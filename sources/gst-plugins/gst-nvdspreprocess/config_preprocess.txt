@@ -1,0 +1,77 @@
+################################################################################
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+# The values in the config file are overridden by values set through GObject
+# properties.
+
+[property]
+enable=1
+target-unique-ids=1
+    # 0=NCHW, 1=NHWC, 2=CUSTOM
+network-input-order=0
+    # tensor shape based on network-input-order
+network-input-shape=7;3;368;640
+processing-width=640
+processing-height=368
+scaling-buf-pool-size=6
+tensor-buf-pool-size=6
+    # 0=RGB, 1=BGR, 2=GRAY
+network-color-format=0
+    # 0=FP32, 1=UINT8, 2=INT8, 3=UINT32, 4=INT32, 5=FP16
+tensor-data-type=0
+tensor-name=input_1
+    # 0=NVBUF_MEM_DEFAULT 1=NVBUF_MEM_CUDA_PINNED 2=NVBUF_MEM_CUDA_DEVICE 3=NVBUF_MEM_CUDA_UNIFIED 4=NVBUF_MEM_SURFACE_ARRAY
+scaling-pool-memory-type=0
+    # 0=NvBufSurfTransformCompute_Default 1=NvBufSurfTransformCompute_GPU 2=NvBufSurfTransformCompute_VIC
+scaling-pool-compute-hw=0
+    # Scaling Interpolation method
+    # 0=NvBufSurfTransformInter_Nearest 1=NvBufSurfTransformInter_Bilinear 2=NvBufSurfTransformInter_Algo1
+    # 3=NvBufSurfTransformInter_Algo2 4=NvBufSurfTransformInter_Algo3 5=NvBufSurfTransformInter_Algo4
+    # 6=NvBufSurfTransformInter_Default
+scaling-filter=0
+
+custom-lib-path=/opt/nvidia/deepstream/deepstream-6.0/lib/gst-plugins/libcustom2d_preprocess.so
+custom-tensor-preparation-function=CustomTensorPreparation
+
+[user-configs]
+pixel-normalization-factor=0.003921568
+#offsets=
+#mean-file=
+
+[group-0]
+src-ids=0;1
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=1
+roi-params-src-0=0;540;900;500;960;0;900;500
+roi-params-src-1=0;540;900;500;960;0;900;500
+
+[group-1]
+src-ids=2
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=1
+roi-params-src-2=0;540;900;500;960;0;900;500
+
+[group-2]
+src-ids=3
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=0
+roi-params-src-3=0;540;900;500;960;0;900;500
