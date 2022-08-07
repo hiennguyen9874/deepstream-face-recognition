@@ -564,6 +564,7 @@ static void gst_nvds_osd_finalize(GObject *object)
     g_free(nvdsosd->rect_params);
     g_free(nvdsosd->mask_rect_params);
     g_free(nvdsosd->mask_params);
+    g_free(nvdsosd->landmark_params);
     g_free(nvdsosd->text_params);
     g_free(nvdsosd->line_params);
     g_free(nvdsosd->arrow_params);

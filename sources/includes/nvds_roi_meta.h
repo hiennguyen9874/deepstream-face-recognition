@@ -39,6 +39,7 @@
 #define __NVDS_ROI_META_H__
 
 #include "nvdsmeta.h"
+#include "nvll_osd_struct.h"
 
 /** max polygon points ; currently not being used */
 #define DS_MAX_POLYGON_POINTS 8

@@ -149,11 +149,44 @@ void attach_metadata_detector(GstNvInfer *nvinfer,
         }
 
         if (nvinfer->output_face_detection_landmark && obj.landmark) {
+            for (unsigned int landmark_idx = 0; landmark_idx < obj.num_landmark; landmark_idx++) {
+                obj.landmark[landmark_idx * 2] =
+                    (obj.landmark[landmark_idx * 2] - frame.offset_left) / frame.scale_ratio_x +
+                    frame.roi_left;
+
+                obj.landmark[landmark_idx * 2 + 1] =
+                    (obj.landmark[landmark_idx * 2 + 1] - frame.offset_top) / frame.scale_ratio_y +
+                    frame.roi_top;
+            }
+
             float *landmark = (float *)g_malloc(obj.landmark_size);
             memcpy(landmark, obj.landmark, obj.landmark_size);
             obj_meta->landmark_params.data = landmark;
             obj_meta->landmark_params.size = obj.landmark_size;
             obj_meta->landmark_params.num_landmark = obj.num_landmark;
+
+            NvDsDisplayMeta *display_meta = nvds_acquire_display_meta_from_pool(batch_meta);
+            nvds_add_display_meta_to_frame(frame_meta, display_meta);
+
+            NvOSD_ColorParams colors[5] = {NvOSD_ColorParams{255, 0, 0, 1},  // Left eye
+                                           NvOSD_ColorParams{0, 0, 255, 1},  // Right eye
+                                           NvOSD_ColorParams{0, 255, 0, 1},  // Nose
+                                           NvOSD_ColorParams{255, 0, 0, 1},  // Left mouth
+                                           NvOSD_ColorParams{0, 0, 255, 1}}; // Right mouth
+
+            for (unsigned int landmark_idx = 0; landmark_idx < obj.num_landmark; landmark_idx++) {
+                NvOSD_CircleParams &circle_params =
+                    display_meta->circle_params[display_meta->num_circles];
+
+                circle_params.xc = obj_meta->landmark_params.data[landmark_idx * 2];
+                circle_params.yc = obj_meta->landmark_params.data[landmark_idx * 2 + 1];
+
+                circle_params.radius = 2;
+                circle_params.circle_color = colors[landmark_idx];
+                circle_params.has_bg_color = 0;
+                circle_params.bg_color = colors[landmark_idx];
+                display_meta->num_circles++;
+            }
         }
 
         nvds_add_obj_meta_to_frame(frame_meta, obj_meta, parent_obj_meta);

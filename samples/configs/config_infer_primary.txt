@@ -1,0 +1,62 @@
+[property]
+gpu-id=0
+
+net-scale-factor=0.0039215697906911373
+
+# 0:RGB 1:BGR 2:GRAY
+model-color-format=0
+
+# For Engine Model
+# model-engine-file=../engines/Primary_Detector/yolov5_6_n_fa_widerface_640_1_fp16_simplify_dynamic_1_16_0807_001907.trt
+model-engine-file=../engines/Primary_Detector/yolov5_6_n_ws_widerface_640_1_fp16_simplify_dynamic_1_16_0806_212222.trt
+force-implicit-batch-dim=1
+
+# For ONNX Model
+# model-engine-file=../models/Primary_Detector/yolox_tiny_fa_coco_416_2_fp16_simplify_dynamic_0.25_0.45_100_nms_0308_000735.engine
+# onnx-file=../models/Primary_Detector/yolox_tiny_fa_coco_416_2_fp16_simplify_dynamic_0.25_0.45_100_nms_0308_000735.onnx
+# infer-dims=3;416;416
+# output-blob-names=num_detections;nms_bboxes;nms_probs;nms_classes
+# workspace-size=4096
+# force-implicit-batch-dim=0
+
+batch-size=1
+
+labelfile-path=../models/Primary_Detector/labels.txt
+
+num-detected-classes=1
+
+interval=0
+
+gie-unique-id=1
+
+# 1: Primary model, secondary model
+process-mode=1
+
+# 0=Detector, 1=Classifier, 2=Segmentation, 3=Instance Segmentation, 4=Face Detection, 100=Other
+network-type=4
+
+# 0:FP32 1:INT8 2:FP16
+network-mode=2
+
+# 0：Group Rectange 1：DBSCAN 2：NMS 3:DBSCAN+NMS 4:None
+cluster-mode=4
+
+# Scale and padding the image maintain aspect ratio
+maintain-aspect-ratio=1
+
+symmetric-padding=1
+
+parse-bbox-face-detection-func-name=NvDsInferParseCustomYoloFaceDetection
+custom-lib-path=../../lib/libnvds_infercustomparser.so
+
+output-face-detection-landmark=1
+
+input-object-min-height=0
+input-object-min-width=0
+
+[class-attrs-all]
+pre-cluster-threshold=0.2
+detected-min-w=0
+detected-min-h=0
+detected-max-w=0
+detected-max-h=0

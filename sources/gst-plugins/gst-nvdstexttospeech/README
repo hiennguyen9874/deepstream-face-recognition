@@ -1,0 +1,33 @@
+################################################################################
+# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA Corporation and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA Corporation is strictly prohibited.
+#
+################################################################################
+Custom interface for developer to derive specific Text To Speech
+functions.
+
+--------------------------------------------------------------------------------
+Description:
+Deepstream Text To Speech plugin
+Refer to the DeepStream SDK documentation for a description of the plugin.
+--------------------------------------------------------------------------------
+Pre-requisites:
+- GStreamer-1.0 Development package
+- GStreamer-1.0 Base Plugins Development package
+
+Install using:
+   sudo apt-get install libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
+
+Install Riva Speech Skills Toolkit
+   Install Riva Speech Skills Toolkit and run the server
+
+--------------------------------------------------------------------------------
+How to test Text-To-Speech Plugin:
+   $ echo "Nvidia corporation is based in Santa Clara" | gst-launch-1.0 -v \
+   fdsrc ! "text/x-raw" ! nvds_text_to_speech config-file=riva_tts_conf.yml \
+   ! autoaudiosink
