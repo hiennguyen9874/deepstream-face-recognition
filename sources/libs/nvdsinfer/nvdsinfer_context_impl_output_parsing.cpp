@@ -742,62 +742,6 @@ void FaceDetectionLandmarkPostprocessor::filterTopKOutputs(
     objectList.resize(static_cast<size_t>(topK) <= objectList.size() ? topK : objectList.size());
 }
 
-bool ClassifyPostprocessor::parseAttributesFromSoftmaxLayers(
-    std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
-    NvDsInferNetworkInfo const &networkInfo,
-    float classifierThreshold,
-    std::vector<NvDsInferAttribute> &attrList,
-    std::string &attrString)
-{
-    /* Get the number of attributes supported by the classifier. */
-    unsigned int numAttributes = m_OutputLayerInfo.size();
-
-    /* Iterate through all the output coverage layers of the classifier.
-     */
-    for (unsigned int l = 0; l < numAttributes; l++) {
-        /* outputCoverageBuffer for classifiers is usually a softmax layer.
-         * The layer is an array of probabilities of the object belonging
-         * to each class with each probability being in the range [0,1] and
-         * sum all probabilities will be 1.
-         */
-        NvDsInferDimsCHW dims;
-
-        getDimsCHWFromDims(dims, m_OutputLayerInfo[l].inferDims);
-        unsigned int numClasses = dims.c;
-        float *outputCoverageBuffer = (float *)m_OutputLayerInfo[l].buffer;
-        float maxProbability = 0;
-        bool attrFound = false;
-        NvDsInferAttribute attr;
-
-        /* Iterate through all the probabilities that the object belongs to
-         * each class. Find the maximum probability and the corresponding class
-         * which meets the minimum threshold. */
-        for (unsigned int c = 0; c < numClasses; c++) {
-            float probability = outputCoverageBuffer[c];
-            if (probability > m_ClassifierThreshold && probability > maxProbability) {
-                maxProbability = probability;
-                attrFound = true;
-                attr.attributeIndex = l;
-                attr.attributeValue = c;
-                attr.attributeConfidence = probability;
-            }
-        }
-        if (attrFound) {
-            if (m_Labels.size() > attr.attributeIndex &&
-                attr.attributeValue < m_Labels[attr.attributeIndex].size())
-                attr.attributeLabel =
-                    strdup(m_Labels[attr.attributeIndex][attr.attributeValue].c_str());
-            else
-                attr.attributeLabel = nullptr;
-            attrList.push_back(attr);
-            if (attr.attributeLabel)
-                attrString.append(attr.attributeLabel).append(" ");
-        }
-    }
-
-    return true;
-}
-
 NvDsInferStatus FaceDetectionLandmarkPostprocessor::fillDetectionOutput(
     const std::vector<NvDsInferLayerInfo> &outputLayers,
     NvDsInferDetectionOutput &output)

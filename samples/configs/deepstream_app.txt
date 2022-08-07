@@ -1,0 +1,90 @@
+[application]
+enable-perf-measurement=1
+perf-measurement-interval-sec=2
+
+[tiled-display]
+enable=0
+
+[source0]
+enable=1
+gpu-id=0
+#Type - 1=CameraV4L2 2=URI 3=MultiURI 4: RTSP
+type=2
+#type=4
+uri=file://../videos/InfinityWar.mp4
+# (0): memtype_device   - Memory type Device
+# (1): memtype_pinned   - Memory type Host Pinned
+# (2): memtype_unified  - Memory type Unified
+cudadec-memtype=0
+nvbuf-memory-type=0
+select-rtp-protocol=0
+rtsp-reconnect-interval-sec=60
+rtsp-reconnect-attempts=5
+
+[sink0]
+enable=1
+gpu-id=0
+#Type - 1=FakeSink 2=EglSink 3=File 4=UDPSink 5=nvoverlaysink 6=MsgConvBroker
+type=3
+sync=0
+source-id=0
+nvbuf-memory-type=0
+#1=mp4 2=mkv
+container=1
+#1=h264 2=h265
+codec=1
+output-file=./outputs/videos/InfinityWar.mp4
+
+[osd]
+enable=1
+gpu-id=0
+border-width=4
+text-size=18
+text-color=0;0;0;1;
+text-bg-color=1.0;1.0;1.0;0.5
+font=Serif
+show-clock=0
+clock-x-offset=800
+clock-y-offset=820
+clock-text-size=12
+clock-color=1;0;0;0
+nvbuf-memory-type=0
+display-mask=0
+display-bbox=1
+display-text=1
+
+[streammux]
+gpu-id=0
+##Boolean property to inform muxer that sources are live
+live-source=0
+# buffer-pool-size=1
+batch-size=1
+##time out in usec, to wait after the first buffer is available
+##to push the batch even if the complete batch is not formed
+batched-push-timeout=40000
+## Set muxer output width and height
+width=1920
+height=1080
+##Enable to maintain aspect ratio wrt source, and allow black borders, works
+##along with width, height properties
+# enable-padding=1
+nvbuf-memory-type=0
+## If set to TRUE, system timestamp will be attached as ntp timestamp
+## If set to FALSE, ntp timestamp from rtspsrc, if available, will be attached
+attach-sys-ts-as-ntp=1
+# config-file=config_sreammux.txt
+
+# config-file property is mandatory for any gie section.
+# Other properties are optional and if set will override the properties set in
+# the infer config file.
+[primary-gie]
+enable=1
+# batch-size=1
+gpu-id=0
+interval=0
+gie-unique-id=1
+nvbuf-memory-type=0
+config-file=./config_infer_primary.txt
+
+[tests]
+file-loop=0
