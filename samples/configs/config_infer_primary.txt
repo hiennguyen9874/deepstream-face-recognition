@@ -7,8 +7,7 @@ net-scale-factor=0.0039215697906911373
 model-color-format=0
 
 # For Engine Model
-# model-engine-file=../engines/Primary_Detector/yolov5_6_n_fa_widerface_640_1_fp16_simplify_dynamic_1_16_0807_001907.trt
-model-engine-file=../engines/Primary_Detector/yolov5_6_n_ws_widerface_640_1_fp16_simplify_dynamic_1_16_0806_212222.trt
+model-engine-file=../engines/Primary_Detector/yolov5_6_n_fa_widerface_640_1_fp16_simplify_dynamic_1_16_0807_193941.trt
 force-implicit-batch-dim=1
 
 # For ONNX Model

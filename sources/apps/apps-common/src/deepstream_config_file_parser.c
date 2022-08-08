@@ -119,6 +119,7 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_GIE_AUDIO_TRANSFORM "audio-transform"
 #define CONFIG_GROUP_GIE_FRAME_SIZE "audio-framesize"
 #define CONFIG_GROUP_GIE_HOP_SIZE "audio-hopsize"
+#define CONFIG_GROUP_GIE_OPENCV_PRE_PROCESSING "opencv-pre-processing"
 /** desired input rate of audio to nvinferaudio in samples per second */
 #define CONFIG_GROUP_GIE_AUDIO_RATE "audio-input-rate"
 
@@ -1070,6 +1071,10 @@ gboolean parse_gie(NvDsGieConfig *config, GKeyFile *key_file, gchar *group, gcha
             config->hop_size =
                 g_key_file_get_integer(key_file, group, CONFIG_GROUP_GIE_HOP_SIZE, &error);
             config->is_hop_size_set = TRUE;
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_GIE_OPENCV_PRE_PROCESSING)) {
+            config->opencv_pre_processing = g_key_file_get_boolean(
+                key_file, group, CONFIG_GROUP_GIE_OPENCV_PRE_PROCESSING, &error);
             CHECK_ERROR(error);
         } else if (!g_strcmp0(*key, CONFIG_GROUP_GIE_AUDIO_RATE)) {
             config->input_audio_rate =

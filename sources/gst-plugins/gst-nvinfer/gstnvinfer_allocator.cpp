@@ -86,7 +86,14 @@ static GstMemory *gst_nvinfer_allocator_alloc(GstAllocator *allocator,
     create_params.isContiguous = 1;
     create_params.colorFormat = inferallocator->color_format;
     create_params.layout = NVBUF_LAYOUT_PITCH;
+
+    // TODO:
+    // create_params.memType = NVBUF_MEM_DEFAULT;
+#ifdef __aarch64__
     create_params.memType = NVBUF_MEM_DEFAULT;
+#else
+    create_params.memType = NVBUF_MEM_CUDA_UNIFIED;
+#endif
 
     if (NvBufSurfaceCreate(&tmem->surf, inferallocator->batch_size, &create_params) != 0) {
         GST_ERROR("Error: Could not allocate internal buffer pool for nvinfer");

@@ -98,6 +98,11 @@ static void all_bbox_generated(AppCtx *appCtx,
         NvDsFrameMeta *frame_meta = l_frame->data;
         for (NvDsMetaList *l_obj = frame_meta->obj_meta_list; l_obj != NULL; l_obj = l_obj->next) {
             NvDsObjectMeta *obj = (NvDsObjectMeta *)l_obj->data;
+
+            // if (obj->landmark_params.num_landmark > 0) {
+            //     g_print("%f\n", obj->landmark_params.data[0]);
+            // }
+
             if (obj->unique_component_id == (gint)appCtx->config.primary_gie_config.unique_id) {
                 if (obj->class_id >= 0 && obj->class_id < 128) {
                     num_objects[obj->class_id]++;

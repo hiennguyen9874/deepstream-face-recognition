@@ -90,6 +90,8 @@ typedef struct {
 
     gchar *tag;
 
+    gboolean opencv_pre_processing;
+
     NvDsGiePluginType plugin_type;
 } NvDsGieConfig;
 

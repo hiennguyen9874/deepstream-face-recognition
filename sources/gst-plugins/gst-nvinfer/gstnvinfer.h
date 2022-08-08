@@ -21,6 +21,12 @@
 #include <unordered_map>
 #include <vector>
 
+/* Open CV headers */
+#ifdef WITH_OPENCV
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#endif
+
 #include "cuda_runtime_api.h"
 #include "gstnvdsinfer.h"
 #include "gstnvdsmeta.h"
