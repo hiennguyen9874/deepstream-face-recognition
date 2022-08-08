@@ -8,6 +8,8 @@
 # license agreement from NVIDIA Corporation is strictly prohibited.
 #################################################################################
 
+WITH_OPENCV?=1
+
 CUDA_VER?=
 ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
@@ -40,6 +42,16 @@ LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_helper -lnvdsgst_meta -lnvds_meta \
 OBJS:= $(SRCS:.cpp=.o)
 
 PKGS:= gstreamer-1.0 gstreamer-base-1.0 gstreamer-video-1.0
+
+ifeq ($(WITH_OPENCV),1)
+CFLAGS+= -DWITH_OPENCV
+ifeq ($(TARGET_DEVICE),aarch64)
+	PKGS+= opencv4
+else
+	PKGS+= opencv
+endif
+endif
+
 CFLAGS+=$(shell pkg-config --cflags $(PKGS))
 LIBS+=$(shell pkg-config --libs $(PKGS))
 

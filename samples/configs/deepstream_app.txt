@@ -22,7 +22,7 @@ rtsp-reconnect-interval-sec=60
 rtsp-reconnect-attempts=5
 
 [sink0]
-enable=1
+enable=0
 gpu-id=0
 #Type - 1=FakeSink 2=EglSink 3=File 4=UDPSink 5=nvoverlaysink 6=MsgConvBroker
 type=3
@@ -79,12 +79,24 @@ attach-sys-ts-as-ntp=1
 # the infer config file.
 [primary-gie]
 enable=1
-# batch-size=1
+batch-size=1
 gpu-id=0
 interval=0
 gie-unique-id=1
 nvbuf-memory-type=0
 config-file=./config_infer_primary.txt
+
+[secondary-gie0]
+enable=1
+batch-size=8
+gpu-id=0
+gie-unique-id=2
+operate-on-gie-id=1
+# operate-on-class-ids=0;
+# Supported memory types for blur-objects are 1 and 3
+nvbuf-memory-type=1
+opencv-pre-processing=1
+config-file=config_infer_secondary_recognition.txt
 
 [tests]
 file-loop=0
