@@ -31,8 +31,10 @@ TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
 
 NVDS_VERSION:=6.0
 
-LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
-APP_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/bin/
+LIB_DS_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
+
+LIB_INSTALL_DIR?=../../../../lib/
+APP_INSTALL_DIR?=../../../../bin/
 
 ifeq ($(TARGET_DEVICE),aarch64)
   CFLAGS:= -DPLATFORM_TEGRA
@@ -53,9 +55,9 @@ CFLAGS+= -I./ -I../../apps-common/includes \
 
 LIBS:= -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart
 
-LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvdsgst_helper \
+LIBS+= -L$(LIB_DS_DIR) -lnvdsgst_meta -lnvds_meta -lnvdsgst_helper \
 	   -lnvdsgst_smartrecord -lnvds_utils -lnvds_msgbroker -lm \
-       -lcuda -lgstrtspserver-1.0 -ldl -Wl,-rpath,$(LIB_INSTALL_DIR)
+       -lcuda -lgstrtspserver-1.0 -ldl -Wl,-rpath,$(LIB_DS_DIR)
 
 CFLAGS+= $(shell pkg-config --cflags $(PKGS))
 

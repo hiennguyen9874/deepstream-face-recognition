@@ -258,5 +258,5 @@ outputs/*
 *.mp4
 logs/*
 bin/*
-
+backup/
 .vscode
