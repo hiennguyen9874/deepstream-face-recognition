@@ -1,21 +1,14 @@
 [property]
 gpu-id=0
 
-net-scale-factor=0.0039215697906911373
-offsets=0;0;0
+net-scale-factor=0.0078125
+offsets=127.5;127.5;127.5
 
 # 0: RGB 1: BGR 2: GRAY
 model-color-format=0
 
-# For Engine Model
-# model-engine-file=../engines/Secondary_Attribute/baseline_resnet_pa100kv3_256x192_8_simplify_dynamic_1_64_0621_091626.trt
-# force-implicit-batch-dim=0
-
 # For ONNX Model
-model-engine-file=../engines/Secondary_Recognition/default_ms1mv2_112x112_1_simplify_dynamic.engine
-onnx-file=../models/Secondary_Recognition/default_ms1mv2_112x112_1_simplify_dynamic.onnx
-infer-dims=3;112;112
-workspace-size=4096
+model-engine-file=../engines/Secondary_Recognition/default_ms1mv2_112x112_8_fp16_simplify_dynamic_8_64.trt
 force-implicit-batch-dim=0
 
 batch-size=8
@@ -33,14 +26,14 @@ process-mode=2
 network-type=100
 
 # 0:FP32 1:INT8 2:FP16
-network-mode=0
+network-mode=2
 
 # 0:NCHW 1:NHWC
 network-input-order=0
 
 output-tensor-meta=1
 
-# secondary-reinfer-interval=0
+face-alignment=0
 
 operate-on-gie-id=1
 # operate-on-class-ids=0
@@ -52,10 +45,5 @@ operate-on-gie-id=1
 # Scale and padding the image maintain aspect ratio
 maintain-aspect-ratio=0
 
-# symmetric-padding=0
-
-# parse-classifier-func-name=NvDsInferClassiferParseCustomAttributeRecognition
-# custom-lib-path=../../lib/libnvds_infercustomparser.so
-
-# input-object-min-height=76
-# input-object-min-width=38
+input-object-min-height=0
+input-object-min-width=0

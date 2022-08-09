@@ -238,38 +238,39 @@ static gboolean create_secondary_gie(NvDsGieConfig *configs1,
 
     gst_bin_add(bin, subbin->secondary_gie);
 
-    g_snprintf(elem_name, sizeof(elem_name), "secondary_gie_%d_conv0", index);
-    subbin->pre_conv = gst_element_factory_make(NVDS_ELEM_VIDEO_CONV, elem_name);
-    if (!subbin->pre_conv) {
-        NVGSTDS_ERR_MSG_V("Failed to create '%s'", elem_name);
-        goto done;
-    }
+    // g_snprintf(elem_name, sizeof(elem_name), "secondary_gie_%d_conv0", index);
+    // subbin->pre_conv = gst_element_factory_make(NVDS_ELEM_VIDEO_CONV, elem_name);
+    // if (!subbin->pre_conv) {
+    //     NVGSTDS_ERR_MSG_V("Failed to create '%s'", elem_name);
+    //     goto done;
+    // }
 
-    g_object_set(G_OBJECT(subbin->pre_conv), "gpu-id", config->gpu_id, NULL);
-    g_object_set(G_OBJECT(subbin->pre_conv), "nvbuf-memory-type", config->nvbuf_memory_type, NULL);
+    // g_object_set(G_OBJECT(subbin->pre_conv), "gpu-id", config->gpu_id, NULL);
+    // g_object_set(G_OBJECT(subbin->pre_conv), "nvbuf-memory-type", config->nvbuf_memory_type,
+    // NULL);
 
-    gst_bin_add(bin, subbin->pre_conv);
+    // gst_bin_add(bin, subbin->pre_conv);
 
-    g_snprintf(elem_name, sizeof(elem_name), "secondary_gie_%d_caps", index);
-    subbin->cap_filter = gst_element_factory_make(NVDS_ELEM_CAPS_FILTER, elem_name);
-    if (!subbin->cap_filter) {
-        NVGSTDS_ERR_MSG_V("Failed to create '%s'", elem_name);
-        goto done;
-    }
+    // g_snprintf(elem_name, sizeof(elem_name), "secondary_gie_%d_caps", index);
+    // subbin->cap_filter = gst_element_factory_make(NVDS_ELEM_CAPS_FILTER, elem_name);
+    // if (!subbin->cap_filter) {
+    //     NVGSTDS_ERR_MSG_V("Failed to create '%s'", elem_name);
+    //     goto done;
+    // }
 
-    if (config->opencv_pre_processing) {
-        caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "RGBA", NULL);
+    // if (config->opencv_pre_processing) {
+    //     caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "RGBA", NULL);
 
-        GstCapsFeatures *feature = NULL;
-        feature = gst_caps_features_new(MEMORY_FEATURES, NULL);
-        gst_caps_set_features(caps, 0, feature);
+    //     GstCapsFeatures *feature = NULL;
+    //     feature = gst_caps_features_new(MEMORY_FEATURES, NULL);
+    //     gst_caps_set_features(caps, 0, feature);
 
-        g_object_set(G_OBJECT(subbin->cap_filter), "caps", caps, NULL);
+    //     g_object_set(G_OBJECT(subbin->cap_filter), "caps", caps, NULL);
 
-        gst_caps_unref(caps);
-    }
+    //     gst_caps_unref(caps);
+    // }
 
-    gst_bin_add(bin, subbin->cap_filter);
+    // gst_bin_add(bin, subbin->cap_filter);
 
     if (subbin->num_children == 0) {
         g_snprintf(elem_name, sizeof(elem_name), "secondary_gie_%d_sink", index);
@@ -293,11 +294,16 @@ static gboolean create_secondary_gie(NvDsGieConfig *configs1,
         gst_bin_add(bin, subbin->tee);
     }
 
+    // if (subbin->queue) {
+    //     NVGSTDS_LINK_ELEMENT(subbin->queue, subbin->pre_conv);
+    // }
+    // NVGSTDS_LINK_ELEMENT(subbin->pre_conv, subbin->cap_filter);
+    // NVGSTDS_LINK_ELEMENT(subbin->cap_filter, subbin->secondary_gie);
+
     if (subbin->queue) {
-        NVGSTDS_LINK_ELEMENT(subbin->queue, subbin->pre_conv);
+        NVGSTDS_LINK_ELEMENT(subbin->queue, subbin->secondary_gie);
     }
-    NVGSTDS_LINK_ELEMENT(subbin->pre_conv, subbin->cap_filter);
-    NVGSTDS_LINK_ELEMENT(subbin->cap_filter, subbin->secondary_gie);
+
     if (subbin->sink) {
         NVGSTDS_LINK_ELEMENT(subbin->secondary_gie, subbin->sink);
     }

@@ -351,7 +351,7 @@ static gboolean create_encode_file_bin(NvDsSinkEncoderConfig *config, NvDsSinkBi
     }
 
     NVGSTDS_ELEM_ADD_PROBE(probe_id, bin->encoder, "sink", seek_query_drop_prob,
-                           GST_PAD_PROBE_TYPE_QUERY_UPSTREAM, bin);
+                           GST_PAD_PROBE_TYPE_QUERY_UPSTREAM, bin, "seek_query_drop_prob");
 
     probe_id = probe_id;
 
@@ -579,7 +579,7 @@ static gboolean create_udpsink_bin(NvDsSinkEncoderConfig *config, NvDsSinkBinSub
     }
 
     NVGSTDS_ELEM_ADD_PROBE(probe_id, bin->encoder, "sink", seek_query_drop_prob,
-                           GST_PAD_PROBE_TYPE_QUERY_UPSTREAM, bin);
+                           GST_PAD_PROBE_TYPE_QUERY_UPSTREAM, bin, "seek_query_drop_prob");
 
     probe_id = probe_id;
 

@@ -68,6 +68,10 @@ public:
     void setLoggingFunc(const NvDsInferLoggingFunc &func) { m_LoggingFunc = func; }
     bool setScaleOffsets(float scale, const std::vector<float> &offsets = {});
     bool setMeanFile(const std::string &file);
+#ifdef DUMP_INPUT_TO_FILE
+    float getScale() { return m_Scale; };
+    NvDsInferFormat getNetworkFormat() { return m_NetworkInputFormat; };
+#endif
     bool setInputOrder(const NvDsInferTensorOrder order);
 
     NvDsInferStatus allocateResource();
@@ -462,6 +466,11 @@ private:
     NvDsInferBatchDimsLayerInfo m_InputImageLayerInfo;
 
     std::vector<void *> m_BindingBuffers;
+#ifdef DUMP_INPUT_TO_FILE
+    uint32_t m_FrameCnt = 0;
+    void *m_inputDumpHostBuf;
+    void *m_inputDumpDeviceBuf;
+#endif
     std::vector<std::unique_ptr<CudaDeviceBuffer>> m_InputDeviceBuffers;
 
     uint32_t m_OutputBufferPoolSize = NVDSINFER_MIN_OUTPUT_BUFFERPOOL_SIZE;

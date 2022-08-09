@@ -42,6 +42,7 @@ struct _GstNvInferAllocator {
     guint height;
     NvBufSurfaceColorFormat color_format;
     guint gpu_id;
+    NvBufSurfaceMemType memType;
 };
 
 struct _GstNvInferAllocatorClass {
@@ -86,14 +87,7 @@ static GstMemory *gst_nvinfer_allocator_alloc(GstAllocator *allocator,
     create_params.isContiguous = 1;
     create_params.colorFormat = inferallocator->color_format;
     create_params.layout = NVBUF_LAYOUT_PITCH;
-
-    // TODO:
-    // create_params.memType = NVBUF_MEM_DEFAULT;
-#ifdef __aarch64__
-    create_params.memType = NVBUF_MEM_DEFAULT;
-#else
-    create_params.memType = NVBUF_MEM_CUDA_UNIFIED;
-#endif
+    create_params.memType = inferallocator->memType;
 
     if (NvBufSurfaceCreate(&tmem->surf, inferallocator->batch_size, &create_params) != 0) {
         GST_ERROR("Error: Could not allocate internal buffer pool for nvinfer");
@@ -199,7 +193,8 @@ GstAllocator *gst_nvinfer_allocator_new(guint width,
                                         guint height,
                                         NvBufSurfaceColorFormat color_format,
                                         guint batch_size,
-                                        guint gpu_id)
+                                        guint gpu_id,
+                                        NvBufSurfaceMemType memType)
 {
     GstNvInferAllocator *allocator =
         (GstNvInferAllocator *)g_object_new(GST_TYPE_NVINFER_ALLOCATOR, nullptr);
@@ -209,6 +204,7 @@ GstAllocator *gst_nvinfer_allocator_new(guint width,
     allocator->batch_size = batch_size;
     allocator->gpu_id = gpu_id;
     allocator->color_format = color_format;
+    allocator->memType = memType;
 
     return (GstAllocator *)allocator;
 }

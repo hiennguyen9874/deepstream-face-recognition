@@ -24,7 +24,7 @@ gie-unique-id=1
 process-mode=1
 
 # 0=Detector, 1=Classifier, 2=Segmentation, 3=Instance Segmentation, 4=Face Detection, 100=Other
-network-type=4
+network-type=0
 
 # 0:FP32 1:INT8 2:FP16
 network-mode=2
@@ -37,10 +37,10 @@ maintain-aspect-ratio=1
 
 symmetric-padding=1
 
-parse-bbox-face-detection-func-name=NvDsInferParseCustomBatchedNMSTLTYoloFaceDetection
+parse-bbox-func-name=NvDsInferParseCustomBatchedNMSTLT
 custom-lib-path=../../lib/libnvds_infercustomparser.so
 
-output-face-detection-landmark=1
+# output-face-detection-landmark=1
 
 input-object-min-height=0
 input-object-min-width=0

@@ -86,15 +86,17 @@ extern "C" {
 #define NVGSTDS_BIN_ADD_GHOST_PAD(bin, elem, pad) \
     NVGSTDS_BIN_ADD_GHOST_PAD_NAMED(bin, elem, pad, pad)
 
-#define NVGSTDS_ELEM_ADD_PROBE(probe_id, elem, pad, probe_func, probe_type, probe_data)    \
-    do {                                                                                   \
-        GstPad *gstpad = gst_element_get_static_pad(elem, pad);                            \
-        if (!gstpad) {                                                                     \
-            NVGSTDS_ERR_MSG_V("Could not find '%s' in '%s'", pad, GST_ELEMENT_NAME(elem)); \
-            goto done;                                                                     \
-        }                                                                                  \
-        probe_id = gst_pad_add_probe(gstpad, (probe_type), probe_func, probe_data, NULL);  \
-        gst_object_unref(gstpad);                                                          \
+#define NVGSTDS_ELEM_ADD_PROBE(probe_id, elem, pad, probe_func, probe_type, probe_data, func_name) \
+    do {                                                                                           \
+        GstPad *gstpad = gst_element_get_static_pad(elem, pad);                                    \
+        if (!gstpad) {                                                                             \
+            NVGSTDS_ERR_MSG_V("Could not find '%s' in '%s'", pad, GST_ELEMENT_NAME(elem));         \
+            goto done;                                                                             \
+        }                                                                                          \
+        NVGSTDS_INFO_MSG_V("Add probe: '%s' in '%s', func name: '%s'", pad,                        \
+                           GST_ELEMENT_NAME(elem), func_name);                                     \
+        probe_id = gst_pad_add_probe(gstpad, (probe_type), probe_func, probe_data, NULL);          \
+        gst_object_unref(gstpad);                                                                  \
     } while (0)
 
 #define NVGSTDS_ELEM_REMOVE_PROBE(probe_id, elem, pad)                                     \
@@ -107,6 +109,7 @@ extern "C" {
             NVGSTDS_ERR_MSG_V("Could not find '%s' in '%s'", pad, GST_ELEMENT_NAME(elem)); \
             break;                                                                         \
         }                                                                                  \
+        NVGSTDS_INFO_MSG_V("Remove probe: '%s' in '%s'", pad, GST_ELEMENT_NAME(elem));     \
         gst_pad_remove_probe(gstpad, probe_id);                                            \
         gst_object_unref(gstpad);                                                          \
     } while (0)
