@@ -25,6 +25,7 @@
 #include <thread>
 #include <vector>
 
+#include "face_preprocess.h"
 #include "gst-nvevent.h"
 #include "gstnvdsmeta.h"
 #include "gstnvinfer_allocator.h"
@@ -95,9 +96,16 @@ static GQuark _dsmeta_quark = 0;
 #define DEFAULT_GPU_DEVICE_ID 0
 #define DEFAULT_OUTPUT_WRITE_TO_FILE FALSE
 #define DEFAULT_OUTPUT_TENSOR_META FALSE
+#define DEFAULT_OUTPUT_FACE_ALIGNMENT FALSE
 #define DEFAULT_OUTPUT_INSTANCE_MASK FALSE
 #define DEFAULT_OUTPUT_FACE_DETECTION_LANDMARK FALSE
 #define DEFAULT_INPUT_TENSOR_META FALSE
+
+static float DEFAULT_REFERENCE_5PTS[5][2] = {{38.2946f + 8.0f, 51.6963f},
+                                             {73.5318f + 8.0f, 51.5014f},
+                                             {56.0252f + 8.0f, 71.7366f},
+                                             {41.5493f + 8.0f, 92.3655f},
+                                             {70.7299f + 8.0f, 92.2041f}};
 
 /* By default NVIDIA Hardware allocated memory flows through the pipeline. We
  * will be processing on this type of memory only. */
@@ -149,6 +157,10 @@ static void gst_nvinfer_reset_init_params(GstNvInfer *nvinfer);
 
 /* Create enum type for the process mode property. */
 #define GST_TYPE_NVDSINFER_PROCESS_MODE (gst_nvinfer_process_mode_get_type())
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define CLIP(a, min, max) (MAX(MIN(a, max), min))
 
 static GType gst_nvinfer_process_mode_get_type(void)
 {
@@ -321,6 +333,13 @@ static void gst_nvinfer_class_init(GstNvInferClass *klass)
             (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | GST_PARAM_MUTABLE_READY)));
 
     g_object_class_install_property(
+        gobject_class, PROP_FACE_ALIGNMENT,
+        g_param_spec_boolean(
+            "face-alignment", "Face Alignment", "Use opencv to aligment face using landmark",
+            DEFAULT_OUTPUT_FACE_ALIGNMENT,
+            (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | GST_PARAM_MUTABLE_READY)));
+
+    g_object_class_install_property(
         gobject_class, PROP_OUTPUT_INSTANCE_MASK,
         g_param_spec_boolean(
             "output-instance-mask", "Output Instance Mask",
@@ -385,6 +404,7 @@ static void gst_nvinfer_init(GstNvInfer *nvinfer)
     nvinfer->operate_on_class_ids = new std::vector<gboolean>;
     nvinfer->filter_out_class_ids = new std::set<uint>;
     nvinfer->output_tensor_meta = DEFAULT_OUTPUT_TENSOR_META;
+    nvinfer->face_alignment = DEFAULT_OUTPUT_FACE_ALIGNMENT;
     nvinfer->output_instance_mask = DEFAULT_OUTPUT_INSTANCE_MASK;
     nvinfer->output_face_detection_landmark = DEFAULT_OUTPUT_FACE_DETECTION_LANDMARK;
 
@@ -531,6 +551,9 @@ static void gst_nvinfer_set_property(GObject *object,
     case PROP_OUTPUT_TENSOR_META:
         nvinfer->output_tensor_meta = g_value_get_boolean(value);
         break;
+    case PROP_FACE_ALIGNMENT:
+        nvinfer->face_alignment = g_value_get_boolean(value);
+        break;
     case PROP_OUTPUT_INSTANCE_MASK:
         nvinfer->output_instance_mask = g_value_get_boolean(value);
         break;
@@ -609,6 +632,9 @@ static void gst_nvinfer_get_property(GObject *object,
         break;
     case PROP_OUTPUT_TENSOR_META:
         g_value_set_boolean(value, nvinfer->output_tensor_meta);
+        break;
+    case PROP_FACE_ALIGNMENT:
+        g_value_set_boolean(value, nvinfer->face_alignment);
         break;
     case PROP_OUTPUT_INSTANCE_MASK:
         g_value_set_boolean(value, nvinfer->output_instance_mask);
@@ -927,9 +953,12 @@ static gboolean gst_nvinfer_start(GstBaseTransform *btrans)
             if (a)
                 gst_object_unref(a);
         };
+
         std::unique_ptr<GstAllocator, decltype(allocator_deleter)> allocator_ptr(
-            gst_nvinfer_allocator_new(nvinfer->network_width, nvinfer->network_height, color_format,
-                                      nvinfer->max_batch_size, nvinfer->gpu_id),
+            gst_nvinfer_allocator_new(
+                nvinfer->network_width, nvinfer->network_height, color_format,
+                nvinfer->max_batch_size, nvinfer->gpu_id,
+                (nvinfer->face_alignment) ? NVBUF_MEM_CUDA_UNIFIED : NVBUF_MEM_DEFAULT),
             allocator_deleter);
         memset(&allocation_params, 0, sizeof(allocation_params));
         gst_buffer_pool_config_set_allocator(config_ptr.get(), allocator_ptr.get(),
@@ -1091,10 +1120,28 @@ static GstFlowReturn get_converted_buffer(GstNvInfer *nvinfer,
                                           guint &offset_top,
                                           void *destCudaPtr)
 {
-    guint src_left = GST_ROUND_UP_2((unsigned int)crop_rect_params->left);
-    guint src_top = GST_ROUND_UP_2((unsigned int)crop_rect_params->top);
-    guint src_width = GST_ROUND_DOWN_2((unsigned int)crop_rect_params->width);
-    guint src_height = GST_ROUND_DOWN_2((unsigned int)crop_rect_params->height);
+    float crop_rect_left = crop_rect_params->left;
+    float crop_rect_top = crop_rect_params->top;
+    float crop_rect_right = crop_rect_params->left + crop_rect_params->width;
+    float crop_rect_bottom = crop_rect_params->top + crop_rect_params->height;
+
+    if (nvinfer->face_alignment) {
+        // Increase size 15%
+        crop_rect_left -= crop_rect_params->width * 0.15;
+        crop_rect_top -= crop_rect_params->height * 0.15;
+        crop_rect_right += crop_rect_params->width * 0.15;
+        crop_rect_bottom += crop_rect_params->height * 0.15;
+    }
+
+    crop_rect_left = CLIP(crop_rect_left, 0, src_frame->width);
+    crop_rect_top = CLIP(crop_rect_top, 0, src_frame->height);
+    crop_rect_right = CLIP(crop_rect_right, 0, src_frame->width);
+    crop_rect_bottom = CLIP(crop_rect_bottom, 0, src_frame->height);
+
+    guint src_left = GST_ROUND_UP_2((unsigned int)crop_rect_left);
+    guint src_top = GST_ROUND_UP_2((unsigned int)crop_rect_top);
+    guint src_width = GST_ROUND_DOWN_2((unsigned int)(crop_rect_right - crop_rect_left));
+    guint src_height = GST_ROUND_DOWN_2((unsigned int)(crop_rect_bottom - crop_rect_top));
     guint dest_width, dest_height;
 
     guint offset_right = 0, offset_bottom = 0;
@@ -1335,6 +1382,25 @@ static gpointer gst_nvinfer_input_queue_loop(gpointer data)
     return NULL;
 }
 
+static gboolean check_landmarks(NvOSD_RectParams rect_params, NvOSD_LandmarkParams landmark_params)
+{
+    if (!landmark_params.data || landmark_params.size < 0 | landmark_params.num_landmark < 0)
+        return FALSE;
+
+    for (unsigned int landmark_idx = 0; landmark_idx < landmark_params.num_landmark;
+         landmark_idx++) {
+        if (landmark_params.data[2 * landmark_idx] < rect_params.left ||
+            landmark_params.data[2 * landmark_idx] > rect_params.left + rect_params.width)
+            return FALSE;
+
+        if (landmark_params.data[2 * landmark_idx + 1] < rect_params.top ||
+            landmark_params.data[2 * landmark_idx + 1] > rect_params.top + rect_params.height)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
                                                        GstNvInferBatch *batch,
                                                        GstNvInferMemory *mem)
@@ -1345,7 +1411,10 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
     NvDsObjectMeta *obj_meta = NULL;
 
 #ifdef WITH_OPENCV
-    cv::Mat in_mat, out_mat;
+    cv::Mat in_mat;
+#ifdef DUMP_INPUT_TO_FILE
+    cv::Mat out_mat;
+#endif
 #endif
 
     /* Set the transform session parameters for the conversions executed in this
@@ -1382,94 +1451,123 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
         return FALSE;
     }
 
-    guint id_cropobj = 0;
-    // Use openCV to remove padding and convert RGBA to BGR. Can be skipped if
-    // algorithm can handle padded RGBA data.
-    for (guint i = 0; i < nvinfer->tmp_surf.numFilled; i++) {
-        id_cropobj++;
+    if (nvinfer->face_alignment) {
+#ifdef DUMP_INPUT_TO_FILE
+        guint id_cropobj = 0;
+#endif
+        // Use openCV to remove padding and convert RGBA to BGR. Can be skipped if
+        // algorithm can handle padded RGBA data.
+        for (guint i = 0; i < nvinfer->tmp_surf.numFilled; i++) {
+#ifdef DUMP_INPUT_TO_FILE
+            id_cropobj++;
+#endif
 
-        obj_meta = batch->frames[i].obj_meta;
+            obj_meta = batch->frames[i].obj_meta;
 
-        if (obj_meta != NULL && obj_meta->landmark_params.data &&
-            obj_meta->landmark_params.size > 0 && obj_meta->landmark_params.num_landmark > 0) {
-            // Map the buffer so that it can be accessed by CPU
-            if (NvBufSurfaceMap(mem->surf, i, 0, NVBUF_MAP_READ_WRITE) != 0) {
-                GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
-                                  ("%s:buffer map to be accessed by CPU failed", __func__), (NULL));
-                return FALSE;
-            }
-            // sync mapped data for CPU access
-            NvBufSurfaceSyncForCpu(mem->surf, i, 0);
+            if (obj_meta != NULL &&
+                check_landmarks(obj_meta->rect_params, obj_meta->landmark_params)) {
+                // Map the buffer so that it can be accessed by CPU
+                if (NvBufSurfaceMap(mem->surf, i, 0, NVBUF_MAP_READ_WRITE) != 0) {
+                    GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
+                                      ("%s:buffer map to be accessed by CPU failed", __func__),
+                                      (NULL));
+                    return FALSE;
+                }
+                // sync mapped data for CPU access
+                NvBufSurfaceSyncForCpu(mem->surf, i, 0);
 
 #ifdef WITH_OPENCV
-            in_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
-                             (gint)mem->surf->surfaceList[i].width, CV_8UC3,
-                             mem->surf->surfaceList[i].mappedAddr.addr[0],
-                             mem->surf->surfaceList[i].pitch);
+                in_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
+                                 (gint)mem->surf->surfaceList[i].width, CV_8UC3,
+                                 mem->surf->surfaceList[i].mappedAddr.addr[0],
+                                 mem->surf->surfaceList[i].pitch);
 
-            // TODO: Convert landmark:
-            // 1. - bounding box nvinfer->transform_params.src_rect[i]->src_rect.left,
-            // nvinfer->transform_params.src_rect[i]->src_rect.top
-            // 2. / bounding box width, height
-            // 3. * mem->surf->surfaceList[i].width, mem->surf->surfaceList[i].height
-            // 4. + batch->frames[i].offset_left, batch->frames[i].offset_top
+                // TODO: Convert landmark:
+                // 1. - bounding box nvinfer->transform_params.src_rect[i]->src_rect.left,
+                // nvinfer->transform_params.src_rect[i]->src_rect.top
+                // 2. / nvinfer->transform_params.src_rect[i]->src_rect.width,
+                // nvinfer->transform_params.src_rect[i]->src_rect.height
+                // 3. * mem->surf->surfaceList[i].width, mem->surf->surfaceList[i].height
+                // 4. + batch->frames[i].offset_left, batch->frames[i].offset_top
 
-            float landmarks[obj_meta->landmark_params.num_landmark * 2];
+                float landmarks[2 * obj_meta->landmark_params.num_landmark];
 
-            out_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
-                              (gint)mem->surf->surfaceList[i].width, CV_8UC3);
+                for (unsigned int landmark_idx = 0;
+                     landmark_idx < obj_meta->landmark_params.num_landmark; landmark_idx++) {
+                    landmarks[2 * landmark_idx] =
+                        (((obj_meta->landmark_params.data[2 * landmark_idx] -
+                           nvinfer->transform_params.src_rect[i].left) /
+                          nvinfer->transform_params.src_rect[i].width) *
+                         nvinfer->transform_params.dst_rect[i].width) +
+                        nvinfer->transform_params.dst_rect[i].left;
 
+                    landmarks[2 * landmark_idx + 1] =
+                        (((obj_meta->landmark_params.data[2 * landmark_idx + 1] -
+                           nvinfer->transform_params.src_rect[i].top) /
+                          nvinfer->transform_params.src_rect[i].height) *
+                         nvinfer->transform_params.dst_rect[i].height) +
+                        nvinfer->transform_params.dst_rect[i].top;
+                }
+
+#ifdef DUMP_INPUT_TO_FILE
+                out_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
+                                  (gint)mem->surf->surfaceList[i].width, CV_8UC3);
 #if (CV_MAJOR_VERSION >= 4)
-            cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
+                cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
 #else
-            cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
+                cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
 #endif
+                cv::Scalar colors[5] = {cv::Scalar(0, 0, 255), cv::Scalar(255, 0, 0),
+                                        cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255),
+                                        cv::Scalar(255, 0, 0)};
 
-            cv::Scalar colors[5] = {cv::Scalar(255, 0, 0), cv::Scalar(0, 0, 255),
-                                    cv::Scalar(0, 255, 0), cv::Scalar(255, 0, 0),
-                                    cv::Scalar(0, 0, 255)};
-            for (unsigned int landmark_idx = 0;
-                 landmark_idx < obj_meta->landmark_params.num_landmark; landmark_idx++) {
-                std::cout << obj_meta->landmark_params.data[2 * landmark_idx] << std::endl;
+                for (unsigned int landmark_idx = 0;
+                     landmark_idx < obj_meta->landmark_params.num_landmark; landmark_idx++) {
+                    cv::circle(
+                        out_mat,
+                        cv::Point(GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx]),
+                                  GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx + 1])),
+                        1, colors[landmark_idx], -1);
+                }
+                gchar *img_file_path_origin =
+                    g_strdup_printf("./outputs/images_cropped/image_origin_%d_%d_%d.jpg",
+                                    batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
 
-                // landmarks[2 * landmark_idx] = (((obj_meta->landmark_params.data[2 * landmark_idx]
-                // -
-                //                                  nvinfer->transform_params.src_rect[i].left) /
-                //                                 nvinfer->transform_params.src_rect[i].width) *
-                //                                nvinfer->transform_params.dst_rect[i].width) +
-                //                               nvinfer->transform_params.dst_rect[i].left;
-
-                // landmarks[2 * landmark_idx + 1] =
-                //     (((obj_meta->landmark_params.data[2 * landmark_idx + 1] -
-                //        nvinfer->transform_params.src_rect[i].top) /
-                //       nvinfer->transform_params.src_rect[i].height) *
-                //      nvinfer->transform_params.dst_rect[i].height) +
-                //     nvinfer->transform_params.dst_rect[i].top;
-
-                // cv::circle(out_mat,
-                //            cv::Point(GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx]),
-                //                      GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx +
-                //                      1])),
-                //            5, colors[landmark_idx], -1);
-            }
-
-            // TODO: DEBUG save image into file
-            gchar *img_file_path =
-                g_strdup_printf("./outputs/images_cropped/image_%d_%d_%d.jpg",
-                                batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
-
-            cv::imwrite(img_file_path, out_mat);
+                cv::imwrite(img_file_path_origin, out_mat);
 #endif
-            if (NvBufSurfaceUnMap(mem->surf, i, 0)) {
-                GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
-                                  ("%s:buffer unmap to be accessed by CPU failed", __func__),
-                                  (NULL));
-                return FALSE;
-            }
+                cv::Mat dst(obj_meta->landmark_params.num_landmark, 2, CV_32FC1, landmarks);
+                memcpy(dst.data, landmarks,
+                       2 * obj_meta->landmark_params.num_landmark * sizeof(float));
+                cv::Mat src(obj_meta->landmark_params.num_landmark, 2, CV_32FC1,
+                            DEFAULT_REFERENCE_5PTS);
+                memcpy(src.data, DEFAULT_REFERENCE_5PTS,
+                       2 * obj_meta->landmark_params.num_landmark * sizeof(float));
+                cv::Mat M = FacePreprocess::similarTransform(dst, src);
+                cv::warpPerspective(in_mat, in_mat, M, in_mat.size());
 
-            /* Cache the mapped data for device access */
-            if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY)
-                NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+#ifdef DUMP_INPUT_TO_FILE
+#if (CV_MAJOR_VERSION >= 4)
+                cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
+#else
+                cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
+#endif
+                gchar *img_file_path_aligned =
+                    g_strdup_printf("./outputs/images_cropped/image_aligned_%d_%d_%d.jpg",
+                                    batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
+                cv::imwrite(img_file_path_aligned, out_mat);
+#endif
+#endif
+                if (NvBufSurfaceUnMap(mem->surf, i, 0)) {
+                    GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
+                                      ("%s:buffer unmap to be accessed by CPU failed", __func__),
+                                      (NULL));
+                    return FALSE;
+                }
+
+                /* Cache the mapped data for device access */
+                if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY)
+                    NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+            }
         }
     }
 
@@ -1740,6 +1838,7 @@ static GstFlowReturn gst_nvinfer_process_objects(GstNvInfer *nvinfer,
         /* Iterate through all the objects. */
         for (NvDsMetaList *l_obj = frame_meta->obj_meta_list; l_obj != NULL; l_obj = l_obj->next) {
             NvDsObjectMeta *object_meta = (NvDsObjectMeta *)(l_obj->data);
+
             guint idx;
             std::shared_ptr<GstNvInferObjectHistory> obj_history;
             gulong frame_num = frame_meta->frame_num;
@@ -2489,6 +2588,7 @@ static gpointer gst_nvinfer_output_loop(gpointer data)
         }
         nvtxDomainRangePop(nvinfer->nvtx_domain);
     }
+
     return nullptr;
 }
 

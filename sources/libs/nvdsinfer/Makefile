@@ -15,6 +15,8 @@ endif
 
 WITH_OPENCV?=0
 
+DUMP_INPUT_TO_FILE?=0
+
 NVCC:=/usr/local/cuda-$(CUDA_VER)/bin/nvcc
 CXX:= g++
 SRCS:= nvdsinfer_context_impl.cpp  nvdsinfer_context_impl_capi.cpp \
@@ -33,6 +35,10 @@ CFLAGS+= -fPIC -Wno-deprecated-declarations -std=c++14 \
 	 -I /usr/local/cuda-$(CUDA_VER)/include \
 	 -I ../../includes -DNDEBUG
 
+ifeq ($(DUMP_INPUT_TO_FILE),1)
+CFLAGS+= -DDUMP_INPUT_TO_FILE
+endif
+
 ifeq ($(WITH_OPENCV),1)
 CFLAGS+= -DWITH_OPENCV
 ifeq ($(shell uname -m), aarch64)
@@ -46,6 +52,9 @@ LIBS := -shared -Wl,-no-undefined \
 
 ifeq ($(WITH_OPENCV),1)
 LIBS += -lopencv_objdetect -lopencv_imgproc -lopencv_core
+ifeq ($(DUMP_INPUT_TO_FILE),1)
+LIBS+= -lopencv_imgcodecs
+endif
 endif
 
 LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_helper -lnvdsgst_meta -lnvds_meta \

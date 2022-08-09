@@ -77,6 +77,7 @@ enum {
     PROP_OUTPUT_CALLBACK,
     PROP_OUTPUT_CALLBACK_USERDATA,
     PROP_OUTPUT_TENSOR_META,
+    PROP_FACE_ALIGNMENT,
     PROP_OUTPUT_INSTANCE_MASK,
     PROP_OUTPUT_FACE_DETECTION_LANDMARK,
     PROP_INPUT_TENSOR_META,
@@ -313,6 +314,9 @@ struct _GstNvInfer {
     /** Boolean indicating if tensor outputs should be attached as meta on
      * GstBuffers. */
     gboolean output_tensor_meta;
+
+    /** Boolean indicating use opencv to aligment face using landmark. */
+    gboolean face_alignment;
 
     /** Boolean indicating if instance masks are expected in output and
      *  has to be attached in metadata */

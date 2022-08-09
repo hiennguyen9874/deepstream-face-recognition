@@ -418,7 +418,7 @@ static void decodebin_child_added(GstChildProxy *child_proxy,
                 bin->src_buffer_probe, GST_ELEMENT(object), "sink", restart_stream_buf_prob,
                 (GstPadProbeType)(GST_PAD_PROBE_TYPE_EVENT_BOTH | GST_PAD_PROBE_TYPE_EVENT_FLUSH |
                                   GST_PAD_PROBE_TYPE_BUFFER),
-                bin);
+                bin, "restart_stream_buf_prob");
         }
     }
 done:
@@ -902,12 +902,12 @@ static gboolean create_rtsp_src_bin(NvDsSourceConfig *config, NvDsSrcBin *bin)
 
     if (bin->rtsp_reconnect_interval_sec > 0) {
         NVGSTDS_ELEM_ADD_PROBE(bin->rtspsrc_monitor_probe, bin->dec_que, "sink",
-                               rtspsrc_monitor_probe_func, GST_PAD_PROBE_TYPE_BUFFER, bin);
+                               rtspsrc_monitor_probe_func, GST_PAD_PROBE_TYPE_BUFFER, bin, "rtspsrc_monitor_probe_func");
         install_mux_eosmonitor_probe = TRUE;
     } else {
         NVGSTDS_ELEM_ADD_PROBE(bin->rtspsrc_monitor_probe, bin->dec_que, "sink",
                                rtspsrc_monitor_probe_func, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
-                               bin);
+                               bin, "rtspsrc_monitor_probe_func");
     }
 
     g_snprintf(elem_name, sizeof(elem_name), "decodebin_elem%d", bin->bin_id);
@@ -1428,7 +1428,7 @@ gboolean create_multi_source_bin(guint num_sub_bins,
     if (install_mux_eosmonitor_probe) {
         NVGSTDS_ELEM_ADD_PROBE(bin->nvstreammux_eosmonitor_probe, bin->streammux, "src",
                                nvstreammux_eosmonitor_probe_func,
-                               GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, bin);
+                               GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, bin, "nvstreammux_eosmonitor_probe_func");
     }
 
     ret = TRUE;

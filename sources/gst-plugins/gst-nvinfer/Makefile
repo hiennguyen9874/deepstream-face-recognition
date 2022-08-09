@@ -10,6 +10,8 @@
 
 WITH_OPENCV?=1
 
+DUMP_INPUT_TO_FILE?=0
+
 CUDA_VER?=
 ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
@@ -50,6 +52,10 @@ ifeq ($(TARGET_DEVICE),aarch64)
 else
 	PKGS+= opencv
 endif
+endif
+
+ifeq ($(DUMP_INPUT_TO_FILE),1)
+CFLAGS+= -DDUMP_INPUT_TO_FILE
 endif
 
 CFLAGS+=$(shell pkg-config --cflags $(PKGS))

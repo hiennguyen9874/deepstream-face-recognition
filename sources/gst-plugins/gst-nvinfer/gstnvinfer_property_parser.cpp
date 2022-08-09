@@ -340,6 +340,10 @@ static gboolean gst_nvinfer_parse_other_attribute(GstNvInfer *nvinfer,
                                    &error))
             nvinfer->output_tensor_meta = TRUE;
         CHECK_ERROR(error);
+    } else if (!g_strcmp0(key, CONFIG_GROUP_INFER_FACE_ALIGNMENT)) {
+        if (g_key_file_get_boolean(key_file, group_name, CONFIG_GROUP_INFER_FACE_ALIGNMENT, &error))
+            nvinfer->face_alignment = TRUE;
+        CHECK_ERROR(error);
     } else if (!g_strcmp0(key, CONFIG_GROUP_INFER_OUTPUT_INSTANCE_MASK)) {
         if (g_key_file_get_boolean(key_file, group_name, CONFIG_GROUP_INFER_OUTPUT_INSTANCE_MASK,
                                    &error))

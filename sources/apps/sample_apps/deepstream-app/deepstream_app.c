@@ -386,8 +386,15 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
     for (NvDsMetaList *l_frame = batch_meta->frame_meta_list; l_frame != NULL;
          l_frame = l_frame->next) {
         NvDsFrameMeta *frame_meta = l_frame->data;
+
         for (NvDsMetaList *l_obj = frame_meta->obj_meta_list; l_obj != NULL; l_obj = l_obj->next) {
             NvDsObjectMeta *obj = (NvDsObjectMeta *)l_obj->data;
+
+            for (NvDsMetaList *l_user = obj->obj_user_meta_list; l_user != NULL;
+                 l_user = l_user->next) {
+                g_print("ALOOOOOOOOOOOOOO\n");
+            }
+
             gint class_index = obj->class_id;
             NvDsGieConfig *gie_config = NULL;
             gchar *str_ins_pos = NULL;
@@ -486,10 +493,12 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
 static void process_buffer(GstBuffer *buf, AppCtx *appCtx, guint index)
 {
     NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta(buf);
+
     if (!batch_meta) {
         NVGSTDS_WARN_MSG_V("Batch meta not found for buffer %p", buf);
         return;
     }
+
     process_meta(appCtx, batch_meta);
     // NvDsInstanceData *data = &appCtx->instance_data[index];
     // guint i;
@@ -713,11 +722,12 @@ static gboolean create_demux_pipeline(AppCtx *appCtx, guint index)
     if (config->osd_config.enable) {
         NVGSTDS_ELEM_ADD_PROBE(instance_bin->all_bbox_buffer_probe_id, instance_bin->osd_bin.nvosd,
                                "sink", gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               instance_bin);
+                               instance_bin, "gie_processing_done_buf_prob");
     } else {
-        NVGSTDS_ELEM_ADD_PROBE(
-            instance_bin->all_bbox_buffer_probe_id, instance_bin->demux_sink_bin.bin, "sink",
-            gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, instance_bin);
+        NVGSTDS_ELEM_ADD_PROBE(instance_bin->all_bbox_buffer_probe_id,
+                               instance_bin->demux_sink_bin.bin, "sink",
+                               gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
+                               instance_bin, "gie_processing_done_buf_prob");
     }
 
     ret = TRUE;
@@ -772,11 +782,11 @@ static gboolean create_processing_instance(AppCtx *appCtx, guint index)
     if (config->osd_config.enable) {
         NVGSTDS_ELEM_ADD_PROBE(instance_bin->all_bbox_buffer_probe_id, instance_bin->osd_bin.nvosd,
                                "sink", gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               instance_bin);
+                               instance_bin, "gie_processing_done_buf_prob");
     } else {
         NVGSTDS_ELEM_ADD_PROBE(instance_bin->all_bbox_buffer_probe_id, instance_bin->sink_bin.bin,
                                "sink", gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               instance_bin);
+                               instance_bin, "gie_processing_done_buf_prob");
     }
 
     ret = TRUE;
@@ -869,7 +879,8 @@ static gboolean create_common_elements(NvDsConfig *config,
         NVGSTDS_ELEM_ADD_PROBE(pipeline->common_elements.primary_bbox_buffer_probe_id,
                                pipeline->common_elements.primary_gie_bin.bin, "src",
                                gie_primary_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               pipeline->common_elements.appCtx);
+                               pipeline->common_elements.appCtx,
+                               "gie_primary_processing_done_buf_prob");
     }
 
     if (config->preprocess_config.enable) {
@@ -893,7 +904,7 @@ static gboolean create_common_elements(NvDsConfig *config,
     if (*src_elem) {
         NVGSTDS_ELEM_ADD_PROBE(pipeline->common_elements.primary_bbox_buffer_probe_id, *src_elem,
                                "src", analytics_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               &pipeline->common_elements);
+                               &pipeline->common_elements, "analytics_done_buf_prob");
 
         /* Add common message converter */
         if (config->msg_conv_config.enable) {
@@ -1090,7 +1101,8 @@ gboolean create_pipeline(AppCtx *appCtx,
 
             NVGSTDS_ELEM_ADD_PROBE(
                 latency_probe_id, appCtx->pipeline.demux_instance_bins[i].demux_sink_bin.bin,
-                "sink", demux_latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx);
+                "sink", demux_latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx,
+                "demux_latency_measurement_buf_prob");
             latency_probe_id = latency_probe_id;
         }
 
@@ -1136,7 +1148,7 @@ gboolean create_pipeline(AppCtx *appCtx,
 
         NVGSTDS_ELEM_ADD_PROBE(latency_probe_id, pipeline->instance_bins->sink_bin.sub_bins[0].sink,
                                "sink", latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               appCtx);
+                               appCtx, "latency_measurement_buf_prob");
         latency_probe_id = latency_probe_id;
     } else {
         /*
@@ -1175,7 +1187,8 @@ gboolean create_pipeline(AppCtx *appCtx,
                 if (pipeline->instance_bins[i].sink_bin.sub_bins[k].sink) {
                     NVGSTDS_ELEM_ADD_PROBE(
                         latency_probe_id, pipeline->instance_bins[i].sink_bin.sub_bins[k].sink,
-                        "sink", latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx);
+                        "sink", latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx,
+                        "latency_measurement_buf_prob");
                     break;
                 }
             }

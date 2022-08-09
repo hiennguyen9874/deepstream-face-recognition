@@ -22,13 +22,23 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <cuda_runtime_api.h>
+#include <glib.h>
+#include <gst/gst.h>
+#include <json-glib/json-glib.h>
+#include <math.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
 
 #include "deepstream_app.h"
 #include "deepstream_config_file_parser.h"
+#include "nvbufsurface.h"
+#include "nvds_obj_encode.h"
 #include "nvds_version.h"
+#include "nvdsmeta.h"
+#include "nvdsmeta_schema.h"
 
 #define MAX_INSTANCES 128
 #define APP_TITLE "DeepStream"
@@ -99,10 +109,6 @@ static void all_bbox_generated(AppCtx *appCtx,
         for (NvDsMetaList *l_obj = frame_meta->obj_meta_list; l_obj != NULL; l_obj = l_obj->next) {
             NvDsObjectMeta *obj = (NvDsObjectMeta *)l_obj->data;
 
-            // if (obj->landmark_params.num_landmark > 0) {
-            //     g_print("%f\n", obj->landmark_params.data[0]);
-            // }
-
             if (obj->unique_component_id == (gint)appCtx->config.primary_gie_config.unique_id) {
                 if (obj->class_id >= 0 && obj->class_id < 128) {
                     num_objects[obj->class_id]++;
@@ -118,6 +124,82 @@ static void all_bbox_generated(AppCtx *appCtx,
                         num_female++;
                     }
                 }
+            }
+        }
+    }
+}
+
+static gboolean check_landmarks(NvOSD_RectParams rect_params, NvOSD_LandmarkParams landmark_params)
+{
+    if (!landmark_params.data || landmark_params.size < 0 | landmark_params.num_landmark < 0)
+        return FALSE;
+
+    for (unsigned int landmark_idx = 0; landmark_idx < landmark_params.num_landmark;
+         landmark_idx++) {
+        if (landmark_params.data[2 * landmark_idx] < rect_params.left ||
+            landmark_params.data[2 * landmark_idx] > rect_params.left + rect_params.width)
+            return FALSE;
+
+        if (landmark_params.data[2 * landmark_idx + 1] < rect_params.top ||
+            landmark_params.data[2 * landmark_idx + 1] > rect_params.top + rect_params.height)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/**
+ * Callback function to be called once all inferences (Primary + Secondary)
+ * are done. This is opportunity to modify content of the metadata.
+ * e.g. Here Person is being replaced with Man/Woman and corresponding counts
+ * are being maintained. It should be modified according to network classes
+ * or can be removed altogether if not required.
+ */
+static void bbox_generated_probe_after_analytics(AppCtx *appCtx,
+                                                 GstBuffer *buf,
+                                                 NvDsBatchMeta *batch_meta,
+                                                 guint index)
+{
+    for (NvDsMetaList *l_frame = batch_meta->frame_meta_list; l_frame != NULL;
+         l_frame = l_frame->next) {
+        NvDsFrameMeta *frame_meta = (NvDsFrameMeta *)(l_frame->data);
+
+        for (NvDsMetaList *l_obj = frame_meta->obj_meta_list; l_obj != NULL; l_obj = l_obj->next) {
+            NvDsObjectMeta *obj_meta = (NvDsObjectMeta *)(l_obj->data);
+
+            // TODO: Add landmark into custom user metadata
+            if (check_landmarks(obj_meta->rect_params, obj_meta->landmark_params)) {
+                // g_print("%f\n", obj_meta->landmark_params.data[0]);
+            }
+
+            // TODO: Add featureVector into custom user metadata
+            for (NvDsMetaList *l_user = obj_meta->obj_user_meta_list; l_user != NULL;
+                 l_user = l_user->next) {
+                NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
+
+                // g_print("%d\n", user_meta->base_meta.meta_type);
+                g_print("ALOOOOOOOOOOOOOO\n");
+
+                // if (user_meta->base_meta.meta_type == NVDSINFER_TENSOR_OUTPUT_META) {
+                //     NvDsInferTensorMeta *meta = (NvDsInferTensorMeta *)user_meta->user_meta_data;
+
+                //     for (unsigned int i = 0; i < meta->num_output_layers; i++) {
+                //         NvDsInferLayerInfo *info = &meta->output_layers_info[i];
+                //         info->buffer = meta->out_buf_ptrs_host[i];
+                //         if (meta->out_buf_ptrs_dev[i]) {
+                //             cudaMemcpy(meta->out_buf_ptrs_host[i], meta->out_buf_ptrs_dev[i],
+                //                        info->inferDims.numElements * 4, cudaMemcpyDeviceToHost);
+                //         }
+                //     }
+
+                //     NvDsInferDimsCHW dims;
+                //     getDimsCHWFromDims(dims, meta->output_layers_info[0].inferDims);
+                //     unsigned int featureDim = dims.c;
+
+                //     float *outputCoverageBuffer = (float *)meta->output_layers_info[0].buffer;
+
+                //     g_print("%f\n", outputCoverageBuffer[0]);
+                // }
             }
         }
     }
@@ -547,7 +629,8 @@ static gboolean recreate_pipeline_thread_func(gpointer arg)
     destroy_pipeline(appCtx);
 
     g_print("Recreate pipeline\n");
-    if (!create_pipeline(appCtx, NULL, all_bbox_generated, perf_cb, overlay_graphics)) {
+    if (!create_pipeline(appCtx, bbox_generated_probe_after_analytics, all_bbox_generated, perf_cb,
+                         overlay_graphics)) {
         NVGSTDS_ERR_MSG_V("Failed to create pipeline");
         return_value = -1;
         return FALSE;
@@ -654,7 +737,8 @@ int main(int argc, char *argv[])
     }
 
     for (i = 0; i < num_instances; i++) {
-        if (!create_pipeline(appCtx[i], NULL, all_bbox_generated, perf_cb, overlay_graphics)) {
+        if (!create_pipeline(appCtx[i], bbox_generated_probe_after_analytics, all_bbox_generated,
+                             perf_cb, overlay_graphics)) {
             NVGSTDS_ERR_MSG_V("Failed to create pipeline");
             return_value = -1;
             goto done;

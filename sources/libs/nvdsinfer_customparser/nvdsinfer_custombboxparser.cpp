@@ -387,7 +387,7 @@ extern "C" bool NvDsInferParseCustomBatchedNMSTLT(
     NvDsInferParseDetectionParams const &detectionParams,
     std::vector<NvDsInferObjectDetectionInfo> &objectList)
 {
-    if (outputLayersInfo.size() != 4) {
+    if (outputLayersInfo.size() != 5) {
         std::cerr << "Mismatch in the number of output buffers."
                   << "Expected 4 output buffers, detected in the network :"
                   << outputLayersInfo.size() << std::endl;
@@ -405,7 +405,7 @@ extern "C" bool NvDsInferParseCustomBatchedNMSTLT(
 
     const float threshold = detectionParams.perClassThreshold[0];
 
-    const int keep_top_k = 200;
+    const int keep_top_k = 100;
     const char *log_enable = std::getenv("ENABLE_DEBUG");
 
     if (log_enable != NULL && std::stoi(log_enable)) {
@@ -441,6 +441,7 @@ extern "C" bool NvDsInferParseCustomBatchedNMSTLT(
 
         if (object.height < 0 || object.width < 0)
             continue;
+
         objectList.push_back(object);
     }
     return true;
