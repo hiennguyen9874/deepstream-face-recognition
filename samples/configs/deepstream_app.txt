@@ -85,7 +85,6 @@ interval=0
 gie-unique-id=1
 nvbuf-memory-type=0
 config-file=./config_infer_primary.txt
-# config-file=config_infer_primary2.txt
 
 [secondary-gie0]
 enable=1

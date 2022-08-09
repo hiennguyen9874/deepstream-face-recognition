@@ -146,7 +146,7 @@ static gboolean create_secondary_gie(NvDsGieConfig *configs1,
                                      GstBin *bin,
                                      guint index)
 {
-    GstCaps *caps = NULL;
+    // GstCaps *caps = NULL;
     gboolean ret = FALSE;
     gchar elem_name[50];
     gchar operate_on_class_str[128];
