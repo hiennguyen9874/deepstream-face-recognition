@@ -20,10 +20,12 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-CUDA_VER?=
+CUDA_VER?=11.4
 ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
 endif
+
+CXX=g++
 
 APP:= deepstream-app
 
@@ -31,9 +33,7 @@ TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
 
 NVDS_VERSION:=6.0
 
-LIB_DS_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
-
-LIB_INSTALL_DIR?=../../../../lib/
+LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
 APP_INSTALL_DIR?=../../../../bin/
 
 ifeq ($(TARGET_DEVICE),aarch64)
@@ -41,23 +41,26 @@ ifeq ($(TARGET_DEVICE),aarch64)
 endif
 
 SRCS:= $(wildcard *.c)
+SRCS+= deepstream_app_main.cpp image_meta_consumer.cpp capture_time_rules.cpp
 SRCS+= $(wildcard ../../apps-common/src/*.c)
 
 INCS:= $(wildcard *.h)
 
 PKGS:= gstreamer-1.0 gstreamer-video-1.0 x11 json-glib-1.0
 
-OBJS:= $(SRCS:.c=.o)
+# OBJS:= $(SRCS:.c=.o)
+OBJS:= $(patsubst %.c,%.o, $(patsubst %.cpp,%.o, $(SRCS)))
 
 CFLAGS+= -I./ -I../../apps-common/includes \
-		 -I../../../includes -DDS_VERSION_MINOR=1 -DDS_VERSION_MAJOR=5 \
+		 -I ../../../includes -DDS_VERSION_MINOR=1 -DDS_VERSION_MAJOR=5 \
 		 -I /usr/local/cuda-$(CUDA_VER)/include
 
 LIBS:= -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart
 
-LIBS+= -L$(LIB_DS_DIR) -lnvdsgst_meta -lnvds_meta -lnvdsgst_helper \
+LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvdsgst_helper \
 	   -lnvdsgst_smartrecord -lnvds_utils -lnvds_msgbroker -lm \
-       -lcuda -lgstrtspserver-1.0 -ldl -Wl,-rpath,$(LIB_DS_DIR)
+       -lnvds_batch_jpegenc \
+       -lcuda -lgstrtspserver-1.0 -lpthread -ldl -Wl,-rpath,$(LIB_INSTALL_DIR)
 
 CFLAGS+= $(shell pkg-config --cflags $(PKGS))
 
@@ -68,8 +71,11 @@ all: $(APP)
 %.o: %.c $(INCS) Makefile
 	$(CC) -c -o $@ $(CFLAGS) $<
 
+%.o: %.cpp $(INCS) Makefile
+	$(CXX) -c -o $@ $(CFLAGS) $<
+
 $(APP): $(OBJS) Makefile
-	$(CC) -o $(APP) $(OBJS) $(LIBS)
+	$(CXX) -o $(APP) $(OBJS) $(LIBS)
 
 install: $(APP)
 	cp -rv $(APP) $(APP_INSTALL_DIR)

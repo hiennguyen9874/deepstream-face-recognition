@@ -153,7 +153,8 @@ static gboolean bus_callback(GstBus *bus, GstMessage *message, gpointer data)
         if (appCtx->config.multi_source_config[0].type == NV_DS_SOURCE_CAMERA_V4L2) {
             if (g_strrstr(debuginfo, "reason not-negotiated (-4)")) {
                 NVGSTDS_INFO_MSG_V(
-                    "incorrect camera parameters provided, please provide supported resolution and "
+                    "incorrect camera parameters provided, please "
+                    "provide supported resolution and "
                     "frame rate\n");
             }
 
@@ -317,8 +318,9 @@ static void write_kitti_past_track_output(AppCtx *appCtx, NvDsBatchMeta *batch_m
 
 /**
  * Function to dump bounding box data in kitti format with tracking ID added.
- * For this to work, property "kitti-track-output-dir" must be set in configuration file.
- * Data of different sources and frames is dumped in separate file.
+ * For this to work, property "kitti-track-output-dir" must be set in
+ * configuration file. Data of different sources and frames is dumped in
+ * separate file.
  */
 static void write_kitti_track_output(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
 {
@@ -386,7 +388,6 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
     for (NvDsMetaList *l_frame = batch_meta->frame_meta_list; l_frame != NULL;
          l_frame = l_frame->next) {
         NvDsFrameMeta *frame_meta = l_frame->data;
-
         for (NvDsMetaList *l_obj = frame_meta->obj_meta_list; l_obj != NULL; l_obj = l_obj->next) {
             NvDsObjectMeta *obj = (NvDsObjectMeta *)l_obj->data;
 
@@ -410,8 +411,8 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
                     gie_config = NULL;
                 }
             }
-            g_free(obj->text_params.display_text);
-            obj->text_params.display_text = NULL;
+            // g_free(obj->text_params.display_text);
+            // obj->text_params.display_text = NULL;
 
             if (gie_config != NULL) {
                 if (g_hash_table_contains(gie_config->bbox_border_color_table,
@@ -445,8 +446,13 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
                 obj->text_params.set_bg_clr = 1;
                 obj->text_params.text_bg_clr = appCtx->config.osd_config.text_bg_color;
             }
-
+            /////////////////
+            /* Start Custom */
+            /////////////////
             obj->text_params.display_text = g_malloc(128);
+            ////////////////
+            /* End Custom */
+            ////////////////
             obj->text_params.display_text[0] = '\0';
             str_ins_pos = obj->text_params.display_text;
 
@@ -467,15 +473,28 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
 
             obj->classifier_meta_list =
                 g_list_sort(obj->classifier_meta_list, component_id_compare_func);
+
             for (NvDsMetaList *l_class = obj->classifier_meta_list; l_class != NULL;
                  l_class = l_class->next) {
                 NvDsClassifierMeta *cmeta = (NvDsClassifierMeta *)l_class->data;
+
+                /////////////////
+                /* Start Custom */
+                /////////////////
+                // TODO: Change to type
+                if (cmeta->unique_component_id == 2)
+                    continue;
+                ////////////////
+                /* End Custom */
+                ////////////////
+
                 for (NvDsMetaList *l_label = cmeta->label_info_list; l_label != NULL;
                      l_label = l_label->next) {
                     NvDsLabelInfo *label = (NvDsLabelInfo *)l_label->data;
+
                     if (label->pResult_label) {
                         sprintf(str_ins_pos, " %s", label->pResult_label);
-                    } else if (label->result_label[0] != '\0') {
+                    } else if (label->result_label != NULL && label->result_label[0] != '\0') {
                         sprintf(str_ins_pos, " %s", label->result_label);
                     }
                     str_ins_pos += strlen(str_ins_pos);
@@ -493,12 +512,10 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
 static void process_buffer(GstBuffer *buf, AppCtx *appCtx, guint index)
 {
     NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta(buf);
-
     if (!batch_meta) {
         NVGSTDS_WARN_MSG_V("Batch meta not found for buffer %p", buf);
         return;
     }
-
     process_meta(appCtx, batch_meta);
     // NvDsInstanceData *data = &appCtx->instance_data[index];
     // guint i;
@@ -663,21 +680,31 @@ static gboolean add_and_link_broker_sink(AppCtx *appCtx)
 
     for (guint i = 0; i < config->num_sink_sub_bins; i++) {
         if (config->sink_bin_sub_bin_config[i].type == NV_DS_SINK_MSG_CONV_BROKER) {
-            if (!pipeline->common_elements.tee) {
-                NVGSTDS_ERR_MSG_V("%s failed; broker added without analytics; check config file\n",
-                                  __func__);
-                return FALSE;
+            /////////////////
+            /* Start Custom */
+            /////////////////
+            if (!config->sink_bin_sub_bin_config[i].msg_conv_broker_on_demux) {
+                if (!pipeline->dxexample_tee) {
+                    NVGSTDS_ERR_MSG_V(
+                        "%s failed; broker added without analytics; check config file\n", __func__);
+                    return FALSE;
+                }
+                /** add the broker sink bin to pipeline */
+                if (!gst_bin_add(GST_BIN(pipeline->pipeline),
+                                 instance_bin->sink_bin.sub_bins[i].bin)) {
+                    return FALSE;
+                }
+                /** link the broker sink bin to the common_elements tee
+                 * (The tee after nvinfer -> tracker (optional) -> sgies (optional)
+                 * block) -> dsexample */
+                if (!link_element_to_tee_src_pad(pipeline->dxexample_tee,
+                                                 instance_bin->sink_bin.sub_bins[i].bin)) {
+                    return FALSE;
+                }
             }
-            /** add the broker sink bin to pipeline */
-            if (!gst_bin_add(GST_BIN(pipeline->pipeline), instance_bin->sink_bin.sub_bins[i].bin)) {
-                return FALSE;
-            }
-            /** link the broker sink bin to the common_elements tee
-             * (The tee after nvinfer -> tracker (optional) -> sgies (optional) block) */
-            if (!link_element_to_tee_src_pad(pipeline->common_elements.tee,
-                                             instance_bin->sink_bin.sub_bins[i].bin)) {
-                return FALSE;
-            }
+            ////////////////
+            /* End Custom */
+            ////////////////
         }
     }
     return TRUE;
@@ -706,6 +733,24 @@ static gboolean create_demux_pipeline(AppCtx *appCtx, guint index)
     gst_bin_add(GST_BIN(instance_bin->bin), instance_bin->demux_sink_bin.bin);
     last_elem = instance_bin->demux_sink_bin.bin;
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    if (config->segvisual_config.enable) {
+        if (!create_segvisual_bin(&config->segvisual_config, &instance_bin->segvisual_bin)) {
+            goto done;
+        }
+
+        gst_bin_add(GST_BIN(instance_bin->bin), instance_bin->segvisual_bin.bin);
+
+        NVGSTDS_LINK_ELEMENT(instance_bin->segvisual_bin.bin, last_elem);
+
+        last_elem = instance_bin->segvisual_bin.bin;
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     if (config->osd_config.enable) {
         if (!create_osd_bin(&config->osd_config, &instance_bin->osd_bin)) {
             goto done;
@@ -722,12 +767,11 @@ static gboolean create_demux_pipeline(AppCtx *appCtx, guint index)
     if (config->osd_config.enable) {
         NVGSTDS_ELEM_ADD_PROBE(instance_bin->all_bbox_buffer_probe_id, instance_bin->osd_bin.nvosd,
                                "sink", gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               instance_bin, "gie_processing_done_buf_prob");
+                               instance_bin);
     } else {
-        NVGSTDS_ELEM_ADD_PROBE(instance_bin->all_bbox_buffer_probe_id,
-                               instance_bin->demux_sink_bin.bin, "sink",
-                               gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               instance_bin, "gie_processing_done_buf_prob");
+        NVGSTDS_ELEM_ADD_PROBE(
+            instance_bin->all_bbox_buffer_probe_id, instance_bin->demux_sink_bin.bin, "sink",
+            gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, instance_bin);
     }
 
     ret = TRUE;
@@ -766,6 +810,24 @@ static gboolean create_processing_instance(AppCtx *appCtx, guint index)
     gst_bin_add(GST_BIN(instance_bin->bin), instance_bin->sink_bin.bin);
     last_elem = instance_bin->sink_bin.bin;
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    if (config->segvisual_config.enable) {
+        if (!create_segvisual_bin(&config->segvisual_config, &instance_bin->segvisual_bin)) {
+            goto done;
+        }
+
+        gst_bin_add(GST_BIN(instance_bin->bin), instance_bin->segvisual_bin.bin);
+
+        NVGSTDS_LINK_ELEMENT(instance_bin->segvisual_bin.bin, last_elem);
+
+        last_elem = instance_bin->segvisual_bin.bin;
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     if (config->osd_config.enable) {
         if (!create_osd_bin(&config->osd_config, &instance_bin->osd_bin)) {
             goto done;
@@ -778,15 +840,65 @@ static gboolean create_processing_instance(AppCtx *appCtx, guint index)
         last_elem = instance_bin->osd_bin.bin;
     }
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    instance_bin->msg_conv_broker_tee =
+        gst_element_factory_make(NVDS_ELEM_TEE, "msg_conv_broker_tee");
+    if (!instance_bin->msg_conv_broker_tee) {
+        NVGSTDS_ERR_MSG_V("Failed to create element 'msg_conv_broker_tee'");
+        goto done;
+    }
+    gst_bin_add(GST_BIN(instance_bin->bin), instance_bin->msg_conv_broker_tee);
+
+    if (!link_element_to_tee_src_pad(instance_bin->msg_conv_broker_tee, last_elem)) {
+        goto done;
+    }
+
+    for (guint i = 0; i < config->num_sink_sub_bins; i++) {
+        if (!config->sink_bin_sub_bin_config[i].enable) {
+            continue;
+        }
+        if (config->sink_bin_sub_bin_config[i].source_id != index) {
+            continue;
+        }
+        if (config->sink_bin_sub_bin_config[i].link_to_demux) {
+            continue;
+        }
+
+        if (config->sink_bin_sub_bin_config[i].type == NV_DS_SINK_MSG_CONV_BROKER) {
+            if (config->sink_bin_sub_bin_config[i].msg_conv_broker_on_demux) {
+                /** add the broker sink bin to tee */
+                if (!gst_bin_add(GST_BIN(instance_bin->bin),
+                                 instance_bin->sink_bin.sub_bins[i].bin)) {
+                    goto done;
+                }
+
+                /** link the broker sink bin to the common_elements tee
+                 * (The tee after nvinfer -> tracker (optional) -> sgies (optional)
+                 * block) */
+                if (!link_element_to_tee_src_pad(instance_bin->msg_conv_broker_tee,
+                                                 instance_bin->sink_bin.sub_bins[i].bin)) {
+                    goto done;
+                }
+            }
+        }
+    }
+
+    last_elem = instance_bin->msg_conv_broker_tee;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     NVGSTDS_BIN_ADD_GHOST_PAD(instance_bin->bin, last_elem, "sink");
     if (config->osd_config.enable) {
         NVGSTDS_ELEM_ADD_PROBE(instance_bin->all_bbox_buffer_probe_id, instance_bin->osd_bin.nvosd,
                                "sink", gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               instance_bin, "gie_processing_done_buf_prob");
+                               instance_bin);
     } else {
         NVGSTDS_ELEM_ADD_PROBE(instance_bin->all_bbox_buffer_probe_id, instance_bin->sink_bin.bin,
                                "sink", gie_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               instance_bin, "gie_processing_done_buf_prob");
+                               instance_bin);
     }
 
     ret = TRUE;
@@ -879,8 +991,7 @@ static gboolean create_common_elements(NvDsConfig *config,
         NVGSTDS_ELEM_ADD_PROBE(pipeline->common_elements.primary_bbox_buffer_probe_id,
                                pipeline->common_elements.primary_gie_bin.bin, "src",
                                gie_primary_processing_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               pipeline->common_elements.appCtx,
-                               "gie_primary_processing_done_buf_prob");
+                               pipeline->common_elements.appCtx);
     }
 
     if (config->preprocess_config.enable) {
@@ -904,7 +1015,7 @@ static gboolean create_common_elements(NvDsConfig *config,
     if (*src_elem) {
         NVGSTDS_ELEM_ADD_PROBE(pipeline->common_elements.primary_bbox_buffer_probe_id, *src_elem,
                                "src", analytics_done_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               &pipeline->common_elements, "analytics_done_buf_prob");
+                               &pipeline->common_elements);
 
         /* Add common message converter */
         if (config->msg_conv_config.enable) {
@@ -1013,7 +1124,7 @@ gboolean create_pipeline(AppCtx *appCtx,
         case NV_DS_SINK_RENDER_EGL:
         case NV_DS_SINK_RENDER_OVERLAY:
             /* Set the "qos" property of sink, if not explicitly specified in the
-               config. */
+       config. */
             if (!sink_config->render_config.qos_value_specified) {
                 sink_config->render_config.qos = FALSE;
             }
@@ -1042,13 +1153,21 @@ gboolean create_pipeline(AppCtx *appCtx,
             1, config->streammux_config.batch_size * sizeof(NvDsFrameLatencyInfo));
     }
 
-    /** a tee after the tiler which shall be connected to sink(s) */
-    pipeline->tiler_tee = gst_element_factory_make(NVDS_ELEM_TEE, "tiler_tee");
-    if (!pipeline->tiler_tee) {
-        NVGSTDS_ERR_MSG_V("Failed to create element 'tiler_tee'");
-        goto done;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    if (config->tiled_display_config.enable != NV_DS_TILED_DISPLAY_DISABLE) {
+        /** a tee after the tiler which shall be connected to sink(s) */
+        pipeline->tiler_tee = gst_element_factory_make(NVDS_ELEM_TEE, "tiler_tee");
+        if (!pipeline->tiler_tee) {
+            NVGSTDS_ERR_MSG_V("Failed to create element 'tiler_tee'");
+            goto done;
+        }
+        gst_bin_add(GST_BIN(pipeline->pipeline), pipeline->tiler_tee);
     }
-    gst_bin_add(GST_BIN(pipeline->pipeline), pipeline->tiler_tee);
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     /** Tiler + Demux in Parallel Use-Case */
     if (config->tiled_display_config.enable == NV_DS_TILED_DISPLAY_ENABLE_WITH_PARALLEL_DEMUX) {
@@ -1085,7 +1204,8 @@ gboolean create_pipeline(AppCtx *appCtx,
 
             if (i >= config->num_sink_sub_bins) {
                 g_print(
-                    "\n\nError : sink for demux (use link-to-demux-only property) is not provided "
+                    "\n\nError : sink for demux (use link-to-demux-only property) "
+                    "is not provided "
                     "in the config file\n\n");
                 goto done;
             }
@@ -1101,8 +1221,7 @@ gboolean create_pipeline(AppCtx *appCtx,
 
             NVGSTDS_ELEM_ADD_PROBE(
                 latency_probe_id, appCtx->pipeline.demux_instance_bins[i].demux_sink_bin.bin,
-                "sink", demux_latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx,
-                "demux_latency_measurement_buf_prob");
+                "sink", demux_latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx);
             latency_probe_id = latency_probe_id;
         }
 
@@ -1148,7 +1267,7 @@ gboolean create_pipeline(AppCtx *appCtx,
 
         NVGSTDS_ELEM_ADD_PROBE(latency_probe_id, pipeline->instance_bins->sink_bin.sub_bins[0].sink,
                                "sink", latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER,
-                               appCtx, "latency_measurement_buf_prob");
+                               appCtx);
         latency_probe_id = latency_probe_id;
     } else {
         /*
@@ -1187,8 +1306,7 @@ gboolean create_pipeline(AppCtx *appCtx,
                 if (pipeline->instance_bins[i].sink_bin.sub_bins[k].sink) {
                     NVGSTDS_ELEM_ADD_PROBE(
                         latency_probe_id, pipeline->instance_bins[i].sink_bin.sub_bins[k].sink,
-                        "sink", latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx,
-                        "latency_measurement_buf_prob");
+                        "sink", latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx);
                     break;
                 }
             }
@@ -1207,6 +1325,23 @@ gboolean create_pipeline(AppCtx *appCtx,
     pipeline->common_elements.appCtx = appCtx;
     // Decide where in the pipeline the element should be added and add only if
     // enabled
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    // TODO: Create dxexample_tee
+    pipeline->dxexample_tee = gst_element_factory_make(NVDS_ELEM_TEE, "dxexample_tee");
+    if (!pipeline->dxexample_tee) {
+        NVGSTDS_ERR_MSG_V("Failed to create element 'dxexample_tee'");
+        goto done;
+    }
+    gst_bin_add(GST_BIN(pipeline->pipeline), pipeline->dxexample_tee);
+    NVGSTDS_LINK_ELEMENT(pipeline->dxexample_tee, last_elem);
+    last_elem = pipeline->dxexample_tee;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     if (config->dsexample_config.enable) {
         // Create dsexample element bin and set properties
         if (!create_dsexample_bin(&config->dsexample_config, &pipeline->dsexample_bin)) {
@@ -1221,6 +1356,29 @@ gboolean create_pipeline(AppCtx *appCtx,
         // Set this bin as the last element
         last_elem = pipeline->dsexample_bin.bin;
     }
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    if (config->dspostprocessing_config.enable) {
+        // Create dspostprocessing element bin and set properties
+        if (!create_dspostprocessing_bin(&config->dspostprocessing_config,
+                                         &pipeline->dspostprocessing_bin)) {
+            goto done;
+        }
+        // Add dspostprocessing bin to instance bin
+        gst_bin_add(GST_BIN(pipeline->pipeline), pipeline->dspostprocessing_bin.bin);
+
+        // Link this bin to the last element in the bin
+        NVGSTDS_LINK_ELEMENT(pipeline->dspostprocessing_bin.bin, last_elem);
+
+        // Set this bin as the last element
+        last_elem = pipeline->dspostprocessing_bin.bin;
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     // create and add common components to pipeline.
     if (!create_common_elements(config, pipeline, &tmp_elem1, &tmp_elem2,
                                 bbox_generated_post_analytics_cb)) {

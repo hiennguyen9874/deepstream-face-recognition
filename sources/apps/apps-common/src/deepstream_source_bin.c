@@ -162,7 +162,6 @@ static gboolean create_camera_source_bin(NvDsSourceConfig *config, NvDsSrcBin *b
         NVGSTDS_LINK_ELEMENT(nvvidconv2, bin->cap_filter);
 
         NVGSTDS_BIN_ADD_GHOST_PAD(bin->bin, bin->cap_filter, "src");
-
     } else {
         g_object_set(G_OBJECT(bin->cap_filter), "caps", caps, NULL);
 
@@ -418,7 +417,7 @@ static void decodebin_child_added(GstChildProxy *child_proxy,
                 bin->src_buffer_probe, GST_ELEMENT(object), "sink", restart_stream_buf_prob,
                 (GstPadProbeType)(GST_PAD_PROBE_TYPE_EVENT_BOTH | GST_PAD_PROBE_TYPE_EVENT_FLUSH |
                                   GST_PAD_PROBE_TYPE_BUFFER),
-                bin, "restart_stream_buf_prob");
+                bin);
         }
     }
 done:
@@ -647,11 +646,11 @@ static gboolean watch_source_status(gpointer data)
                     // source is still not up, reconfigure it again.
                     reset_source_pipeline(src_bin);
                 } else {
-                    GST_ELEMENT_WARNING(
-                        src_bin->bin, STREAM, FAILED,
-                        ("Number of RTSP reconnect attempts exceeded, stopping source: %d",
-                         src_bin->source_id),
-                        (NULL));
+                    GST_ELEMENT_WARNING(src_bin->bin, STREAM, FAILED,
+                                        ("Number of RTSP reconnect attempts exceeded, "
+                                         "stopping source: %d",
+                                         src_bin->source_id),
+                                        (NULL));
 
                     check_rtsp_reconnection_attempts(src_bin);
 
@@ -700,11 +699,11 @@ static gboolean watch_source_status(gpointer data)
                         src_bin->bin_id, time_since_last_buf_sec);
                     reset_source_pipeline(src_bin);
                 } else {
-                    GST_ELEMENT_WARNING(
-                        src_bin->bin, STREAM, FAILED,
-                        ("Number of RTSP reconnect attempts exceeded, stopping source: %d",
-                         src_bin->source_id),
-                        (NULL));
+                    GST_ELEMENT_WARNING(src_bin->bin, STREAM, FAILED,
+                                        ("Number of RTSP reconnect attempts exceeded, "
+                                         "stopping source: %d",
+                                         src_bin->source_id),
+                                        (NULL));
 
                     check_rtsp_reconnection_attempts(src_bin);
 
@@ -845,7 +844,15 @@ static gboolean create_rtsp_src_bin(NvDsSourceConfig *config, NvDsSrcBin *bin)
 
     g_object_set(G_OBJECT(bin->src_elem), "location", config->uri, NULL);
     g_object_set(G_OBJECT(bin->src_elem), "latency", config->latency, NULL);
-    g_object_set(G_OBJECT(bin->src_elem), "drop-on-latency", TRUE, NULL);
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    g_object_set(G_OBJECT(bin->src_elem), "do-retransmission", config->do_retransmission, NULL);
+    g_object_set(G_OBJECT(bin->src_elem), "drop-on-latency", config->drop_on_latency, NULL);
+    ////////////////
+    /* End Custom */
+    ////////////////
     configure_source_for_ntp_sync(bin->src_elem);
 
     // 0x4 for TCP and 0x7 for All (UDP/UDP-MCAST/TCP)
@@ -902,12 +909,12 @@ static gboolean create_rtsp_src_bin(NvDsSourceConfig *config, NvDsSrcBin *bin)
 
     if (bin->rtsp_reconnect_interval_sec > 0) {
         NVGSTDS_ELEM_ADD_PROBE(bin->rtspsrc_monitor_probe, bin->dec_que, "sink",
-                               rtspsrc_monitor_probe_func, GST_PAD_PROBE_TYPE_BUFFER, bin, "rtspsrc_monitor_probe_func");
+                               rtspsrc_monitor_probe_func, GST_PAD_PROBE_TYPE_BUFFER, bin);
         install_mux_eosmonitor_probe = TRUE;
     } else {
         NVGSTDS_ELEM_ADD_PROBE(bin->rtspsrc_monitor_probe, bin->dec_que, "sink",
                                rtspsrc_monitor_probe_func, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
-                               bin, "rtspsrc_monitor_probe_func");
+                               bin);
     }
 
     g_snprintf(elem_name, sizeof(elem_name), "decodebin_elem%d", bin->bin_id);
@@ -1428,7 +1435,7 @@ gboolean create_multi_source_bin(guint num_sub_bins,
     if (install_mux_eosmonitor_probe) {
         NVGSTDS_ELEM_ADD_PROBE(bin->nvstreammux_eosmonitor_probe, bin->streammux, "src",
                                nvstreammux_eosmonitor_probe_func,
-                               GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, bin, "nvstreammux_eosmonitor_probe_func");
+                               GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, bin);
     }
 
     ret = TRUE;

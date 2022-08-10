@@ -57,11 +57,12 @@ struct BodyPose2DPostProcessorParams {
     int threshPartCnt;           /**< model threshold for part count. */
     float threshHumanScore;      /**< model threshold for human score. */
     std::vector<std::pair<uint32_t, uint32_t>>
-        jointEdges; /** Skeleton edge mapping using zero indexed joint indices. Example: If joint
-                       index 0 is nose and index 4 is left ear, {0, 4} represents an edge between
-                       nose tip and left ear, Joint edges need to be provided in the order of paf
-                       map order. i.e Edge 0 corresponds to channel 0, 1 of paf Map, Edge index 1
-                       corresponds to channel 2, 3 of paf map*/
+        jointEdges; /** Skeleton edge mapping using zero indexed joint indices.
+                       Example: If joint index 0 is nose and index 4 is left ear,
+                       {0, 4} represents an edge between nose tip and left ear,
+                       Joint edges need to be provided in the order of paf map
+                       order. i.e Edge 0 corresponds to channel 0, 1 of paf Map,
+                       Edge index 1 corresponds to channel 2, 3 of paf map*/
 };
 
 /**
@@ -70,16 +71,17 @@ struct BodyPose2DPostProcessorParams {
 enum class HandType : uint32_t { LEFT_HAND = 0, RIGHT_HAND };
 
 /**
- * Data structure to describe the parameters tuned for bounding box detection from pose.
+ * Data structure to describe the parameters tuned for bounding box detection
+ * from pose.
  */
 struct HandBoundingBoxParams {
-    HandType handType;                  /**< Left or Right hand. */
-    bool enableHandBoxDynamicScaling;   /**< Enable using hand scale input */
-    float defaultHandBoxScalingFactor;  /** Default scaling factor for bounding box*/
-    float handBoxScalingFactorMinRange; /**< Minimum scaling factor */
-    float handBoxScalingFactorMaxRange; /**< Maximum scaling factor */
-    Vector2d
-        handBoxScalingFactorTrainDims; /** Training factor used to determine the scaling factor. */
+    HandType handType;                         /**< Left or Right hand. */
+    bool enableHandBoxDynamicScaling;          /**< Enable using hand scale input */
+    float defaultHandBoxScalingFactor;         /** Default scaling factor for bounding box*/
+    float handBoxScalingFactorMinRange;        /**< Minimum scaling factor */
+    float handBoxScalingFactorMaxRange;        /**< Maximum scaling factor */
+    Vector2d handBoxScalingFactorTrainDims;    /** Training factor used to determine
+                                                  the scaling factor. */
     Vector2f handBoxScalingFactorNeckHipCoeff; /**< Scale ratio between Neck and Hip*/
     float handBoxNoseNeckHipRatio;             /** Scale factor between neck and nose*/
     /* Wrist and elbow indices are necessary for computing the hand bounding box*/

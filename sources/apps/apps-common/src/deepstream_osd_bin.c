@@ -77,7 +77,6 @@ gboolean create_osd_bin(NvDsOSDConfig *config, NvDsOSDBin *bin)
     g_object_set(G_OBJECT(bin->nvosd), "display-text", config->draw_text, NULL);
     g_object_set(G_OBJECT(bin->nvosd), "display-bbox", config->draw_bbox, NULL);
     g_object_set(G_OBJECT(bin->nvosd), "display-mask", config->draw_mask, NULL);
-    // TODO: Landmark
     if (config->mode == 2 && config->hw_blend_color_attr)
         g_object_set(G_OBJECT(bin->nvosd), "hw-blend-color-attr", config->hw_blend_color_attr,
                      NULL);

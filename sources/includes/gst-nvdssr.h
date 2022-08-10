@@ -187,8 +187,10 @@ NvDsSRStatus NvDsSRCreate(NvDsSRContext **ctx, NvDsSRInitParams *params);
  *
  * @param[in] ctx         A pointer to a \ref NvDsSRContext.
  * @param[out] sessionId  A pointer to a \ref NvDsSRSessionId.
- * @param[in] startTime   Seconds before the current time. Should be less than video cache size.
- * @param[in] duration    Duration value in seconds after the start of recording.
+ * @param[in] startTime   Seconds before the current time. Should be less than
+ * video cache size.
+ * @param[in] duration    Duration value in seconds after the start of
+ * recording.
  * @param[in] userData    A pointer to user specified data.
  *
  * @return NVDSSR_STATUS_OK if successful, or corresponding error otherwise.

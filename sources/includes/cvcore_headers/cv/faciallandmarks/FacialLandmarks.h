@@ -165,7 +165,8 @@ public:
 
     /*
      * Running postprocessing for a given image.
-     * @param facialKeypointsCoordinates output facial keypoints for each image in the batch.
+     * @param facialKeypointsCoordinates output facial keypoints for each image in
+     * the batch.
      * @param coordRaw the candidate facial keypoints for a given face.
      * @param facesBBoxes squarified faces bboxes.
      * @param stream Cuda stream

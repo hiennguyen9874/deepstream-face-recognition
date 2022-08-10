@@ -20,19 +20,28 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+CUDA_VER?=11.4
+ifeq ($(CUDA_VER),)
+  $(error "CUDA_VER is not set")
+endif
+
 CC:= g++
 
 CFLAGS:= -Wall -std=c++11
 
+LIB_INSTALL_DIR?=../../../lib
+
 CFLAGS+= -shared -fPIC
 
 CFLAGS+= -I../../includes \
-         -I /usr/local/cuda-$(CUDA_VER)/include
+         -I/usr/local/cuda-$(CUDA_VER)/include
 
 LIBS:= -lnvinfer -lnvparsers
+LIBS+= -L/usr/local/cuda-$(CUDA_VER)/lib64 -lcudart -lcublas
+
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 
-SRCFILES:= nvdsinfer_custombboxparser.cpp nvdsinfer_customclassifierparser.cpp nvdsinfer_customfacedetectionparser.cpp
+SRCFILES:= nvdsinfer_custombboxparser.cpp nvdsinfer_customfacedetectionparser.cpp
 TARGET_LIB:= libnvds_infercustomparser.so
 
 all: $(TARGET_LIB)
@@ -41,7 +50,7 @@ $(TARGET_LIB) : $(SRCFILES)
 	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
 
 install: $(TARGET_LIB)
-	cp $(TARGET_LIB) ../../../lib
+	cp $(TARGET_LIB) $(LIB_INSTALL_DIR)
 
 clean:
 	rm -rf $(TARGET_LIB)

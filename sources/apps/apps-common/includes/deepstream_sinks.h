@@ -103,6 +103,15 @@ typedef struct {
     gboolean link_to_demux;
     NvDsSinkType type;
     gint sync;
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    gboolean msg_conv_broker_on_demux;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     NvDsSinkEncoderConfig encoder_config;
     NvDsSinkRenderConfig render_config;
     NvDsSinkMsgConvBrokerConfig msg_conv_broker_config;

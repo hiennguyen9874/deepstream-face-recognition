@@ -60,6 +60,16 @@ typedef struct {
     gchar *dir_path;
     gchar *file_prefix;
     gint latency;
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    gboolean drop_on_latency;
+    gboolean do_retransmission;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     guint smart_rec_cache_size;
     guint smart_rec_container;
     guint smart_rec_def_duration;

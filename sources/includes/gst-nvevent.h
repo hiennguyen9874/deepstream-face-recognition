@@ -110,9 +110,8 @@ GstEvent *gst_nvevent_new_stream_segment(guint source_id, GstSegment *segment);
 /**
  * Creates a "custom reset" event for the specified source.
  *
- * @param[in] source_id     Source ID of the stream for which reset is to be sent;
- *                          also the pad ID  of the sinkpad of the
- *                          Gst-nvstreammux plugin for which
+ * @param[in] source_id     Source ID of the stream for which reset is to be
+ * sent; also the pad ID  of the sinkpad of the Gst-nvstreammux plugin for which
  *                          the source is configured.
  * @return  A pointer to the event corresponding to request if sucxessful,
  *  or NULL otherwise.

@@ -38,6 +38,13 @@ typedef struct {
     gdouble max_confidence;
     guint min_box_width;
     guint min_box_height;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    guint quality;
+    ////////////////
+    /* End Custom */
+    ////////////////
 } NvDsImageSave;
 
 #ifdef __cplusplus

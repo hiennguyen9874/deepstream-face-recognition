@@ -128,8 +128,8 @@ gboolean nvds_add_sub_time(GstBuffer *buffer,
 /**
  * \brief  Measures the latency of all frames present in the current batch.
  *
- * The latency is computed from decoder input up to the point this API is called.
- * You can install the probe on either pad of the component and call
+ * The latency is computed from decoder input up to the point this API is
+ * called. You can install the probe on either pad of the component and call
  * this function to measure the latency.
  *
  * @param[in]  buf          A pointer to a Gst Buffer to which
