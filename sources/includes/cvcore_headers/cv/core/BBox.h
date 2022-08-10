@@ -72,8 +72,7 @@ struct BBox {
     }
 
     /**
-     * Scales bounding box based along the width and height retaining the same
-     * center.
+     * Scales bounding box based along the width and height retaining the same center.
      * @param Scale in X direction along the width
      * @param Scale in Y direction along the height
      * @return Scaled bounding box

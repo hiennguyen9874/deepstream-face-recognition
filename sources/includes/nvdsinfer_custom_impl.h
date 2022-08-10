@@ -11,8 +11,7 @@
 
 /**
  * @file nvdsinfer_custom_impl.h
- * <b>Defines specification for Custom Method Implementations for custom models
- * </b>
+ * <b>Defines specification for Custom Method Implementations for custom models </b>
  *
  * @b Description: This file defines the API that
  * implements custom methods required by the GStreamer Gst-nvinfer plugin to
@@ -87,11 +86,11 @@
  *
  * In case of IModelParser / NvDsInferCreateModelParser interface, the custom
  * library must derive and implement IModelParser, an interface to parse
- * the custom networks and build the TensorRT network
- * (nvinfer1::INetworkDefinition). The "nvinfer" plugin will then use this
- * TensorRT network to build the inference engine. The plugin will look for the
- * symbol "NvDsInferCreateModelParser" in the library and call the function to
- * get an instance of the model parser implementation from the library.
+ * the custom networks and build the TensorRT network (nvinfer1::INetworkDefinition).
+ * The "nvinfer" plugin will then use this TensorRT network to build the
+ * inference engine. The plugin will look for the symbol "NvDsInferCreateModelParser"
+ * in the library and call the function to get an instance of the model parser
+ * implementation from the library.
  *
  * Alternatively, you can use the custom engine creation function to build
  * networks that are not natively supported by nvinfer. The function must be
@@ -136,15 +135,13 @@
 #ifdef __cplusplus
 
 /**
- * A model parser interface to translate user-defined model to a TensorRT
- * network.
+ * A model parser interface to translate user-defined model to a TensorRT network.
  *
  * Users can parse any custom model derived from this inferface. Instance would
  * be created by a call to @fn NvDsInferCreateModelParser.
  *
  * Implementations should make sure that all member functions are overriden.
- * This parser will be deleted after the engine (nvinfer1::ICudaEngine) is
- * built.
+ * This parser will be deleted after the engine (nvinfer1::ICudaEngine) is built.
  */
 class IModelParser {
 public:
@@ -237,8 +234,7 @@ typedef bool (*NvDsInferParseCustomFunc)(std::vector<NvDsInferLayerInfo> const &
                                     std::vector<NvDsInferObjectDetectionInfo> &objectList);
 
 /**
- * Type definition for the custom bounding box and instance mask parsing
- * function.
+ * Type definition for the custom bounding box and instance mask parsing function.
  *
  * @param[in]  outputLayersInfo A vector containing information on the output
  *                              layers of the model.
@@ -269,6 +265,9 @@ typedef bool (*NvDsInferInstanceMaskParseCustomFunc)(
                                     NvDsInferParseDetectionParams const &detectionParams,    \
                                     std::vector<NvDsInferInstanceMaskInfo> &objectList);
 
+/////////////////
+/* Start Custom */
+/////////////////
 /**
  * Type definition for the custom bounding box and face detection parsing
  * function.
@@ -302,6 +301,9 @@ typedef bool (*NvDsInferFaceDetectionLandmarkParseCustomFunc)(
                                     NvDsInferNetworkInfo const &networkInfo,                     \
                                     NvDsInferParseDetectionParams const &detectionParams,        \
                                     std::vector<NvDsInferFaceDetectionLandmarkInfo> &objectList);
+////////////////
+/* End Custom */
+////////////////
 
 /**
  * Type definition for the custom classifier output parsing function.

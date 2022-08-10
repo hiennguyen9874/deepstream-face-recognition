@@ -393,7 +393,11 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
 
             for (NvDsMetaList *l_user = obj->obj_user_meta_list; l_user != NULL;
                  l_user = l_user->next) {
-                g_print("ALOOOOOOOOOOOOOO\n");
+                NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
+
+                if (user_meta->base_meta.meta_type == (NvDsMetaType)NVDSINFER_TENSOR_OUTPUT_META) {
+                    g_print("ALOOOOOOOOOOOOOO\n");
+                }
             }
 
             gint class_index = obj->class_id;

@@ -109,8 +109,7 @@ gboolean nvds_destroy_audio_batch_meta(NvDsBatchMeta *batch_meta);
 /**
  * \brief  Acquires a audio frame meta from a batch's audio frame meta pool.
  *
- * You must acquire a audio frame meta before you can fill it with audio frame
- * metadata.
+ * You must acquire a audio frame meta before you can fill it with audio frame metadata.
  *
  * @param[in] batch_meta    A pointer to batch meta from which to acquire
  *                          a audio frame meta.
@@ -190,8 +189,8 @@ void nvds_add_user_meta_to_audio_frame(NvDsAudioFrameMeta *frame_meta, NvDsUserM
 /**
  * Removes a user meta from a audio batch meta to which it is attached.
  *
- * @param[in] batch_meta    A pointer to the audio batch meta from which @a
- * user_meta is to be removed.
+ * @param[in] batch_meta    A pointer to the audio batch meta from which @a user_meta
+ *                          is to be removed.
  * @param[in] user_meta     A pointer to the user meta to be removed from
  *                          @a batch_meta.
  *
@@ -304,8 +303,7 @@ void nvds_copy_audio_frame_meta(NvDsAudioFrameMeta *src_frame_meta,
  * in a specified audio frame meta.
  *
  * @param[in] src_user_meta_list    A pointer to the source user meta list.
- * @param[in] dst_frame_meta        A pointer to the destination audio frame
- * meta.
+ * @param[in] dst_frame_meta        A pointer to the destination audio frame meta.
  */
 void nvds_copy_audio_frame_user_meta_list(NvDsUserMetaList *src_user_meta_list,
                                           NvDsAudioFrameMeta *dst_frame_meta);

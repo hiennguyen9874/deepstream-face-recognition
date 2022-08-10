@@ -223,15 +223,14 @@ typedef struct _NvBufSurfTransformCompositeBlendParams {
     uint32_t input_buf_count;
     /** Holds a blend/composite filter applicable only  */
     NvBufSurfTransform_Inter composite_blend_filter;
-    /** Holds background color list for blending if background buffer is absent,
-     * if NULL it wont be used, background buffer is expected to be NULL, if
-     * blending with static color is required
+    /** Holds background color list for blending if background buffer is absent, if NULL
+     * it wont be used, background buffer is expected to be NULL, if blending with
+     * static color is required
      */
     NvBufSurfTransform_ColorParams *color_bg;
-    /** Holds a boolean flag list indicating whether blending to be done for
-     * particular buffer, if NULL, blending will be on all buffers, if valid value
-     * API expects at least numFilled size list and each element can take value 0
-     * or 1
+    /** Holds a boolean flag list indicating whether blending to be done for particular buffer,
+     * if NULL, blending will be on all buffers, if valid value API expects at least numFilled
+     * size list and each element can take value 0 or 1
      */
     uint32_t *perform_blending;
 
@@ -345,11 +344,12 @@ NvBufSurfTransform_Error NvBufSurfTransformComposite(
  * @param[out] sync_objs
  *                  A pointer to an \ref NvBufSurfTransformSyncObj structure
  *                  which holds synchronization information of the current
- *                  transform call. \ref NvBufSurfTransfromSyncObjWait() API to
- * be called on this object to wait for transformation to complete. \ref
- * NvBufSurfTransformSyncObjDestroy API should be called after \ref
- * NvBufSurfTransformSyncObjWait API to release the objects If the parameter is
- * NULL, the call would return only after the transform is complete.
+ *                  transform call. \ref NvBufSurfTransfromSyncObjWait() API to be
+ *                  called on this object to wait for transformation to complete.
+ *                  \ref NvBufSurfTransformSyncObjDestroy API should be called after
+ *                  \ref NvBufSurfTransformSyncObjWait API to release the objects
+ *                  If the parameter is NULL, the call would return only after
+ *                  the transform is complete.
  * @return  An \ref NvBufSurfTransform_Error value indicating
  *  success or failure.
  */
@@ -378,11 +378,12 @@ NvBufSurfTransform_Error NvBufSurfTransformAsync(NvBufSurface *src,
  * @param[out] sync_objs
  *                  A pointer to an \ref NvBufSurfTransformSyncObj structure
  *                  which holds synchronization information of the current
- *                  composite call. ref\ NvBufSurfTransfromSyncObjWait() API to
- * be called on this object to wait for composition to complete. \ref
- * NvBufSurfTransformSyncObjDestroy API should be called after \ref
- * NvBufSurfTransformSyncObjWait API to release the objects If the parameter is
- * NULL, the call would return only after the composite is complete.
+ *                  composite call. ref\ NvBufSurfTransfromSyncObjWait() API to be
+ *                  called on this object to wait for composition to complete.
+ *                  \ref NvBufSurfTransformSyncObjDestroy API should be called after
+ *                  \ref NvBufSurfTransformSyncObjWait API to release the objects
+ *                  If the parameter is NULL, the call would return only after
+ *                  the composite is complete.
  * @return An \ref NvBufSurfTransform_Error value indicating success or failure.
  */
 NvBufSurfTransform_Error NvBufSurfTransformCompositeAsync(
@@ -406,8 +407,7 @@ NvBufSurfTransform_Error NvBufSurfTransformCompositeAsync(
  *
  * @param[in]  src0  A pointer to input batched buffers to be blend.
  * @param[in]  src1  A pointer to input batched buffers to be blend with.
- * @param[in]  alpha  A pointer to input batched buffers which has blending
- * weights.
+ * @param[in]  alpha  A pointer to input batched buffers which has blending weights.
  * @param[out] dst  A pointer to output batched buffers where blended composite
  *                  output is stored
  * @param[in]  blend_params
@@ -431,8 +431,8 @@ NvBufSurfTransform_Error NvBufSurfTransformCompositeBlend(
  *
  *
  * @param[in]  sync_obj  A pointer to sync object on which the API should wait
- * @param[in]  time_out  Maximum time in ms API should wait before returning,
- * only Only applicable for VIC as of now.
+ * @param[in]  time_out  Maximum time in ms API should wait before returning, only
+ *                       Only applicable for VIC as of now.
  * @return An \ref NvBufSurfTransform_Error value indicating success or failure.
  */
 NvBufSurfTransform_Error NvBufSurfTransformSyncObjWait(NvBufSurfTransformSyncObj_t sync_obj,

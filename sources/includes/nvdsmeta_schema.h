@@ -225,9 +225,8 @@ typedef struct NvDsFaceObjectWithExt {
  * You can attach various types of objects (vehicle, person, face, etc.)
  * to an event by setting a pointer to the object in @a extMsg.
  *
- * Similarly, you can attach a custom object to an event by setting a pointer to
- * the object in @a extMsg. A custom object must be handled by the metadata
- * parsing module accordingly.
+ * Similarly, you can attach a custom object to an event by setting a pointer to the object in @a
+ * extMsg. A custom object must be handled by the metadata parsing module accordingly.
  */
 typedef struct NvDsEventMsgMeta {
     /** Holds the event's type. */

@@ -135,10 +135,16 @@ typedef enum {
      network detects objects, bounding box and mask for objects, and
      their classes in an input frame */
     NvDsInferNetworkType_InstanceSegmentation,
+    /////////////////
+    /* Start Custom */
+    /////////////////
     /** Specifies a face detection network. A face detection
      network detects objects, bounding box and landmark for objects, and
      their classes in an input frame */
     NvDsInferNetworkType_FaceDetection,
+    ////////////////
+    /* End Custom */
+    ////////////////
     /** Specifies other. Output layers of an "other" network are not parsed by
      NvDsInferContext. This is useful for networks that produce custom output.
      Output can be parsed by the NvDsInferContext client or can be combined
@@ -180,10 +186,9 @@ typedef enum {
         NvDsInferTensorOrder_kNC
 } NvDsInferTensorOrder;
 
-#define NvDsInferUffOrder                                             \
-    _Pragma(                                                          \
-        "GCC warning \"'NvDsInferUffOrder' macro is deprecated. Use " \
-        "NvDsInferTensorOrder "                                       \
+#define NvDsInferUffOrder                                                                  \
+    _Pragma(                                                                               \
+        "GCC warning \"'NvDsInferUffOrder' macro is deprecated. Use NvDsInferTensorOrder " \
         "instead.\"") NvDsInferTensorOrder
 
 /**
@@ -202,8 +207,7 @@ typedef struct {
     float postClusterThreshold;
 
     /** Holds the epsilon to control merging of overlapping boxes. Refer to OpenCV
-     * groupRectangles and DBSCAN documentation for more information on epsilon.
-     */
+     * groupRectangles and DBSCAN documentation for more information on epsilon. */
     float eps;
     /** Holds the minimum number of boxes in a cluster to be considered
      an object during grouping using DBSCAN. */
@@ -233,8 +237,7 @@ typedef enum {
     NVDSINFER_CLUSTER_NONE
 } NvDsInferClusterMode;
 /**
- * Holds the initialization parameters required for the NvDsInferContext
- * interface.
+ * Holds the initialization parameters required for the NvDsInferContext interface.
  */
 typedef struct _NvDsInferContextInitParams {
     /** Holds a unique identifier for the instance. This can be used
@@ -388,9 +391,15 @@ typedef struct _NvDsInferContextInitParams {
      in the custom library. */
     char customBBoxInstanceMaskParseFuncName[_MAX_STR_LENGTH];
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
     /** Holds the name of the bounding box and instance mask parse function
-     in the custom library. */
+    in the custom library. */
     char customBBoxFaceDetectionLandmarkParseFuncName[_MAX_STR_LENGTH];
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     /** Can be used to specify the format and datatype for bound output layers.
      * For each layer specified the format is
@@ -482,12 +491,18 @@ typedef struct {
     unsigned int mask_height;
     /** Holds size of mask in bytes*/
     unsigned int mask_size;
+    /////////////////
+    /* Start Custom */
+    /////////////////
     /** Holds object segment landmark */
     float *landmark;
     /** Holds num of landmark */
     unsigned int num_landmark;
     /** Holds size of landmark in bytes*/
     unsigned int landmark_size;
+    ////////////////
+    /* End Custom */
+    ////////////////
 } NvDsInferObject;
 
 /**
@@ -629,9 +644,7 @@ void NvDsInferContext_ResetInitParams(NvDsInferContextInitParams *initParams);
  *  the status is unrecognized. Memory is owned by the function; the caller
  *  may not free it.
  */
-_DS_DEPRECATED_(
-    "NvDsInferContext_GetStatusName is deprecated. Use "
-    "NvDsInferStatus2Str instead")
+_DS_DEPRECATED_("NvDsInferContext_GetStatusName is deprecated. Use NvDsInferStatus2Str instead")
 const char *NvDsInferContext_GetStatusName(NvDsInferStatus status);
 
 #ifdef __cplusplus
@@ -719,7 +732,7 @@ public:
      *
      * @return  Reference to a vector of vector of string labels.
      */
-    virtual const std::vector<std::vector<std::string>> &getLabels() = 0;
+    virtual const std::vector<std::vector<std::string> > &getLabels() = 0;
 
     /**
      * Deinitialize the inference engine and frees resources it used.
