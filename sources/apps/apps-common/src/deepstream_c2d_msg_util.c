@@ -176,7 +176,8 @@ NvDsC2DMsg *nvds_c2d_parse_cloud_message(gpointer data, guint size)
                     duration = 0;
                 }
             } else {
-                // Duration is not specified that means stop event will be received later.
+                // Duration is not specified that means stop event will be received
+                // later.
                 duration = 0;
             }
         }

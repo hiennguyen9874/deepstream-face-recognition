@@ -646,11 +646,11 @@ static gboolean watch_source_status(gpointer data)
                     // source is still not up, reconfigure it again.
                     reset_source_pipeline(src_bin);
                 } else {
-                    GST_ELEMENT_WARNING(
-                        src_bin->bin, STREAM, FAILED,
-                        ("Number of RTSP reconnect attempts exceeded, stopping source: %d",
-                         src_bin->source_id),
-                        (NULL));
+                    GST_ELEMENT_WARNING(src_bin->bin, STREAM, FAILED,
+                                        ("Number of RTSP reconnect attempts exceeded, "
+                                         "stopping source: %d",
+                                         src_bin->source_id),
+                                        (NULL));
 
                     check_rtsp_reconnection_attempts(src_bin);
 
@@ -699,11 +699,11 @@ static gboolean watch_source_status(gpointer data)
                         src_bin->bin_id, time_since_last_buf_sec);
                     reset_source_pipeline(src_bin);
                 } else {
-                    GST_ELEMENT_WARNING(
-                        src_bin->bin, STREAM, FAILED,
-                        ("Number of RTSP reconnect attempts exceeded, stopping source: %d",
-                         src_bin->source_id),
-                        (NULL));
+                    GST_ELEMENT_WARNING(src_bin->bin, STREAM, FAILED,
+                                        ("Number of RTSP reconnect attempts exceeded, "
+                                         "stopping source: %d",
+                                         src_bin->source_id),
+                                        (NULL));
 
                     check_rtsp_reconnection_attempts(src_bin);
 

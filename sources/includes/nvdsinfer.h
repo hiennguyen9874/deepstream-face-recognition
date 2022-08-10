@@ -155,7 +155,8 @@ typedef struct {
 typedef NvDsInferObjectDetectionInfo NvDsInferParseObjectInfo;
 
 /**
- * Holds information about one parsed object and instance mask from a detector's output.
+ * Holds information about one parsed object and landmark from a face detector's
+ * output.
  */
 typedef struct {
     /** Holds the ID of the class to which the object belongs. */
@@ -183,7 +184,8 @@ typedef struct {
 } NvDsInferFaceDetectionLandmarkInfo;
 
 /**
- * Holds information about one parsed object and instance mask from a detector's output.
+ * Holds information about one parsed object and instance mask from a detector's
+ * output.
  */
 typedef struct {
     /** Holds the ID of the class to which the object belongs. */

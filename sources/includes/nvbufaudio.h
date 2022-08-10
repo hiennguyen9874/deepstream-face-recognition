@@ -70,9 +70,10 @@ typedef enum {
 /** Specifies audio data layout in memory */
 typedef enum {
     NVBUF_AUDIO_INVALID_LAYOUT,
-    NVBUF_AUDIO_INTERLEAVED, /**< audio sample from each channel shall be interleaved LRLRLRLR */
-    NVBUF_AUDIO_NON_INTERLEAVED, /**< audio sample from each channel shall be interleaved ;
-                                    LLLLLLLLRRRRRRRR */
+    NVBUF_AUDIO_INTERLEAVED,     /**< audio sample from each channel shall be
+                                    interleaved LRLRLRLR */
+    NVBUF_AUDIO_NON_INTERLEAVED, /**< audio sample from each channel shall be
+                                    interleaved ; LLLLLLLLRRRRRRRR */
 } NvBufAudioLayout;
 
 typedef struct {
