@@ -40,10 +40,10 @@ typedef struct NvDsMsg2pCtx {
 } NvDsMsg2pCtx;
 
 /**
- * @ref NvDsMsg2pMetaInfo is structure to hold
- *      the NvDs metadata related information
-        to be processed to generate payloads
- */
+* @ref NvDsMsg2pMetaInfo is structure to hold
+*      the NvDs metadata related information
+    to be processed to generate payloads
+*/
 
 typedef struct {
     /** Holds the object metadata */

@@ -1976,7 +1976,6 @@ static GstFlowReturn gst_nvinfer_process_objects(GstNvInfer *nvinfer,
             idx = batch->frames.size();
 
             /* Crop, scale and convert the buffer. */
-            // TODO: Aligment face
             if (get_converted_buffer(nvinfer, in_surf, in_surf->surfaceList + frame_meta->batch_id,
                                      &object_meta->rect_params, memory->surf,
                                      memory->surf->surfaceList + idx, scale_ratio_x, scale_ratio_y,
@@ -2005,7 +2004,6 @@ static GstFlowReturn gst_nvinfer_process_objects(GstNvInfer *nvinfer,
 
             /* Submit batch if the batch size has reached max_batch_size. */
             if (batch->frames.size() == nvinfer->max_batch_size) {
-                // TODO: Aligment face
                 if (!convert_batch_and_push_to_input_thread(nvinfer, batch.get(), memory)) {
                     return GST_FLOW_ERROR;
                 }
