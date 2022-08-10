@@ -323,7 +323,7 @@ struct _GstNvInfer {
     gboolean output_instance_mask;
 
     /** Boolean indicating if landmarks are expected in output and
-     *  has to be attached in metadata */
+     *  has to be attached in user metadata */
     gboolean output_face_detection_landmark;
 
     /** PTS of input buffer when nvinfer last posted the warning about untracked

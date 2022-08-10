@@ -8,7 +8,7 @@ model-color-format=0
 
 # For Engine Model
 model-engine-file=../engines/Primary_Detector/yolov5_6_n_fa_widerface_640_1_fp16_simplify_dynamic_1_16_0.2_0.6_100_nms_0807_193941.trt
-force-implicit-batch-dim=1
+force-implicit-batch-dim=0
 
 batch-size=1
 
@@ -48,7 +48,11 @@ input-object-min-height=0
 input-object-min-width=0
 
 [class-attrs-all]
-pre-cluster-threshold=0.2
+pre-cluster-threshold=0.25
+
+roi-top-offset=0
+roi-bottom-offset=0
+
 detected-min-w=0
 detected-min-h=0
 detected-max-w=0
