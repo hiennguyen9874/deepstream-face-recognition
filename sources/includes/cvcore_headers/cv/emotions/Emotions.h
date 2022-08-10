@@ -79,7 +79,8 @@ public:
 
     /**
      * Running Emotions for a given image.
-     * @param emotionLikelihoods output emotions likelihood vector for each image in the batch.
+     * @param emotionLikelihoods output emotions likelihood vector for each image
+     * in the batch.
      * @param topEmotions the top ranked emotions for each image in the batch
      * @param inputLandmarks input facial landmarks vector.
      * @param stream Cuda stream
@@ -158,7 +159,8 @@ public:
 
     /**
      * Running postprocessing for a given set of emotion likelihoods.
-     * @param emotionLikelihoods output emotions likelihood vector for each image in the batch.
+     * @param emotionLikelihoods output emotions likelihood vector for each image
+     * in the batch.
      * @param topEmotions the top ranked emotions for each image in the batch
      * @param emotionsRaw input emotions vector in tensor format.
      * @param stream Cuda stream

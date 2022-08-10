@@ -18,7 +18,8 @@
 
 namespace cvcore {
 
-// there is no CUDA dependency at the data level, so we map half type to uint16_t for now
+// there is no CUDA dependency at the data level, so we map half type to
+// uint16_t for now
 using half = std::uint16_t;
 
 /**
@@ -332,7 +333,8 @@ std::size_t ChannelToCount()
     case C4:
         return 4;
     }
-    return 0; // this is safe as this function will never be called for dynamic channel counts
+    return 0; // this is safe as this function will never be called for dynamic
+              // channel counts
 }
 
 /**
@@ -399,7 +401,8 @@ public:
             return getStride(DimToIndex2D<TL>::kChannel);
         default:
             throw std::out_of_range(
-                "cvcore::Tensor2D::getStride ==> Requested TensorDimension is out of bounds");
+                "cvcore::Tensor2D::getStride ==> Requested "
+                "TensorDimension is out of bounds");
         }
     }
 
@@ -488,7 +491,8 @@ public:
             return getStride(DimToIndex3D<TL>::kChannel);
         default:
             throw std::out_of_range(
-                "cvcore::Tensor3D::getStride ==> Requested TensorDimension is out of bounds");
+                "cvcore::Tensor3D::getStride ==> Requested "
+                "TensorDimension is out of bounds");
         }
     }
 
@@ -585,7 +589,8 @@ public:
             return getStride(DimToIndex4D<TL>::kDepth);
         default:
             throw std::out_of_range(
-                "cvcore::Tensor4D::getStride ==> Requested TensorDimension is out of bounds");
+                "cvcore::Tensor4D::getStride ==> Requested "
+                "TensorDimension is out of bounds");
         }
     }
 
@@ -759,7 +764,8 @@ public:
     {
         if (rowPitch % GetChannelSize(CT) != 0) {
             throw std::domain_error(
-                "cvcore::Tensor<HWC, CC, CT>::Tensor ==> Parameter rowPitch is not evenly "
+                "cvcore::Tensor<HWC, CC, CT>::Tensor ==> "
+                "Parameter rowPitch is not evenly "
                 "divisible by channel size");
         }
     }
@@ -795,7 +801,8 @@ public:
     {
         if (rowPitch % GetChannelSize(CT) != 0) {
             throw std::domain_error(
-                "cvcore::Tensor<HWC, CC, CT>::Tensor ==> Parameter rowPitch is not evenly "
+                "cvcore::Tensor<HWC, CC, CT>::Tensor ==> "
+                "Parameter rowPitch is not evenly "
                 "divisible by channel size");
         }
     }
@@ -931,7 +938,8 @@ public:
     {
         if (rowPitch % GetChannelSize(CT) != 0) {
             throw std::domain_error(
-                "cvcore::Tensor<DHWC, CC, CT>::Tensor ==> Parameter rowPitch is not evenly "
+                "cvcore::Tensor<DHWC, CC, CT>::Tensor ==> "
+                "Parameter rowPitch is not evenly "
                 "divisible by channel size");
         }
     }
@@ -973,7 +981,8 @@ public:
     {
         if (rowPitch % GetChannelSize(CT) != 0) {
             throw std::domain_error(
-                "cvcore::Tensor<DHWC, CC, CT>::Tensor ==> Parameter rowPitch is not evenly "
+                "cvcore::Tensor<DHWC, CC, CT>::Tensor ==> "
+                "Parameter rowPitch is not evenly "
                 "divisible by channel size");
         }
     }

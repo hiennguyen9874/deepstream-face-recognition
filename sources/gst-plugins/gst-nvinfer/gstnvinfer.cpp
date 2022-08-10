@@ -2588,6 +2588,7 @@ static gpointer gst_nvinfer_output_loop(gpointer data)
         }
         nvtxDomainRangePop(nvinfer->nvtx_domain);
     }
+
     return nullptr;
 }
 

@@ -99,6 +99,7 @@ NvDsInferStatus CaffeModelParser::setPluginFactory()
             "Invalid PluginFactory type returned by "
             "custom library");
         return NVDSINFER_CUSTOM_LIB_FAILED;
+
     } else {
         m_CaffeParser->setPluginFactoryV2(m_CaffePluginFactory.pluginFactoryV2);
     }

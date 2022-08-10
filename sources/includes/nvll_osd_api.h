@@ -232,7 +232,8 @@ int nvll_osd_draw_lines(NvOSDCtxHandle nvosd_ctx, NvOSD_FrameLineParams *frame_l
  * The length of @a arrow_params_list must equal @a num_arrows.
  * The client is responsible for allocating this array.
  *
- * @note Currently only @ref MODE_CPU is supported. Specifying other modes has no effect.
+ * @note Currently only @ref MODE_CPU is supported. Specifying other modes has
+ * no effect.
  *
  * @param[in] nvosd_ctx A handle for an NvOSD context.
  * @param[in] frame_arrow_params A pointer to the FrameArrowParams struct
@@ -245,9 +246,11 @@ int nvll_osd_draw_arrows(NvOSDCtxHandle nvosd_ctx, NvOSD_FrameArrowParams *frame
 /**
  * Overlays circles on the buffer.
  *
- * You must ensure that the length of @a circle_params_list equals @a num_circles.
+ * You must ensure that the length of @a circle_params_list equals @a
+ * num_circles.
  *
- * @note Currently only @ref MODE_CPU is supported. Specifying other modes has no effect.
+ * @note Currently only @ref MODE_CPU is supported. Specifying other modes has
+ * no effect.
  *
  * @param[in] nvosd_ctx A handle for an NvOSD context.
  * @param[in] frame_circle_params A pointer to the FrameCircleParams struct

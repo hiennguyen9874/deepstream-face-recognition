@@ -153,7 +153,8 @@ static gboolean bus_callback(GstBus *bus, GstMessage *message, gpointer data)
         if (appCtx->config.multi_source_config[0].type == NV_DS_SOURCE_CAMERA_V4L2) {
             if (g_strrstr(debuginfo, "reason not-negotiated (-4)")) {
                 NVGSTDS_INFO_MSG_V(
-                    "incorrect camera parameters provided, please provide supported resolution and "
+                    "incorrect camera parameters provided, please "
+                    "provide supported resolution and "
                     "frame rate\n");
             }
 
@@ -317,8 +318,9 @@ static void write_kitti_past_track_output(AppCtx *appCtx, NvDsBatchMeta *batch_m
 
 /**
  * Function to dump bounding box data in kitti format with tracking ID added.
- * For this to work, property "kitti-track-output-dir" must be set in configuration file.
- * Data of different sources and frames is dumped in separate file.
+ * For this to work, property "kitti-track-output-dir" must be set in
+ * configuration file. Data of different sources and frames is dumped in
+ * separate file.
  */
 static void write_kitti_track_output(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
 {
@@ -409,8 +411,8 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
                     gie_config = NULL;
                 }
             }
-            g_free(obj->text_params.display_text);
-            obj->text_params.display_text = NULL;
+            // g_free(obj->text_params.display_text);
+            // obj->text_params.display_text = NULL;
 
             if (gie_config != NULL) {
                 if (g_hash_table_contains(gie_config->bbox_border_color_table,
@@ -471,6 +473,7 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
 
             obj->classifier_meta_list =
                 g_list_sort(obj->classifier_meta_list, component_id_compare_func);
+
             for (NvDsMetaList *l_class = obj->classifier_meta_list; l_class != NULL;
                  l_class = l_class->next) {
                 NvDsClassifierMeta *cmeta = (NvDsClassifierMeta *)l_class->data;
@@ -488,6 +491,7 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
                 for (NvDsMetaList *l_label = cmeta->label_info_list; l_label != NULL;
                      l_label = l_label->next) {
                     NvDsLabelInfo *label = (NvDsLabelInfo *)l_label->data;
+
                     if (label->pResult_label) {
                         sprintf(str_ins_pos, " %s", label->pResult_label);
                     } else if (label->result_label != NULL && label->result_label[0] != '\0') {
@@ -1120,7 +1124,7 @@ gboolean create_pipeline(AppCtx *appCtx,
         case NV_DS_SINK_RENDER_EGL:
         case NV_DS_SINK_RENDER_OVERLAY:
             /* Set the "qos" property of sink, if not explicitly specified in the
-               config. */
+       config. */
             if (!sink_config->render_config.qos_value_specified) {
                 sink_config->render_config.qos = FALSE;
             }
@@ -1200,7 +1204,8 @@ gboolean create_pipeline(AppCtx *appCtx,
 
             if (i >= config->num_sink_sub_bins) {
                 g_print(
-                    "\n\nError : sink for demux (use link-to-demux-only property) is not provided "
+                    "\n\nError : sink for demux (use link-to-demux-only property) "
+                    "is not provided "
                     "in the config file\n\n");
                 goto done;
             }

@@ -25,7 +25,7 @@ Compiling and installing the plugin:
 Export or set in Makefile the appropriate cuda version using CUDA_VER
 Run make and sudo make install
 
-NOTE:
+NOTE: 
 1. To compile the sources, run make with "sudo" or root permission.
 2. This plugin contains additional optimized sample which supports batch processing
 of buffers. Refer to the Makefile for using optimized sample.

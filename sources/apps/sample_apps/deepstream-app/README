@@ -1,22 +1,17 @@
----
+*****************************************************************************
+* Copyright (c) 2018 NVIDIA Corporation.  All rights reserved.
+*
+* NVIDIA Corporation and its licensors retain all intellectual property
+* and proprietary rights in and to this software, related documentation
+* and any modifications thereto.  Any use, reproduction, disclosure or
+* distribution of this software and related documentation without an express
+* license agreement from NVIDIA Corporation is strictly prohibited.
+*****************************************************************************
 
-- Copyright (c) 2018 NVIDIA Corporation. All rights reserved.
--
-- NVIDIA Corporation and its licensors retain all intellectual property
-- and proprietary rights in and to this software, related documentation
-- and any modifications thereto. Any use, reproduction, disclosure or
-- distribution of this software and related documentation without an express
-- license agreement from NVIDIA Corporation is strictly prohibited.
-
----
-
----
-
+*****************************************************************************
                               deepstream-app
                                  README
-
----
-
+*****************************************************************************
 Follow these procedures to use the deepstream-app application for native
 compilation.
 
@@ -34,10 +29,10 @@ You must have the following development packages installed
 
 2. Build the sources by executing the command:
 
-$ Set CUDA_VER in the MakeFile as per platform.
-For Jetson, CUDA_VER=10.2
-For x86, CUDA_VER=11.4
-$ sudo make
+  $ Set CUDA_VER in the MakeFile as per platform.
+      For Jetson, CUDA_VER=10.2
+      For x86, CUDA_VER=11.4
+  $ sudo make
 
 3. Run the application by executing the command:
    ./deepstream-app -c <config-file>

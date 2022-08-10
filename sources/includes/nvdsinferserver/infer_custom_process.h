@@ -48,8 +48,8 @@ public:
     /**
      * @brief Indicate whether this custom processor requires inference loop,
      *    in which nvdsinferserver lib guarantees extraInputProcess() and
-     *    InferenceDone() running in order per each stream id. User can process last
-     *    frame's output tensor from inferenceDone() and feed into next frame's
+     *    InferenceDone() running in order per each stream id. User can process
+     * last frame's output tensor from inferenceDone() and feed into next frame's
      *    inference input tensor in extraInputProcess()
      * @return true if need loop(e.g. LSTM based processing); Else @return false.
      */
@@ -59,16 +59,16 @@ public:
      * @brief Custom processor for extra input data.
      *
      * @param primaryInputs, [input], the primary image input
-     * @param extraInputs [input/output], custom processing to generate extra tensor
-     *        input data. The memory is pre-allocated. memory type is same as
+     * @param extraInputs [input/output], custom processing to generate extra
+     * tensor input data. The memory is pre-allocated. memory type is same as
      *        supportInputMemType returned types.
      * @param options, [input]. Associated options along with the input buffers.
-     *        It has most of the common Deepstream metadata along with primary data.
-     *        e.g. NvDsBatchMeta, NvDsObjectMeta, NvDsFrameMeta, stream ids and so on.
-     *        See infer_ioptions.h to get all the potential key name and structures
+     *        It has most of the common Deepstream metadata along with primary
+     * data. e.g. NvDsBatchMeta, NvDsObjectMeta, NvDsFrameMeta, stream ids and so
+     * on. See infer_ioptions.h to get all the potential key name and structures
      *        in the key-value table.
-     * @return NvDsInferStatus, if successful implementation must return NVDSINFER_SUCCESS
-     *        or an error value in case of error.
+     * @return NvDsInferStatus, if successful implementation must return
+     * NVDSINFER_SUCCESS or an error value in case of error.
      */
     virtual NvDsInferStatus extraInputProcess(const std::vector<IBatchBuffer *> &primaryInputs,
                                               std::vector<IBatchBuffer *> &extraInputs,
@@ -84,8 +84,8 @@ public:
      *        User can set other values from MEMORY_TYPE_CPU, MEMORY_TYPE_GPU.
      * @param inOptions, [input], corresponding options from input tensors. It is
      *        same as options in extraInputProcess().
-     * @return NvDsInferStatus, if successful implementation must return NVDSINFER_SUCCESS
-     *        or an error value in case of error.
+     * @return NvDsInferStatus, if successful implementation must return
+     * NVDSINFER_SUCCESS or an error value in case of error.
      */
     virtual NvDsInferStatus inferenceDone(const IBatchArray *outputs,
                                           const IOptions *inOptions) = 0;
@@ -105,7 +105,8 @@ extern "C" {
 /**
  * Custom processor context is created and loaded in runtime.
  *
- * @param[in]  config Contents of prototxt configuration file serialized as a string.
+ * @param[in]  config Contents of prototxt configuration file serialized as a
+ * string.
  * @param[in]  configLen use for string length of \a config
  * @return new instance of IInferCustomProcessor. If failed, return nullptr
  */

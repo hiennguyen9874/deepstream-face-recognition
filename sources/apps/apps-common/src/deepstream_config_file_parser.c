@@ -959,7 +959,8 @@ gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file)
             CHECK_ERROR(error);
             if (length != 4) {
                 NVGSTDS_ERR_MSG_V(
-                    "Color params should be exactly 4 floats {r, g, b, a} between 0 and 1");
+                    "Color params should be exactly 4 floats {r, g, b, "
+                    "a} between 0 and 1");
                 goto done;
             }
             config->text_color.red = list[0];
@@ -973,7 +974,8 @@ gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file)
             CHECK_ERROR(error);
             if (length != 4) {
                 NVGSTDS_ERR_MSG_V(
-                    "Color params should be exactly 4 floats {r, g, b, a} between 0 and 1");
+                    "Color params should be exactly 4 floats {r, g, b, "
+                    "a} between 0 and 1");
                 goto done;
             }
             config->text_bg_color.red = list[0];
@@ -1019,7 +1021,8 @@ gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file)
             CHECK_ERROR(error);
             if (length != 4) {
                 NVGSTDS_ERR_MSG_V(
-                    "Color params should be exactly 4 floats {r, g, b, a} between 0 and 1");
+                    "Color params should be exactly 4 floats {r, g, b, "
+                    "a} between 0 and 1");
                 goto done;
             }
             config->clock_color.red = list[0];
@@ -1301,11 +1304,11 @@ gboolean parse_gie(NvDsGieConfig *config, GKeyFile *key_file, gchar *group, gcha
             gchar *endptr;
             gint64 class_index = -1;
 
-            /* Check if the key is specified for a particular class or for all classes.
-             * For generic key "bbox-border-color", strlen (key1) will return 0 and·
-             * class_index will be -1.
-             * For class-specific key "bbox-border-color<class-id>", strlen (key1)
-             * will return a positive value and·class_index will have a value >= 0.
+            /* Check if the key is specified for a particular class or for all
+             * classes. For generic key "bbox-border-color", strlen (key1) will return
+             * 0 and· class_index will be -1. For class-specific key
+             * "bbox-border-color<class-id>", strlen (key1) will return a positive
+             * value and·class_index will have a value >= 0.
              */
             if (strlen(key1) > 0) {
                 class_index = g_ascii_strtoll(key1, &endptr, 10);
@@ -1345,11 +1348,11 @@ gboolean parse_gie(NvDsGieConfig *config, GKeyFile *key_file, gchar *group, gcha
             gchar *endptr;
             gint64 class_index = -1;
 
-            /* Check if the key is specified for a particular class or for all classes.
-             * For generic key "bbox-bg-color", strlen (key1) will return 0 and·
-             * class_index will be -1.
-             * For class-specific key "bbox-bg-color<class-id>", strlen (key1)
-             * will return a positive value and·class_index will have a value >= 0.
+            /* Check if the key is specified for a particular class or for all
+             * classes. For generic key "bbox-bg-color", strlen (key1) will return 0
+             * and· class_index will be -1. For class-specific key
+             * "bbox-bg-color<class-id>", strlen (key1) will return a positive value
+             * and·class_index will have a value >= 0.
              */
             if (strlen(key1) > 0) {
                 class_index = g_ascii_strtoll(key1, &endptr, 10);

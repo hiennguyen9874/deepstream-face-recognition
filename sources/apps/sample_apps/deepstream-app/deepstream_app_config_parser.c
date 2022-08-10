@@ -306,6 +306,7 @@ gboolean parse_config_file(NvDsConfig *config, gchar *cfg_file_path)
         }
         g_key_file_remove_group(cfg_file, CONFIG_GROUP_SOURCE_LIST, &error);
     }
+
     if (g_key_file_has_group(cfg_file, CONFIG_GROUP_SOURCE_ALL)) {
         if (!parse_source(&global_source_config, cfg_file, CONFIG_GROUP_SOURCE_ALL,
                           cfg_file_path)) {

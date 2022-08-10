@@ -29,9 +29,11 @@ namespace gestures {
 struct GesturesPostProcessorParams {
     /**< Number of gestures */
     uint32_t numGestures;
-    /**< Smoothing window size for filtering the detections. Set to 1 for no filtering */
+    /**< Smoothing window size for filtering the detections. Set to 1 for no
+     * filtering */
     size_t gestureHistorySize;
-    /**< Threshold for refining. Refers to the maximum number of detections in the window size. */
+    /**< Threshold for refining. Refers to the maximum number of detections in the
+     * window size. */
     size_t gestureHistoryThreshold;
 };
 
@@ -170,8 +172,8 @@ public:
 
     /**
      * Main interface to run post-processing for batch input.
-     * @param gestures Array of gestures detected represented as pair<index, score> ranked by score
-     * based on highest score.
+     * @param gestures Array of gestures detected represented as pair<index,
+     * score> ranked by score based on highest score.
      * @param input Raw gesture output from the output layer of gestures network.
      * @param stream Cuda stream
      */

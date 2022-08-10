@@ -134,13 +134,16 @@ typedef enum {
     NVDS_AUDIO_BATCH_META,
     /** Specifies metadata type for audio frame. */
     NVDS_AUDIO_FRAME_META,
-    /** Specifies metadata type for preprocess scale&converted ROIs attached by Gst-nvdspreprocess.
+    /** Specifies metadata type for preprocess scale&converted ROIs attached by
+     Gst-nvdspreprocess.
      @see NvDsPreProcessFrameMeta for details. */
     NVDS_PREPROCESS_FRAME_META,
-    /** Specifies metadata type for preprocess batch level attached by Gst-nvdspreprocess.
+    /** Specifies metadata type for preprocess batch level attached by
+     Gst-nvdspreprocess.
      @see NvDsPreProcessBatchMeta for details. */
     NVDS_PREPROCESS_BATCH_META,
-    /** Specifies user defined custom message blob to be part of payload generated */
+    /** Specifies user defined custom message blob to be part of payload generated
+     */
     NVDS_CUSTOM_MSG_BLOB,
     /** Reserved field */
     NVDS_RESERVED_META = 4095,
@@ -401,7 +404,8 @@ typedef struct _NvDsLabelInfo {
     guint num_classes;
     /** Holds an string describing the label of the classified object. */
     gchar result_label[MAX_LABEL_SIZE];
-    /** Holds a pointer to the result label if its length exceeds MAX_LABEL_SIZE bytes. */
+    /** Holds a pointer to the result label if its length exceeds MAX_LABEL_SIZE
+     * bytes. */
     gchar *pResult_label;
     /** Holds the class UD of the best result. */
     guint result_class_id;
@@ -542,9 +546,10 @@ NvDsObjectMeta *nvds_acquire_obj_meta_from_pool(NvDsBatchMeta *batch_meta);
  *
  * @param[in] frame_meta    A pointer to the frame meta to which @a obj_meta
  *                          is to be added.
- * @param[in] obj_meta      A pointer to an object meta to be added to @a frame_meta.
- * @param[in] obj_parent    A pointer to the this object meta's parent object meta.
- *                          This pointer is stored in @a obj_meta->parent.
+ * @param[in] obj_meta      A pointer to an object meta to be added to @a
+ * frame_meta.
+ * @param[in] obj_parent    A pointer to the this object meta's parent object
+ * meta. This pointer is stored in @a obj_meta->parent.
  */
 void nvds_add_obj_meta_to_frame(NvDsFrameMeta *frame_meta,
                                 NvDsObjectMeta *obj_meta,
