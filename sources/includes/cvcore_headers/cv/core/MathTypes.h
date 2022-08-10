@@ -70,8 +70,8 @@ struct AxisAngleRotation {
 /**
  * A struct.
  * Structure used to store quaternion rotation representation.
- * A rotation of unit vector u with rotation theta can be represented in
- * quaternion as: q={cos(theta/2)+ i(u*sin(theta/2))}
+ * A rotation of unit vector u with rotation theta can be represented in quaternion as:
+ * q={cos(theta/2)+ i(u*sin(theta/2))}
  */
 struct Quaternion {
     double qx, qy, qz; /** Axis or imaginary component of the quaternion representation. */

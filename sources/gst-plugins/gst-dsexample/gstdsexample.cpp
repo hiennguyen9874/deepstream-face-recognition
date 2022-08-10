@@ -754,7 +754,6 @@ static GstFlowReturn gst_dsexample_transform_ip(GstBaseTransform *btrans, GstBuf
             i++;
             free(output);
         }
-
     } else {
         /* Using object crops as input to the algorithm. The objects are detected by
          * the primary detector */

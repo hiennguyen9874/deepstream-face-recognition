@@ -60,17 +60,14 @@ enum ImageType {
  */
 struct ImagePreProcessingParams {
     ImageType imgType;      /**< Input Image Type. */
-    float pixelMean[3];     /**< Image Mean value offset for R,G,B channels. Default
-                               is 0.0f */
-    float normalization[3]; /**< Scale or normalization values for  R,G,B
-                               channels. Default is 1.0/255.0f */
-    float stdDev[3];        /**< Standard deviation values for  R,G,B channels. Default
-                               is 1.0f */
+    float pixelMean[3];     /**< Image Mean value offset for R,G,B channels. Default is 0.0f */
+    float normalization[3]; /**< Scale or normalization values for  R,G,B channels. Default
+                               is 1.0/255.0f */
+    float stdDev[3];        /**< Standard deviation values for  R,G,B channels. Default is 1.0f */
 };
 
 /**
- * Image traits that map ImageType to TensorLayout, ChannelCount and
- * ChannelType.
+ * Image traits that map ImageType to TensorLayout, ChannelCount and ChannelType.
  */
 template <ImageType T, size_t N>
 struct ImageTraits;

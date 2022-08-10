@@ -197,8 +197,7 @@ gboolean parse_segvisual(NvSegVisualConfig *config, GKeyFile *key_file);
 ////////////////
 
 /**
- * Function to read properties of nvdspreprocess element from configuration
- * file.
+ * Function to read properties of nvdspreprocess element from configuration file.
  *
  * @param[in] config pointer to @ref NvDsPreProcessConfig
  * @param[in] key_file pointer to file having key value pairs.
@@ -308,8 +307,7 @@ gboolean parse_dspostprocessing(NvDsDsPostProcessingConfig *config, GKeyFile *ke
 gboolean parse_streammux(NvDsStreammuxConfig *config, GKeyFile *key_file, gchar *cfg_file_path);
 
 /**
- * Function to read properties of message converter element from configuration
- * file.
+ * Function to read properties of message converter element from configuration file.
  *
  * @param[in] config pointer to @ref NvDsSinkMsgConvBrokerConfig
  * @param[in] key_file pointer to file having key value pairs.
@@ -324,8 +322,7 @@ gboolean parse_msgconv(NvDsSinkMsgConvBrokerConfig *config,
                        gchar *cfg_file_path);
 
 /**
- * Function to read properties of message consumer element from configuration
- * file.
+ * Function to read properties of message consumer element from configuration file.
  *
  * @param[in] config pointer to @ref NvDsMsgConsumerConfig
  * @param[in] key_file pointer to file having key value pairs.

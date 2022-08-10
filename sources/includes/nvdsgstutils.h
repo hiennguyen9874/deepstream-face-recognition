@@ -19,8 +19,8 @@
 /**
  * @defgroup  gstreamer_utils  Utilities: Gstreamer utilities API
  *
- * Specifies GStreamer utilities functions, used to configure the source to
- * generate NTP Sync values.
+ * Specifies GStreamer utilities functions, used to configure the source to generate NTP Sync
+ * values.
  *
  * @ingroup NvDsUtilsApi
  * @{

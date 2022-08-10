@@ -464,7 +464,6 @@ static gpointer copy_tensor_output_meta(gpointer data, gpointer user_data)
             if (cudaMemcpy(tensor_output_meta->out_buf_ptrs_host[i], src_meta->out_buf_ptrs_host[i],
                            layer_size, cudaMemcpyHostToHost) != cudaSuccess)
                 g_print("Unable to copy between two host memories. \n");
-
         } else {
             tensor_output_meta->out_buf_ptrs_host[i] = NULL;
         }
@@ -477,7 +476,6 @@ static gpointer copy_tensor_output_meta(gpointer data, gpointer user_data)
             if (cudaMemcpy(tensor_output_meta->out_buf_ptrs_dev[i], src_meta->out_buf_ptrs_dev[i],
                            layer_size, cudaMemcpyDeviceToDevice) != cudaSuccess)
                 g_print("Unable to copy between two device memories. \n");
-
         } else {
             tensor_output_meta->out_buf_ptrs_dev[i] = NULL;
         }
