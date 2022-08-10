@@ -1592,8 +1592,8 @@ NvDsInferStatus NvDsInferContextImpl::queueInputBatch(NvDsInferContextBatchInput
     assert(m_InferStream && m_InputConsumedEvent && m_InferCompleteEvent);
 
 #ifdef DUMP_INPUT_TO_FILE
-#define DUMP_FRAME_CNT_START (100)
-#define DUMP_FRAME_CNT_STOP (320)
+#define DUMP_FRAME_CNT_START (500)
+#define DUMP_FRAME_CNT_STOP (1000)
     if ((m_FrameCnt++ >= DUMP_FRAME_CNT_START) && (m_FrameCnt <= DUMP_FRAME_CNT_STOP)) {
         void *hBuffer;
         float scale = m_Preprocessor->getScale();

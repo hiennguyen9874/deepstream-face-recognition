@@ -11,7 +11,7 @@ gpu-id=0
 #Type - 1=CameraV4L2 2=URI 3=MultiURI 4: RTSP
 type=2
 #type=4
-uri=file://../videos/InfinityWar.mp4
+uri=file://../videos/Friends.mp4
 # (0): memtype_device   - Memory type Device
 # (1): memtype_pinned   - Memory type Host Pinned
 # (2): memtype_unified  - Memory type Unified
@@ -33,7 +33,7 @@ nvbuf-memory-type=0
 container=1
 #1=h264 2=h265
 codec=1
-output-file=./outputs/videos/InfinityWar.mp4
+output-file=./outputs/videos/Friends.mp4
 
 [osd]
 enable=1

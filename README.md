@@ -5,8 +5,3 @@
 ## Export face recognition model
 
 -   `python3 src/export_trt.py --cfg-source configs/source/ms1mv2.yml --cfg-model configs/model/default.yml --checkpoint-path saved/checkpoints/0805_100219/val_best_accuracy_agedb_30.pth --image-size 112,112 --batch-size 8 --min-batch-size 8 --max-batch-size 64 --half --simplify --dynamic --device 0`
-
-# TODO
-
--   Nhãn không hiện thị
--   Tensor metadata không tự thêm vô user metadata
