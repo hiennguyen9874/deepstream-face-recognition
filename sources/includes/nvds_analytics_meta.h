@@ -76,15 +76,13 @@ typedef struct {
      */
     std::unordered_map<std::string, uint32_t> objInROIcnt;
 
-    /** Holds a map of total count of Line crossing in current frame for
-     * configured lines, which can be accessed using key, value pair; where key is
-     * the line crossing label
+    /** Holds a map of total count of Line crossing in current frame for configured lines,
+     * which can be accessed using key, value pair; where key is the line crossing label
      */
     std::unordered_map<std::string, uint64_t> objLCCurrCnt;
 
-    /** Holds a map of total cumulative count of Line crossing  for configured
-     * lines, can be accessed using key, value pair; where key is the line
-     * crossing label
+    /** Holds a map of total cumulative count of Line crossing  for configured lines,
+     * can be accessed using key, value pair; where key is the line crossing label
      */
     std::unordered_map<std::string, uint64_t> objLCCumCnt;
 

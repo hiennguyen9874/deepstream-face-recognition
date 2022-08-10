@@ -209,12 +209,10 @@ static gboolean create_msg_conv_broker_bin(NvDsSinkMsgConvBrokerConfig *config,
         goto done;
     }
 
-    /** set threshold on queue to avoid pipeline choke when broker is stuck on
-     * network leaky=2 (2): downstream       - Leaky on downstream (old buffers)
-     */
+    /** set threshold on queue to avoid pipeline choke when broker is stuck on network
+     * leaky=2 (2): downstream       - Leaky on downstream (old buffers) */
     g_object_set(G_OBJECT(bin->queue), "leaky", 2, NULL);
     g_object_set(G_OBJECT(bin->queue), "max-size-buffers", 20, NULL);
-
     g_signal_connect(G_OBJECT(bin->queue), "overrun", G_CALLBACK(broker_queue_overrun), bin);
 
     /* Create msg converter to generate payload from buffer metadata */
@@ -257,6 +255,7 @@ static gboolean create_msg_conv_broker_bin(NvDsSinkMsgConvBrokerConfig *config,
     NVGSTDS_BIN_ADD_GHOST_PAD(bin->bin, bin->queue, "sink");
 
     ret = TRUE;
+
 done:
     if (!ret) {
         NVGSTDS_ERR_MSG_V("%s failed", __func__);
@@ -265,8 +264,8 @@ done:
 }
 
 /**
- * Probe function to drop upstream "GST_QUERY_SEEKING" query from h264parse
- * element. This is a WAR to avoid memory leaks from h264parse element
+ * Probe function to drop upstream "GST_QUERY_SEEKING" query from h264parse element.
+ * This is a WAR to avoid memory leaks from h264parse element
  */
 static GstPadProbeReturn seek_query_drop_prob(GstPad *pad, GstPadProbeInfo *info, gpointer u_data)
 {
@@ -470,8 +469,7 @@ static gboolean start_rtsp_streaming(guint rtsp_port_num,
         udp_buffer_size = 512 * 1024;
 
     sprintf(udpsrc_pipeline,
-            "( udpsrc name=pay0 port=%d buffer-size=%lu "
-            "caps=\"application/x-rtp, media=video, "
+            "( udpsrc name=pay0 port=%d buffer-size=%lu caps=\"application/x-rtp, media=video, "
             "clock-rate=90000, encoding-name=%s, payload=96 \" )",
             updsink_port_num, udp_buffer_size, encoder_name);
 
@@ -497,10 +495,8 @@ static gboolean start_rtsp_streaming(guint rtsp_port_num,
 
     g_mutex_unlock(&server_cnt_lock);
 
-    g_print(
-        "\n *** DeepStream: Launched RTSP Streaming at "
-        "rtsp://localhost:%d/ds-test ***\n\n",
-        rtsp_port_num);
+    g_print("\n *** DeepStream: Launched RTSP Streaming at rtsp://localhost:%d/ds-test ***\n\n",
+            rtsp_port_num);
 
     return TRUE;
 }
