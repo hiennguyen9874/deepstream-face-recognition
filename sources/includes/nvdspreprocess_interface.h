@@ -252,8 +252,8 @@ typedef struct {
     gulong inbuf_batch_num = 0;
     /** Boolean indicating that the output thread should only push the buffer to
      * downstream element. If set to true, a corresponding batch has not been
-     * queued at the input of NvDsPreProcessContext and hence dequeuing of output is
-     * not required. */
+     * queued at the input of NvDsPreProcessContext and hence dequeuing of output
+     * is not required. */
     gboolean push_buffer = FALSE;
     /** Boolean marking this batch as an event marker. This is only used for
      * synchronization. The output loop does not process on the batch.

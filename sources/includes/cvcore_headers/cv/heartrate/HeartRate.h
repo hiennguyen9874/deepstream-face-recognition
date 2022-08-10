@@ -139,7 +139,8 @@ public:
      * Running preprocessing for a given face image and bounding box.
      * @param preProcessedFaceImage output preprocessed batch face image.
      * @param preProcessedFaceMotion output motion image of the last two frame.
-     * @param entityInFrame vector of booleans determine if persistent object in frame.
+     * @param entityInFrame vector of booleans determine if persistent object in
+     * frame.
      * @param faceImage input batch of raw face images.
      * @param faceBBox input batch of face bounding boxes.
      * @param stream Cuda stream
@@ -189,10 +190,12 @@ public:
 
     /**
      * Running postprocessing for a given heart rate inference history.
-     * @param heartRate output heartrate calculated using signal processing on the inference
-     * history.
-     * @param rawHeartRate the current heart rate inference based on last two frames.
-     * @param entityInFrame vector of booleans determine if persistent object in frame.
+     * @param heartRate output heartrate calculated using signal processing on the
+     * inference history.
+     * @param rawHeartRate the current heart rate inference based on last two
+     * frames.
+     * @param entityInFrame vector of booleans determine if persistent object in
+     * frame.
      * @param stream Cuda stream
      */
     void execute(Array<float> &heartRate,

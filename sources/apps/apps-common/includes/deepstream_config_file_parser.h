@@ -35,11 +35,25 @@ extern "C" {
 #include "deepstream_dewarper.h"
 #include "deepstream_dsanalytics.h"
 #include "deepstream_dsexample.h"
+/////////////////
+/* Start Custom */
+/////////////////
+#include "deepstream_dspostprocessing.h"
+////////////////
+/* End Custom */
+////////////////
 #include "deepstream_gie.h"
 #include "deepstream_image_save.h"
 #include "deepstream_osd.h"
 #include "deepstream_preprocess.h"
 #include "deepstream_primary_gie.h"
+/////////////////
+/* Start Custom */
+/////////////////
+#include "deepstream_segvisual.h"
+////////////////
+/* End Custom */
+////////////////
 #include "deepstream_sinks.h"
 #include "deepstream_sources.h"
 #include "deepstream_streammux.h"
@@ -49,10 +63,26 @@ extern "C" {
 #define CONFIG_GROUP_SOURCE_LIST "source-list"
 #define CONFIG_GROUP_SOURCE_LIST_NUM_SOURCE_BINS "num-source-bins"
 #define CONFIG_GROUP_SOURCE_LIST_URI_LIST "list"
+
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_SOURCE_LIST_DROP_FRAME_INTERVAL_LIST "list-drop-frame-interval"
+////////////////
+/* End Custom */
+////////////////
+
 #define CONFIG_GROUP_SOURCE_ALL "source-attr-all"
 
 #define CONFIG_GROUP_SOURCE "source"
 #define CONFIG_GROUP_OSD "osd"
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_SEGVISUAL "segvisual"
+////////////////
+/* End Custom */
+////////////////
 #define CONFIG_GROUP_PREPROCESS "pre-process"
 #define CONFIG_GROUP_PRIMARY_GIE "primary-gie"
 #define CONFIG_GROUP_SECONDARY_GIE "secondary-gie"
@@ -61,6 +91,13 @@ extern "C" {
 #define CONFIG_GROUP_TILED_DISPLAY "tiled-display"
 #define CONFIG_GROUP_DSANALYTICS "nvds-analytics"
 #define CONFIG_GROUP_DSEXAMPLE "ds-example"
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_DSPOSTPROCESSING "ds-postprocessing"
+////////////////
+/* End Custom */
+////////////////
 #define CONFIG_GROUP_STREAMMUX "streammux"
 #define CONFIG_GROUP_DEWARPER "dewarper"
 #define CONFIG_GROUP_MSG_CONVERTER "message-converter"
@@ -141,8 +178,27 @@ gboolean parse_source(NvDsSourceConfig *config,
  */
 gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file);
 
+/////////////////
+/* Start Custom */
+/////////////////
+
 /**
- * Function to read properties of nvdspreprocess element from configuration file.
+ * Function to read properties of OSD element from configuration file.
+ *
+ * @param[in] config pointer to @ref NvDsOSDConfig
+ * @param[in] key_file pointer to file having key value pairs.
+ *
+ * @return true if parsed successfully.
+ */
+gboolean parse_segvisual(NvSegVisualConfig *config, GKeyFile *key_file);
+
+////////////////
+/* End Custom */
+////////////////
+
+/**
+ * Function to read properties of nvdspreprocess element from configuration
+ * file.
  *
  * @param[in] config pointer to @ref NvDsPreProcessConfig
  * @param[in] key_file pointer to file having key value pairs.
@@ -221,6 +277,25 @@ gboolean parse_dsanalytics(NvDsDsAnalyticsConfig *config, GKeyFile *key_file, gc
  */
 gboolean parse_dsexample(NvDsDsExampleConfig *config, GKeyFile *key_file);
 
+/////////////////
+/* Start Custom */
+/////////////////
+
+/**
+ * Function to read properties of dspostprocessing element from configuration
+ * file.
+ *
+ * @param[in] config pointer to @ref NvDsDsPostProcessingConfig
+ * @param[in] key_file pointer to file having key value pairs.
+ *
+ * @return true if parsed successfully.
+ */
+gboolean parse_dspostprocessing(NvDsDsPostProcessingConfig *config, GKeyFile *key_file);
+
+////////////////
+/* End Custom */
+////////////////
+
 /**
  * Function to read properties of streammux element from configuration file.
  *
@@ -233,7 +308,8 @@ gboolean parse_dsexample(NvDsDsExampleConfig *config, GKeyFile *key_file);
 gboolean parse_streammux(NvDsStreammuxConfig *config, GKeyFile *key_file, gchar *cfg_file_path);
 
 /**
- * Function to read properties of message converter element from configuration file.
+ * Function to read properties of message converter element from configuration
+ * file.
  *
  * @param[in] config pointer to @ref NvDsSinkMsgConvBrokerConfig
  * @param[in] key_file pointer to file having key value pairs.
@@ -248,7 +324,8 @@ gboolean parse_msgconv(NvDsSinkMsgConvBrokerConfig *config,
                        gchar *cfg_file_path);
 
 /**
- * Function to read properties of message consumer element from configuration file.
+ * Function to read properties of message consumer element from configuration
+ * file.
  *
  * @param[in] config pointer to @ref NvDsMsgConsumerConfig
  * @param[in] key_file pointer to file having key value pairs.

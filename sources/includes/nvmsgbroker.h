@@ -65,7 +65,8 @@ typedef void (*nv_msgbroker_send_cb_t)(void *user_ptr, NvMsgBrokerErrorType stat
 
 /** subscribe callback method registered during subscribe
  * @param[in] status            Completion status of send operation
- * @param[in] msg               Consumer Message. Should be copied before function return
+ * @param[in] msg               Consumer Message. Should be copied before
+ * function return
  * @param[in] msglen            Length of message consumed
  * @param[in] topic             Subscribed Topic where message is received
  * @param[in] user_ptr          Pointer passed during send_async for context
@@ -80,10 +81,10 @@ typedef void (*nv_msgbroker_subscribe_cb_t)(NvMsgBrokerErrorType status,
  *
  * @param[in] broker_conn_str   A connection string (optional) with format
  * @param[in] broker_proto_lib  Full Path to Message protocol adapter library
- * @param[in] connect_cb        A pointer to a callback function for events associated with the
- * connection.
- * @param[in] cfg               Pathname of a configuration file passed to be passed to the message
- * protocol adapter
+ * @param[in] connect_cb        A pointer to a callback function for events
+ * associated with the connection.
+ * @param[in] cfg               Pathname of a configuration file passed to be
+ * passed to the message protocol adapter
  *
  * @return                      A connection handle.
  */
@@ -94,7 +95,8 @@ NvMsgBrokerClientHandle nv_msgbroker_connect(char *broker_conn_str,
 
 /* Send a message asynchronously based on non-blocking semantics
  * @param[in] h_ptr             connection handle to Message Broker library
- * @param[in] message           Message packet which has details of message, topic, priority ..etc
+ * @param[in] message           Message packet which has details of message,
+ * topic, priority ..etc
  * @param[in] cb                callback to be invoked to notify status of send
  * @param[in] user_ctx          pointer to pass to callback for context
  *
@@ -108,7 +110,8 @@ NvMsgBrokerErrorType nv_msgbroker_send_async(NvMsgBrokerClientHandle h_ptr,
  * @param[in] h_ptr             Connection handle
  * @param[in] topics            pointer to array of topics  (cannot be NULL)
  * @param[in] num_topics        number of topics
- * @param[in] cb                A pointer to a callback function to forward consumed message
+ * @param[in] cb                A pointer to a callback function to forward
+ *consumed message
  * @param[in] user_ctx          user ptr to be passed to callback for context
  * @return Completion status of send operation
  **/
@@ -127,8 +130,8 @@ NvMsgBrokerErrorType nv_msgbroker_disconnect(NvMsgBrokerClientHandle h_ptr);
 
 /* Version of Nvmsgbroker interface
  *
- * @return [out]                 version of Nvmsgbroker interface supported by msgbroker library in
- * MAJOR.MINOR format
+ * @return [out]                 version of Nvmsgbroker interface supported by
+ * msgbroker library in MAJOR.MINOR format
  */
 char *nv_msgbroker_version(void);
 

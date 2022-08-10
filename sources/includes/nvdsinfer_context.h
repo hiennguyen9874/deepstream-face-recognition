@@ -180,9 +180,10 @@ typedef enum {
         NvDsInferTensorOrder_kNC
 } NvDsInferTensorOrder;
 
-#define NvDsInferUffOrder                                                                  \
-    _Pragma(                                                                               \
-        "GCC warning \"'NvDsInferUffOrder' macro is deprecated. Use NvDsInferTensorOrder " \
+#define NvDsInferUffOrder                                             \
+    _Pragma(                                                          \
+        "GCC warning \"'NvDsInferUffOrder' macro is deprecated. Use " \
+        "NvDsInferTensorOrder "                                       \
         "instead.\"") NvDsInferTensorOrder
 
 /**
@@ -201,7 +202,8 @@ typedef struct {
     float postClusterThreshold;
 
     /** Holds the epsilon to control merging of overlapping boxes. Refer to OpenCV
-     * groupRectangles and DBSCAN documentation for more information on epsilon. */
+     * groupRectangles and DBSCAN documentation for more information on epsilon.
+     */
     float eps;
     /** Holds the minimum number of boxes in a cluster to be considered
      an object during grouping using DBSCAN. */
@@ -231,7 +233,8 @@ typedef enum {
     NVDSINFER_CLUSTER_NONE
 } NvDsInferClusterMode;
 /**
- * Holds the initialization parameters required for the NvDsInferContext interface.
+ * Holds the initialization parameters required for the NvDsInferContext
+ * interface.
  */
 typedef struct _NvDsInferContextInitParams {
     /** Holds a unique identifier for the instance. This can be used
@@ -626,7 +629,9 @@ void NvDsInferContext_ResetInitParams(NvDsInferContextInitParams *initParams);
  *  the status is unrecognized. Memory is owned by the function; the caller
  *  may not free it.
  */
-_DS_DEPRECATED_("NvDsInferContext_GetStatusName is deprecated. Use NvDsInferStatus2Str instead")
+_DS_DEPRECATED_(
+    "NvDsInferContext_GetStatusName is deprecated. Use "
+    "NvDsInferStatus2Str instead")
 const char *NvDsInferContext_GetStatusName(NvDsInferStatus status);
 
 #ifdef __cplusplus
@@ -714,7 +719,7 @@ public:
      *
      * @return  Reference to a vector of vector of string labels.
      */
-    virtual const std::vector<std::vector<std::string> > &getLabels() = 0;
+    virtual const std::vector<std::vector<std::string>> &getLabels() = 0;
 
     /**
      * Deinitialize the inference engine and frees resources it used.

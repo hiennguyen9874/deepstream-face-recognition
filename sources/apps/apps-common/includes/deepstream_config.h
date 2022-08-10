@@ -61,8 +61,22 @@
 #define NVDS_ELEM_STREAM_DEMUX "nvstreamdemux"
 #define NVDS_ELEM_TILER "nvmultistreamtiler"
 #define NVDS_ELEM_OSD "nvdsosd"
+/////////////////
+/* Start Custom */
+/////////////////
+#define NVDS_ELEM_SEGVISUAL "nvsegvisual"
+////////////////
+/* End Custom */
+////////////////
 #define NVDS_ELEM_DSANALYTICS_ELEMENT "nvdsanalytics"
 #define NVDS_ELEM_DSEXAMPLE_ELEMENT "dsexample"
+/////////////////
+/* Start Custom */
+/////////////////
+#define NVDS_ELEM_DSPOSTPROCESSING_ELEMENT "dspostprocessing"
+////////////////
+/* End Custom */
+////////////////
 
 #define NVDS_ELEM_DEWARPER "nvdewarper"
 #define NVDS_ELEM_SPOTANALYSIS "nvspot"

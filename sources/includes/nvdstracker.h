@@ -165,7 +165,8 @@ typedef enum { NvMOTStatus_OK, NvMOTStatus_Error, NvMOTStatus_Invalid_Path } NvM
  * @brief Bitwise flag to define whether batch/nonbatch mode is supported
  */
 typedef enum {
-    /** Unsupported batch mode. At least either batch or non-batch should be supported. **/
+    /** Unsupported batch mode. At least either batch or non-batch should be
+       supported. **/
     NvMOTBatchMode_Error = 0,
     /** Batch processing mode. **/
     NvMOTBatchMode_Batch = 1 << 0,
@@ -397,15 +398,16 @@ NvMOTStatus NvMOT_Process(NvMOTContextHandle contextHandle,
 /**
  * @brief Process the past-frame data in the low-level tracker lib and retrieve
  *
- * Given a context and batch of frame(s), process the past-frame data of each tracked object stored
- in the low-level tracker lib
+ * Given a context and batch of frame(s), process the past-frame data of each
+ tracked object stored in the low-level tracker lib
  * , put it into the past-frame data strcture, and retrieve it
  *
  * @param [in] pContext The context handle obtained from NvMOTInit()
- * @param [in] pParams Pointer to parameters for the batch of frames with the available stream ID
- * @param [out] pPastFrameObjBatch Batch of lists of tracked objects that are stored by the
- low-level tracker in the past frames BBoxes are scaled to the resolution of the first input image
- transform buffer.
+ * @param [in] pParams Pointer to parameters for the batch of frames with the
+ available stream ID
+ * @param [out] pPastFrameObjBatch Batch of lists of tracked objects that are
+ stored by the low-level tracker in the past frames BBoxes are scaled to the
+ resolution of the first input image transform buffer.
  * @return Status of batch processing
  */
 NvMOTStatus NvMOT_ProcessPast(NvMOTContextHandle contextHandle,

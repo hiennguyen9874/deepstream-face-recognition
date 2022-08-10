@@ -32,8 +32,6 @@ extern "C" {
 typedef struct {
     GstElement *queue;
     GstElement *secondary_gie;
-    // GstElement *pre_conv;
-    // GstElement *cap_filter;
     GstElement *tee;
     GstElement *sink;
     gboolean create;

@@ -43,6 +43,16 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_SOURCE_CAMERA_CSI_SID "camera-csi-sensor-id"
 #define CONFIG_GROUP_SOURCE_CAMERA_V4L2_DEVNODE "camera-v4l2-dev-node"
 #define CONFIG_GROUP_SOURCE_URI "uri"
+
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_SOURCE_DO_RETRANSMISSION "do-retransmission"
+#define CONFIG_GROUP_SOURCE_DROP_ON_LATENCY "drop-on-latency"
+////////////////
+/* End Custom */
+////////////////
+
 #define CONFIG_GROUP_SOURCE_LATENCY "latency"
 #define CONFIG_GROUP_SOURCE_NUM_SOURCES "num-sources"
 #define CONFIG_GROUP_SOURCE_INTRA_DECODE "intra-decode-enable"
@@ -95,7 +105,16 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_OSD_SHOW_TEXT "display-text"
 #define CONFIG_GROUP_OSD_SHOW_BBOX "display-bbox"
 #define CONFIG_GROUP_OSD_SHOW_MASK "display-mask"
-// TODO: Landmark
+
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_SEGVISUAL_BATCH_SIZE "batch-size"
+#define CONFIG_GROUP_SEGVISUAL_WIDTH "width"
+#define CONFIG_GROUP_SEGVISUAL_HEIGHT "height"
+////////////////
+/* End Custom */
+////////////////
 
 #define CONFIG_GROUP_DEWARPER_CONFIG_FILE "config-file"
 #define CONFIG_GROUP_DEWARPER_SOURCE_ID "source-id"
@@ -157,6 +176,14 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_SINK_OFFSET_Y "offset-y"
 #define CONFIG_GROUP_SINK_ONLY_FOR_DEMUX "link-to-demux"
 
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_SINK_MSG_CONV_BROKER_ON_BROKER_ON_DEMUX "msg-conv-broker-on-demux"
+////////////////
+/* End Custom */
+////////////////
+
 #define CONFIG_GROUP_SINK_MSG_CONV_CONFIG "msg-conv-config"
 #define CONFIG_GROUP_SINK_MSG_CONV_PAYLOAD_TYPE "msg-conv-payload-type"
 #define CONFIG_GROUP_SINK_MSG_CONV_MSG2P_LIB "msg-conv-msg2p-lib"
@@ -196,6 +223,14 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_IMG_SAVE_MIN_BOX_WIDTH "min-box-width"
 #define CONFIG_GROUP_IMG_SAVE_MIN_BOX_HEIGHT "min-box-height"
 
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_IMG_SAVE_QUALITY "quality"
+////////////////
+/* End Custom */
+////////////////
+
 // To add configuration parsing for any element, you need to:
 // 1. Define a group name and set of key strings for the config options
 // 2. Create a function to parse these configs (refer parse_dsexample)
@@ -211,6 +246,20 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_DSEXAMPLE_BLUR_OBJECTS "blur-objects"
 #define CONFIG_GROUP_DSEXAMPLE_UNIQUE_ID "unique-id"
 #define CONFIG_GROUP_DSEXAMPLE_GPU_ID "gpu-id"
+
+/////////////////
+/* Start Custom */
+/////////////////
+// Add group name for set of configs of dspostprocessing element
+#define CONFIG_GROUP_DSPOSTPROCESSING "ds-postprocessing"
+// Refer to gst-dspostprocessing element source code for the meaning of these
+// configs
+#define CONFIG_GROUP_DSPOSTPROCESSING_UNIQUE_ID "unique-id"
+#define CONFIG_GROUP_DSPOSTPROCESSING_GPU_ID "gpu-id"
+#define CONFIG_GROUP_DSPOSTPROCESSING_INITIAL_COLORS "initial-colors"
+////////////////
+/* End Custom */
+////////////////
 
 #define CHECK_ERROR(error)                                       \
     if (error) {                                                 \
@@ -411,6 +460,16 @@ gboolean parse_source(NvDsSourceConfig *config,
     }
     keys = g_key_file_get_keys(key_file, group, NULL, &error);
     CHECK_ERROR(error);
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    config->do_retransmission = TRUE;
+    config->drop_on_latency = TRUE;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     config->latency = 100;
     config->num_decode_surfaces = N_DECODE_SURFACES;
     config->num_extra_surfaces = N_EXTRA_SURFACES;
@@ -460,7 +519,25 @@ gboolean parse_source(NvDsSourceConfig *config,
                 g_free(uri);
             } else
                 config->uri = uri;
-        } else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_LATENCY)) {
+        }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_DO_RETRANSMISSION)) {
+            config->do_retransmission = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SOURCE_DO_RETRANSMISSION, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_DROP_ON_LATENCY)) {
+            config->drop_on_latency = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SOURCE_DROP_ON_LATENCY, &error);
+            CHECK_ERROR(error);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_LATENCY)) {
             config->latency =
                 g_key_file_get_integer(key_file, group, CONFIG_GROUP_SOURCE_LATENCY, &error);
             CHECK_ERROR(error);
@@ -784,6 +861,66 @@ done:
     return ret;
 }
 
+/////////////////
+/* Start Custom */
+/////////////////
+gboolean parse_dspostprocessing(NvDsDsPostProcessingConfig *config, GKeyFile *key_file)
+{
+    gboolean ret = FALSE;
+    gchar **keys = NULL;
+    gchar **key = NULL;
+    GError *error = NULL;
+
+    keys = g_key_file_get_keys(key_file, CONFIG_GROUP_DSPOSTPROCESSING, NULL, &error);
+    CHECK_ERROR(error);
+    for (key = keys; *key; key++) {
+        if (!g_strcmp0(*key, CONFIG_GROUP_ENABLE)) {
+            config->enable = g_key_file_get_integer(key_file, CONFIG_GROUP_DSPOSTPROCESSING,
+                                                    CONFIG_GROUP_ENABLE, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_DSPOSTPROCESSING_UNIQUE_ID)) {
+            config->unique_id =
+                g_key_file_get_integer(key_file, CONFIG_GROUP_DSPOSTPROCESSING,
+                                       CONFIG_GROUP_DSPOSTPROCESSING_UNIQUE_ID, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_DSPOSTPROCESSING_GPU_ID)) {
+            config->gpu_id = g_key_file_get_integer(key_file, CONFIG_GROUP_DSPOSTPROCESSING,
+                                                    CONFIG_GROUP_DSPOSTPROCESSING_GPU_ID, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_DSPOSTPROCESSING_INITIAL_COLORS)) {
+            gsize length;
+            config->list_initial_colors = g_key_file_get_integer_list(
+                key_file, CONFIG_GROUP_DSPOSTPROCESSING,
+                CONFIG_GROUP_DSPOSTPROCESSING_INITIAL_COLORS, &length, &error);
+            config->num_initial_colors = length;
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_NVBUF_MEMORY_TYPE)) {
+            config->nvbuf_memory_type = g_key_file_get_integer(
+                key_file, CONFIG_GROUP_DSPOSTPROCESSING, CONFIG_NVBUF_MEMORY_TYPE, &error);
+            CHECK_ERROR(error);
+        } else {
+            NVGSTDS_WARN_MSG_V("Unknown key '%s' for group [%s]", *key,
+                               CONFIG_GROUP_DSPOSTPROCESSING);
+        }
+    }
+
+    ret = TRUE;
+done:
+    if (error) {
+        g_error_free(error);
+    }
+    if (keys) {
+        g_strfreev(keys);
+    }
+    if (!ret) {
+        NVGSTDS_ERR_MSG_V("%s failed", __func__);
+    }
+    return ret;
+}
+////////////////
+/* End Custom */
+////////////////
+
 gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file)
 {
     gboolean ret = FALSE;
@@ -822,7 +959,8 @@ gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file)
             CHECK_ERROR(error);
             if (length != 4) {
                 NVGSTDS_ERR_MSG_V(
-                    "Color params should be exactly 4 floats {r, g, b, a} between 0 and 1");
+                    "Color params should be exactly 4 floats {r, g, b, "
+                    "a} between 0 and 1");
                 goto done;
             }
             config->text_color.red = list[0];
@@ -836,7 +974,8 @@ gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file)
             CHECK_ERROR(error);
             if (length != 4) {
                 NVGSTDS_ERR_MSG_V(
-                    "Color params should be exactly 4 floats {r, g, b, a} between 0 and 1");
+                    "Color params should be exactly 4 floats {r, g, b, "
+                    "a} between 0 and 1");
                 goto done;
             }
             config->text_bg_color.red = list[0];
@@ -882,7 +1021,8 @@ gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file)
             CHECK_ERROR(error);
             if (length != 4) {
                 NVGSTDS_ERR_MSG_V(
-                    "Color params should be exactly 4 floats {r, g, b, a} between 0 and 1");
+                    "Color params should be exactly 4 floats {r, g, b, "
+                    "a} between 0 and 1");
                 goto done;
             }
             config->clock_color.red = list[0];
@@ -923,6 +1063,62 @@ done:
     }
     return ret;
 }
+
+/////////////////
+/* Start Custom */
+/////////////////
+gboolean parse_segvisual(NvSegVisualConfig *config, GKeyFile *key_file)
+{
+    gboolean ret = FALSE;
+    gchar **keys = NULL;
+    gchar **key = NULL;
+    GError *error = NULL;
+
+    /** Default values */
+    config->batch_size = 1;
+    config->width = 512;
+    config->height = 512;
+
+    keys = g_key_file_get_keys(key_file, CONFIG_GROUP_SEGVISUAL, NULL, &error);
+    CHECK_ERROR(error);
+    for (key = keys; *key; key++) {
+        if (!g_strcmp0(*key, CONFIG_GROUP_ENABLE)) {
+            config->enable = g_key_file_get_integer(key_file, CONFIG_GROUP_SEGVISUAL,
+                                                    CONFIG_GROUP_ENABLE, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SEGVISUAL_BATCH_SIZE)) {
+            config->batch_size = g_key_file_get_integer(key_file, CONFIG_GROUP_SEGVISUAL,
+                                                        CONFIG_GROUP_SEGVISUAL_BATCH_SIZE, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SEGVISUAL_WIDTH)) {
+            config->width = g_key_file_get_integer(key_file, CONFIG_GROUP_SEGVISUAL,
+                                                   CONFIG_GROUP_SEGVISUAL_WIDTH, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SEGVISUAL_HEIGHT)) {
+            config->height = g_key_file_get_integer(key_file, CONFIG_GROUP_SEGVISUAL,
+                                                    CONFIG_GROUP_SEGVISUAL_HEIGHT, &error);
+            CHECK_ERROR(error);
+        } else {
+            NVGSTDS_WARN_MSG_V("Unknown key '%s' for group [%s]", *key, CONFIG_GROUP_OSD);
+        }
+    }
+
+    ret = TRUE;
+done:
+    if (error) {
+        g_error_free(error);
+    }
+    if (keys) {
+        g_strfreev(keys);
+    }
+    if (!ret) {
+        NVGSTDS_ERR_MSG_V("%s failed", __func__);
+    }
+    return ret;
+}
+////////////////
+/* End Custom */
+////////////////
 
 gboolean parse_dewarper(NvDsDewarperConfig *config, GKeyFile *key_file, gchar *cfg_file_path)
 {
@@ -1108,11 +1304,11 @@ gboolean parse_gie(NvDsGieConfig *config, GKeyFile *key_file, gchar *group, gcha
             gchar *endptr;
             gint64 class_index = -1;
 
-            /* Check if the key is specified for a particular class or for all classes.
-             * For generic key "bbox-border-color", strlen (key1) will return 0 and·
-             * class_index will be -1.
-             * For class-specific key "bbox-border-color<class-id>", strlen (key1)
-             * will return a positive value and·class_index will have a value >= 0.
+            /* Check if the key is specified for a particular class or for all
+             * classes. For generic key "bbox-border-color", strlen (key1) will return
+             * 0 and· class_index will be -1. For class-specific key
+             * "bbox-border-color<class-id>", strlen (key1) will return a positive
+             * value and·class_index will have a value >= 0.
              */
             if (strlen(key1) > 0) {
                 class_index = g_ascii_strtoll(key1, &endptr, 10);
@@ -1145,7 +1341,6 @@ gboolean parse_gie(NvDsGieConfig *config, GKeyFile *key_file, gchar *group, gcha
             clr_params->green = list[1];
             clr_params->blue = list[2];
             clr_params->alpha = list[3];
-
         } else if (!strncmp(*key, CONFIG_GROUP_GIE_BBOX_BG_COLOR,
                             sizeof(CONFIG_GROUP_GIE_BBOX_BG_COLOR) - 1)) {
             NvOSD_ColorParams *clr_params;
@@ -1153,11 +1348,11 @@ gboolean parse_gie(NvDsGieConfig *config, GKeyFile *key_file, gchar *group, gcha
             gchar *endptr;
             gint64 class_index = -1;
 
-            /* Check if the key is specified for a particular class or for all classes.
-             * For generic key "bbox-bg-color", strlen (key1) will return 0 and·
-             * class_index will be -1.
-             * For class-specific key "bbox-bg-color<class-id>", strlen (key1)
-             * will return a positive value and·class_index will have a value >= 0.
+            /* Check if the key is specified for a particular class or for all
+             * classes. For generic key "bbox-bg-color", strlen (key1) will return 0
+             * and· class_index will be -1. For class-specific key
+             * "bbox-bg-color<class-id>", strlen (key1) will return a positive value
+             * and·class_index will have a value >= 0.
              */
             if (strlen(key1) > 0) {
                 class_index = g_ascii_strtoll(key1, &endptr, 10);
@@ -1336,6 +1531,13 @@ gboolean parse_sink(NvDsSinkSubBinConfig *config,
     config->msg_conv_broker_config.conv_msg2p_new_api = FALSE;
     config->msg_conv_broker_config.conv_frame_interval = 30;
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    config->msg_conv_broker_on_demux = FALSE;
+    ////////////////
+    /* End Custom */
+    ////////////////
     if (g_key_file_get_integer(key_file, group, CONFIG_GROUP_ENABLE, &error) == FALSE ||
         error != NULL)
         return TRUE;
@@ -1354,7 +1556,21 @@ gboolean parse_sink(NvDsSinkSubBinConfig *config,
             config->link_to_demux =
                 g_key_file_get_integer(key_file, group, CONFIG_GROUP_SINK_ONLY_FOR_DEMUX, &error);
             CHECK_ERROR(error);
-        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_WIDTH)) {
+        }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_MSG_CONV_BROKER_ON_BROKER_ON_DEMUX)) {
+            config->msg_conv_broker_on_demux = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SINK_MSG_CONV_BROKER_ON_BROKER_ON_DEMUX, &error);
+            CHECK_ERROR(error);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_WIDTH)) {
             config->render_config.width =
                 g_key_file_get_integer(key_file, group, CONFIG_GROUP_SINK_WIDTH, &error);
             CHECK_ERROR(error);
@@ -1716,6 +1932,13 @@ gboolean parse_image_save(NvDsImageSave *config,
     config->max_confidence = 1.0;
     config->min_box_width = 1;
     config->min_box_height = 1;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    config->quality = 80;
+    ////////////////
+    /* End Custom */
+    ////////////////
     config->save_image_full_frame = TRUE;
     config->save_image_cropped_object = FALSE;
     config->second_to_skip_interval = 600;
@@ -1762,7 +1985,19 @@ gboolean parse_image_save(NvDsImageSave *config,
             config->min_box_height = g_key_file_get_integer(
                 key_file, group, CONFIG_GROUP_IMG_SAVE_MIN_BOX_HEIGHT, &error);
             CHECK_ERROR(error);
-        } else {
+        }
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_IMG_SAVE_QUALITY)) {
+            config->quality =
+                g_key_file_get_integer(key_file, group, CONFIG_GROUP_IMG_SAVE_QUALITY, &error);
+            CHECK_ERROR(error);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+        else {
             NVGSTDS_WARN_MSG_V("Unknown key '%s' for group [%s]", *key, group);
         }
     }

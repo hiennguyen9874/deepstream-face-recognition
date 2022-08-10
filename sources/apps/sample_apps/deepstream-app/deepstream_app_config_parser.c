@@ -72,7 +72,27 @@ static gboolean parse_source_list(NvDsConfig *config, GKeyFile *key_file, gchar 
                 goto done;
             }
             CHECK_ERROR(error);
-        } else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_SGIE_BATCH_SIZE)) {
+        }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_LIST_DROP_FRAME_INTERVAL_LIST)) {
+            gsize length;
+            config->drop_frame_interval_list = g_key_file_get_integer_list(
+                key_file, CONFIG_GROUP_SOURCE_LIST,
+                CONFIG_GROUP_SOURCE_LIST_DROP_FRAME_INTERVAL_LIST, &length, &error);
+            if (length > MAX_SOURCE_BINS) {
+                NVGSTDS_ERR_MSG_V("App supports max %d sources", MAX_SOURCE_BINS);
+                goto done;
+            }
+            CHECK_ERROR(error);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_SGIE_BATCH_SIZE)) {
             config->sgie_batch_size = g_key_file_get_integer(
                 key_file, CONFIG_GROUP_SOURCE_LIST, CONFIG_GROUP_SOURCE_SGIE_BATCH_SIZE, &error);
             CHECK_ERROR(error);
@@ -148,6 +168,18 @@ static gboolean set_source_all_configs(NvDsConfig *config, gchar *cfg_file_path)
                 }
             }
         }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        if (config->drop_frame_interval_list) {
+            gint drop_frame_interval = config->drop_frame_interval_list[i];
+
+            config->multi_source_config[i].drop_frame_interval = drop_frame_interval;
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
     }
     return TRUE;
 }
@@ -274,6 +306,7 @@ gboolean parse_config_file(NvDsConfig *config, gchar *cfg_file_path)
         }
         g_key_file_remove_group(cfg_file, CONFIG_GROUP_SOURCE_LIST, &error);
     }
+
     if (g_key_file_has_group(cfg_file, CONFIG_GROUP_SOURCE_ALL)) {
         if (!parse_source(&global_source_config, cfg_file, CONFIG_GROUP_SOURCE_ALL,
                           cfg_file_path)) {
@@ -344,6 +377,16 @@ gboolean parse_config_file(NvDsConfig *config, gchar *cfg_file_path)
         if (!g_strcmp0(*group, CONFIG_GROUP_OSD)) {
             parse_err = !parse_osd(&config->osd_config, cfg_file);
         }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        if (!g_strcmp0(*group, CONFIG_GROUP_SEGVISUAL)) {
+            parse_err = !parse_segvisual(&config->segvisual_config, cfg_file);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
 
         if (!g_strcmp0(*group, CONFIG_GROUP_PREPROCESS)) {
             parse_err = !parse_preprocess(&config->preprocess_config, cfg_file, cfg_file_path);
@@ -416,6 +459,16 @@ gboolean parse_config_file(NvDsConfig *config, gchar *cfg_file_path)
         if (!g_strcmp0(*group, CONFIG_GROUP_DSEXAMPLE)) {
             parse_err = !parse_dsexample(&config->dsexample_config, cfg_file);
         }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        if (!g_strcmp0(*group, CONFIG_GROUP_DSPOSTPROCESSING)) {
+            parse_err = !parse_dspostprocessing(&config->dspostprocessing_config, cfg_file);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
 
         if (!g_strcmp0(*group, CONFIG_GROUP_MSG_CONVERTER)) {
             parse_err = !parse_msgconv(&config->msg_conv_config, cfg_file, *group, cfg_file_path);

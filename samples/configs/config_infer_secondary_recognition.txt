@@ -33,7 +33,7 @@ network-input-order=0
 
 output-tensor-meta=1
 
-face-alignment=0
+face-alignment=1
 
 operate-on-gie-id=1
 # operate-on-class-ids=0
