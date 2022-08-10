@@ -176,15 +176,6 @@ typedef struct _NvOSD_MaskParams {
 } NvOSD_MaskParams;
 
 /**
- * Holds the mask parameters of the segment to be overlayed
- */
-typedef struct _NvOSD_LandmarkParams {
-    float *data;               /** Landmark data */
-    unsigned int size;         /** Landmark size */
-    unsigned int num_landmark; /** Landmark num */
-} NvOSD_LandmarkParams;
-
-/**
  * Holds the box parameters of a line to be overlayed.
  */
 typedef struct _NvOSD_LineParams {

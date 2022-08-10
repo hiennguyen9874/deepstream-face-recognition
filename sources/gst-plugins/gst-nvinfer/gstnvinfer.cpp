@@ -1382,22 +1382,20 @@ static gpointer gst_nvinfer_input_queue_loop(gpointer data)
     return NULL;
 }
 
-static gboolean check_landmarks(NvOSD_RectParams rect_params, NvOSD_LandmarkParams landmark_params)
+static gboolean check_landmarks(NvOSD_RectParams rect_params, NvDSInferLandmarkMeta landmark)
 {
-    if (!landmark_params.data || landmark_params.size < 0 | landmark_params.num_landmark < 0)
+    if (!landmark.data || landmark.size < 0 | landmark.num_landmark < 0)
         return FALSE;
 
-    for (unsigned int landmark_idx = 0; landmark_idx < landmark_params.num_landmark;
-         landmark_idx++) {
-        if (landmark_params.data[2 * landmark_idx] < rect_params.left ||
-            landmark_params.data[2 * landmark_idx] > rect_params.left + rect_params.width)
+    for (unsigned int landmark_idx = 0; landmark_idx < landmark.num_landmark; landmark_idx++) {
+        if (landmark.data[2 * landmark_idx] < rect_params.left ||
+            landmark.data[2 * landmark_idx] > rect_params.left + rect_params.width)
             return FALSE;
 
-        if (landmark_params.data[2 * landmark_idx + 1] < rect_params.top ||
-            landmark_params.data[2 * landmark_idx + 1] > rect_params.top + rect_params.height)
+        if (landmark.data[2 * landmark_idx + 1] < rect_params.top ||
+            landmark.data[2 * landmark_idx + 1] > rect_params.top + rect_params.height)
             return FALSE;
     }
-
     return TRUE;
 }
 
@@ -1464,109 +1462,124 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
 
             obj_meta = batch->frames[i].obj_meta;
 
-            if (obj_meta != NULL &&
-                check_landmarks(obj_meta->rect_params, obj_meta->landmark_params)) {
-                // Map the buffer so that it can be accessed by CPU
-                if (NvBufSurfaceMap(mem->surf, i, 0, NVBUF_MAP_READ_WRITE) != 0) {
-                    GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
-                                      ("%s:buffer map to be accessed by CPU failed", __func__),
-                                      (NULL));
-                    return FALSE;
-                }
-                // sync mapped data for CPU access
-                NvBufSurfaceSyncForCpu(mem->surf, i, 0);
+            if (obj_meta == NULL)
+                continue;
+
+            for (NvDsMetaList *l_user = obj_meta->obj_user_meta_list; l_user != NULL;
+                 l_user = l_user->next) {
+                NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
+
+                if (user_meta->base_meta.meta_type == (NvDsMetaType)NVDSINFER_LANDMARK_META) {
+                    NvDSInferLandmarkMeta *landmark_meta =
+                        (NvDSInferLandmarkMeta *)user_meta->user_meta_data;
+
+                    if (check_landmarks(obj_meta->rect_params, *landmark_meta)) {
+                        // Map the buffer so that it can be accessed by CPU
+                        if (NvBufSurfaceMap(mem->surf, i, 0, NVBUF_MAP_READ_WRITE) != 0) {
+                            GST_ELEMENT_ERROR(
+                                nvinfer, STREAM, FAILED,
+                                ("%s:buffer map to be accessed by CPU failed", __func__), (NULL));
+                            return FALSE;
+                        }
+                        // sync mapped data for CPU access
+                        NvBufSurfaceSyncForCpu(mem->surf, i, 0);
 
 #ifdef WITH_OPENCV
-                in_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
-                                 (gint)mem->surf->surfaceList[i].width, CV_8UC3,
-                                 mem->surf->surfaceList[i].mappedAddr.addr[0],
-                                 mem->surf->surfaceList[i].pitch);
+                        in_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
+                                         (gint)mem->surf->surfaceList[i].width, CV_8UC3,
+                                         mem->surf->surfaceList[i].mappedAddr.addr[0],
+                                         mem->surf->surfaceList[i].pitch);
 
-                // TODO: Convert landmark:
-                // 1. - bounding box nvinfer->transform_params.src_rect[i]->src_rect.left,
-                // nvinfer->transform_params.src_rect[i]->src_rect.top
-                // 2. / nvinfer->transform_params.src_rect[i]->src_rect.width,
-                // nvinfer->transform_params.src_rect[i]->src_rect.height
-                // 3. * mem->surf->surfaceList[i].width, mem->surf->surfaceList[i].height
-                // 4. + batch->frames[i].offset_left, batch->frames[i].offset_top
+                        // TODO: Convert landmark:
+                        // 1. - bounding box nvinfer->transform_params.src_rect[i]->src_rect.left,
+                        // nvinfer->transform_params.src_rect[i]->src_rect.top
+                        // 2. / nvinfer->transform_params.src_rect[i]->src_rect.width,
+                        // nvinfer->transform_params.src_rect[i]->src_rect.height
+                        // 3. * mem->surf->surfaceList[i].width, mem->surf->surfaceList[i].height
+                        // 4. + batch->frames[i].offset_left, batch->frames[i].offset_top
 
-                float landmarks[2 * obj_meta->landmark_params.num_landmark];
+                        float landmarks[2 * landmark_meta->num_landmark];
 
-                for (unsigned int landmark_idx = 0;
-                     landmark_idx < obj_meta->landmark_params.num_landmark; landmark_idx++) {
-                    landmarks[2 * landmark_idx] =
-                        (((obj_meta->landmark_params.data[2 * landmark_idx] -
-                           nvinfer->transform_params.src_rect[i].left) /
-                          nvinfer->transform_params.src_rect[i].width) *
-                         nvinfer->transform_params.dst_rect[i].width) +
-                        nvinfer->transform_params.dst_rect[i].left;
+                        for (unsigned int landmark_idx = 0;
+                             landmark_idx < landmark_meta->num_landmark; landmark_idx++) {
+                            landmarks[2 * landmark_idx] =
+                                (((landmark_meta->data[2 * landmark_idx] -
+                                   nvinfer->transform_params.src_rect[i].left) /
+                                  nvinfer->transform_params.src_rect[i].width) *
+                                 nvinfer->transform_params.dst_rect[i].width) +
+                                nvinfer->transform_params.dst_rect[i].left;
 
-                    landmarks[2 * landmark_idx + 1] =
-                        (((obj_meta->landmark_params.data[2 * landmark_idx + 1] -
-                           nvinfer->transform_params.src_rect[i].top) /
-                          nvinfer->transform_params.src_rect[i].height) *
-                         nvinfer->transform_params.dst_rect[i].height) +
-                        nvinfer->transform_params.dst_rect[i].top;
-                }
-
-#ifdef DUMP_INPUT_TO_FILE
-                out_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
-                                  (gint)mem->surf->surfaceList[i].width, CV_8UC3);
-#if (CV_MAJOR_VERSION >= 4)
-                cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
-#else
-                cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
-#endif
-                cv::Scalar colors[5] = {cv::Scalar(0, 0, 255), cv::Scalar(255, 0, 0),
-                                        cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255),
-                                        cv::Scalar(255, 0, 0)};
-
-                for (unsigned int landmark_idx = 0;
-                     landmark_idx < obj_meta->landmark_params.num_landmark; landmark_idx++) {
-                    cv::circle(
-                        out_mat,
-                        cv::Point(GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx]),
-                                  GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx + 1])),
-                        1, colors[landmark_idx], -1);
-                }
-                gchar *img_file_path_origin =
-                    g_strdup_printf("./outputs/images_cropped/image_origin_%d_%d_%d.jpg",
-                                    batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
-
-                cv::imwrite(img_file_path_origin, out_mat);
-#endif
-                cv::Mat dst(obj_meta->landmark_params.num_landmark, 2, CV_32FC1, landmarks);
-                memcpy(dst.data, landmarks,
-                       2 * obj_meta->landmark_params.num_landmark * sizeof(float));
-                cv::Mat src(obj_meta->landmark_params.num_landmark, 2, CV_32FC1,
-                            DEFAULT_REFERENCE_5PTS);
-                memcpy(src.data, DEFAULT_REFERENCE_5PTS,
-                       2 * obj_meta->landmark_params.num_landmark * sizeof(float));
-                cv::Mat M = FacePreprocess::similarTransform(dst, src);
-                cv::warpPerspective(in_mat, in_mat, M, in_mat.size());
+                            landmarks[2 * landmark_idx + 1] =
+                                (((landmark_meta->data[2 * landmark_idx + 1] -
+                                   nvinfer->transform_params.src_rect[i].top) /
+                                  nvinfer->transform_params.src_rect[i].height) *
+                                 nvinfer->transform_params.dst_rect[i].height) +
+                                nvinfer->transform_params.dst_rect[i].top;
+                        }
 
 #ifdef DUMP_INPUT_TO_FILE
+                        out_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
+                                          (gint)mem->surf->surfaceList[i].width, CV_8UC3);
 #if (CV_MAJOR_VERSION >= 4)
-                cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
+                        cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
 #else
-                cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
+                        cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
 #endif
-                gchar *img_file_path_aligned =
-                    g_strdup_printf("./outputs/images_cropped/image_aligned_%d_%d_%d.jpg",
-                                    batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
-                cv::imwrite(img_file_path_aligned, out_mat);
-#endif
-#endif
-                if (NvBufSurfaceUnMap(mem->surf, i, 0)) {
-                    GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
-                                      ("%s:buffer unmap to be accessed by CPU failed", __func__),
-                                      (NULL));
-                    return FALSE;
-                }
+                        cv::Scalar colors[5] = {cv::Scalar(0, 0, 255), cv::Scalar(255, 0, 0),
+                                                cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255),
+                                                cv::Scalar(255, 0, 0)};
 
-                /* Cache the mapped data for device access */
-                if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY)
-                    NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+                        for (unsigned int landmark_idx = 0;
+                             landmark_idx < landmark_meta->num_landmark; landmark_idx++) {
+                            cv::circle(
+                                out_mat,
+                                cv::Point(
+                                    GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx]),
+                                    GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx + 1])),
+                                1, colors[landmark_idx], -1);
+                        }
+                        gchar *img_file_path_origin = g_strdup_printf(
+                            "./outputs/images_cropped/image_origin_%d_%d_%d.jpg",
+                            batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
+
+                        cv::imwrite(img_file_path_origin, out_mat);
+#endif
+                        cv::Mat dst(landmark_meta->num_landmark, 2, CV_32FC1, landmarks);
+                        memcpy(dst.data, landmarks,
+                               2 * landmark_meta->num_landmark * sizeof(float));
+                        cv::Mat src(landmark_meta->num_landmark, 2, CV_32FC1,
+                                    DEFAULT_REFERENCE_5PTS);
+                        memcpy(src.data, DEFAULT_REFERENCE_5PTS,
+                               2 * landmark_meta->num_landmark * sizeof(float));
+                        cv::Mat M = FacePreprocess::similarTransform(dst, src);
+                        cv::warpPerspective(in_mat, in_mat, M, in_mat.size());
+
+#ifdef DUMP_INPUT_TO_FILE
+#if (CV_MAJOR_VERSION >= 4)
+                        cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
+#else
+                        cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
+#endif
+                        gchar *img_file_path_aligned = g_strdup_printf(
+                            "./outputs/images_cropped/image_aligned_%d_%d_%d.jpg",
+                            batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
+                        cv::imwrite(img_file_path_aligned, out_mat);
+#endif
+#endif
+                        if (NvBufSurfaceUnMap(mem->surf, i, 0)) {
+                            GST_ELEMENT_ERROR(
+                                nvinfer, STREAM, FAILED,
+                                ("%s:buffer unmap to be accessed by CPU failed", __func__), (NULL));
+                            return FALSE;
+                        }
+
+                        /* Cache the mapped data for device access */
+                        if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY)
+                            NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+                    }
+
+                    break;
+                }
             }
         }
     }

@@ -129,8 +129,8 @@ typedef struct _NvDsMeta {
 } NvDsMeta;
 
 /**
- * Adds %GstMeta of type @ref NvDsMeta to the GstBuffer and sets the @a
- * meta_data member of @ref NvDsMeta.
+ * Adds %GstMeta of type @ref NvDsMeta to the GstBuffer and sets the @a meta_data
+ * member of @ref NvDsMeta.
  *
  * @param[in] buffer    A pointer to a %GstBuffer to which the function adds
  *                      metadata.

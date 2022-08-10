@@ -154,9 +154,11 @@ typedef struct {
  */
 typedef NvDsInferObjectDetectionInfo NvDsInferParseObjectInfo;
 
+/////////////////
+/* Start Custom */
+/////////////////
 /**
- * Holds information about one parsed object and landmark from a face detector's
- * output.
+ * Holds information about one parsed object and landmark from a face detector's output.
  */
 typedef struct {
     /** Holds the ID of the class to which the object belongs. */
@@ -182,10 +184,12 @@ typedef struct {
     /** Holds size of landmark in bytes*/
     unsigned int landmark_size;
 } NvDsInferFaceDetectionLandmarkInfo;
+////////////////
+/* End Custom */
+////////////////
 
 /**
- * Holds information about one parsed object and instance mask from a detector's
- * output.
+ * Holds information about one parsed object and instance mask from a detector's output.
  */
 typedef struct {
     /** Holds the ID of the class to which the object belongs. */

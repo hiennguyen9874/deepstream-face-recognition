@@ -6,6 +6,9 @@ export CUDA_VER=11.4
 
 cd $DIR
 
+echo "Building deepstream-app"
+cd apps/sample_apps/deepstream-app && make install -j4 && cd $DIR
+
 echo "Building gst-dsexample"
 cd gst-plugins/gst-dsexample && make install -j4 && cd $DIR
 
@@ -62,9 +65,6 @@ cd libs/nvdsinfer && make install -j4 && cd $DIR
 
 echo "Building nvmsgconv_audio"
 cd libs/nvmsgconv_audio && make install -j4 && cd $DIR
-
-echo "Building deepstream-app"
-cd apps/sample_apps/deepstream-app && make install -j4 && cd $DIR
 
 echo "Build done!"
 

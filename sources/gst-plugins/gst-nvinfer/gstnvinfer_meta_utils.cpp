@@ -30,6 +30,28 @@ static inline int get_element_size(NvDsInferDataType data_type)
     }
 }
 
+static void release_landmark_meta(gpointer data, gpointer user_data)
+{
+    NvDsUserMeta *user_meta = (NvDsUserMeta *)data;
+    NvDSInferLandmarkMeta *meta = (NvDSInferLandmarkMeta *)user_meta->user_meta_data;
+    if (meta->data) {
+        g_free(meta->data);
+    }
+    delete meta;
+}
+
+static gpointer copy_landmark_meta(gpointer data, gpointer user_data)
+{
+    NvDsUserMeta *src_user_meta = (NvDsUserMeta *)data;
+    NvDSInferLandmarkMeta *src_meta = (NvDSInferLandmarkMeta *)src_user_meta->user_meta_data;
+    NvDSInferLandmarkMeta *meta = (NvDSInferLandmarkMeta *)g_malloc(sizeof(NvDSInferLandmarkMeta));
+
+    meta->size = src_meta->size;
+    meta->num_landmark = src_meta->num_landmark;
+    meta->data = (gfloat *)g_memdup(src_meta->data, src_meta->size);
+    return meta;
+}
+
 /**
  * Attach metadata for the detector. We will be adding a new metadata.
  */
@@ -159,12 +181,6 @@ void attach_metadata_detector(GstNvInfer *nvinfer,
                     frame.roi_top;
             }
 
-            float *landmark = (float *)g_malloc(obj.landmark_size);
-            memcpy(landmark, obj.landmark, obj.landmark_size);
-            obj_meta->landmark_params.data = landmark;
-            obj_meta->landmark_params.size = obj.landmark_size;
-            obj_meta->landmark_params.num_landmark = obj.num_landmark;
-
             NvDsDisplayMeta *display_meta = nvds_acquire_display_meta_from_pool(batch_meta);
             nvds_add_display_meta_to_frame(frame_meta, display_meta);
 
@@ -178,8 +194,8 @@ void attach_metadata_detector(GstNvInfer *nvinfer,
                 NvOSD_CircleParams &circle_params =
                     display_meta->circle_params[display_meta->num_circles];
 
-                circle_params.xc = obj_meta->landmark_params.data[landmark_idx * 2];
-                circle_params.yc = obj_meta->landmark_params.data[landmark_idx * 2 + 1];
+                circle_params.xc = obj.landmark[landmark_idx * 2];
+                circle_params.yc = obj.landmark[landmark_idx * 2 + 1];
 
                 circle_params.radius = 2;
                 circle_params.circle_color = colors[landmark_idx];
@@ -187,6 +203,23 @@ void attach_metadata_detector(GstNvInfer *nvinfer,
                 circle_params.bg_color = colors[landmark_idx];
                 display_meta->num_circles++;
             }
+
+            NvDsUserMeta *user_meta = nvds_acquire_user_meta_from_pool(batch_meta);
+
+            NvDSInferLandmarkMeta *meta =
+                (NvDSInferLandmarkMeta *)g_malloc(sizeof(NvDSInferLandmarkMeta));
+            meta->data = (gfloat *)g_malloc(obj.landmark_size);
+            memcpy(meta->data, obj.landmark, obj.landmark_size);
+            meta->size = obj.landmark_size;
+            meta->num_landmark = obj.num_landmark;
+
+            user_meta->user_meta_data = meta;
+            user_meta->base_meta.meta_type = (NvDsMetaType)NVDSINFER_LANDMARK_META;
+            user_meta->base_meta.release_func = release_landmark_meta;
+            user_meta->base_meta.copy_func = copy_landmark_meta;
+            user_meta->base_meta.batch_meta = batch_meta;
+
+            nvds_add_user_meta_to_obj(obj_meta, user_meta);
         }
 
         nvds_add_obj_meta_to_frame(frame_meta, obj_meta, parent_obj_meta);

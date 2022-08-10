@@ -9,11 +9,8 @@ cd $DIR
 echo "Building deepstream-app"
 cd apps/sample_apps/deepstream-app && make install -j4 && cd $DIR
 
-# echo "Building gst-dsexample"
-# cd gst-plugins/gst-dsexample && make install -j4 && cd $DIR
-
-echo "Building gst-nvdsosd"
-cd gst-plugins/gst-nvdsosd && make install -j4 && cd $DIR
+echo "Building gst-dsexample"
+cd gst-plugins/gst-dsexample && make install -j4 && cd $DIR
 
 echo "Building gst-nvinfer"
 cd gst-plugins/gst-nvinfer && make install -j4 && cd $DIR

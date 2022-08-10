@@ -31,11 +31,11 @@ G_BEGIN_DECLS
  * Function definition for the inference raw output generated callback of
  * Gst-NvInfer plugin.
  *
- * The callback function can be registered by setting
- * "raw-output-generated-callback" property on an "nvinfer" element instance.
- * Additionally, a pointer to user data can be set through the
- * "raw-output-generated-userdata" property. This pointer will be passed to the
- * raw output generated callback function through the userdata parameter.
+ * The callback function can be registered by setting "raw-output-generated-callback"
+ * property on an "nvinfer" element instance. Additionally, a pointer to
+ * user data can be set through the "raw-output-generated-userdata" property.
+ * This pointer will be passed to the raw output generated callback function
+ * through the userdata parameter.
  *
  * Refer to the reference deepstream-app sources for a sample implementation
  * of the callback.
@@ -79,18 +79,15 @@ typedef struct {
      * Size of the array will be equal to num_output_layers. Pointers inside
      * the NvDsInferLayerInfo structure are not valid for this array. */
     NvDsInferLayerInfo *output_layers_info;
-    /** Array of pointers to the output host buffers for the batch / frame /
-     * object. */
+    /** Array of pointers to the output host buffers for the batch / frame / object. */
     void **out_buf_ptrs_host;
-    /** Array of pointers to the output device buffers for the batch / frame /
-     * object. */
+    /** Array of pointers to the output device buffers for the batch / frame / object. */
     void **out_buf_ptrs_dev;
     /** GPU device ID on which the device buffers have been allocated. */
     gint gpu_id;
     /** Private data used for the meta producer's internal memory management. */
     void *priv_data;
-    /** Network information for the model specified for the nvinfer element
-     * instance. */
+    /** Network information for the model specified for the nvinfer element instance. */
     NvDsInferNetworkInfo network_info;
 } NvDsInferTensorMeta;
 
@@ -114,12 +111,26 @@ typedef struct {
      * will be at index (y * width + x). */
     gint *class_map;
     /** Pointer to the raw array containing the probabilities. The probability for
-     * class c and pixel (x,y) will be at index (c * width *height + y * width +
-     * x). */
+     * class c and pixel (x,y) will be at index (c * width *height + y * width + x). */
     gfloat *class_probabilities_map;
     /** Private data used for the meta producer's internal memory management. */
     void *priv_data;
 } NvDsInferSegmentationMeta;
+
+/////////////////
+/* Start Custom */
+/////////////////
+/**
+ * Holds the mask parameters of the segment to be overlayed
+ */
+typedef struct {
+    gfloat *data;       /** Landmark data */
+    guint size;         /** Landmark size */
+    guint num_landmark; /** Landmark num */
+} NvDSInferLandmarkMeta;
+////////////////
+/* End Custom */
+////////////////
 
 G_END_DECLS
 
