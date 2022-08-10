@@ -119,10 +119,22 @@ NvDsPayload **nvds_msg2p_generate_multiple(NvDsMsg2pCtx *ctx,
             g_free(message);
         }
     } else if (ctx->payloadType == NVDS_PAYLOAD_CUSTOM) {
-        payloads[*payloadCount] = (NvDsPayload *)g_malloc0(sizeof(NvDsPayload));
-        payloads[*payloadCount]->payload = (gpointer)g_strdup("CUSTOM Schema");
-        payloads[*payloadCount]->payloadSize = strlen((char *)payloads[*payloadCount]->payload) + 1;
-        ++(*payloadCount);
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        message = generate_event_message_custom(ctx->privData, events->metadata);
+        if (message) {
+            payloads[*payloadCount] = (NvDsPayload *)g_malloc0(sizeof(NvDsPayload));
+            len = strlen(message);
+            // Remove '\0' character at the end of string and just copy the content.
+            payloads[*payloadCount]->payload = g_memdup(message, len);
+            payloads[*payloadCount]->payloadSize = len;
+            ++(*payloadCount);
+            g_free(message);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
     } else
         payloads = NULL;
 
@@ -154,8 +166,20 @@ NvDsPayload *nvds_msg2p_generate(NvDsMsg2pCtx *ctx, NvDsEvent *events, guint siz
             g_free(message);
         }
     } else if (ctx->payloadType == NVDS_PAYLOAD_CUSTOM) {
-        payload->payload = (gpointer)g_strdup("CUSTOM Schema");
-        payload->payloadSize = strlen((char *)payload->payload) + 1;
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        message = generate_event_message_custom(ctx->privData, events->metadata);
+        if (message) {
+            len = strlen(message);
+            // Remove '\0' character at the end of string and just copy the content.
+            payload->payload = g_memdup(message, len);
+            payload->payloadSize = len;
+            g_free(message);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
     } else
         payload->payload = NULL;
 
@@ -182,7 +206,19 @@ NvDsPayload *nvds_msg2p_generate_new(NvDsMsg2pCtx *ctx, void *metadataInfo)
             g_free(message);
         }
     } else if (ctx->payloadType == NVDS_PAYLOAD_DEEPSTREAM_MINIMAL) {
-        message = generate_dsmeta_message_minimal(ctx->privData, frame_meta);
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        // message = generate_dsmeta_message_minimal(ctx->privData, frame_meta);
+        // if (message)
+        // {
+        //     len = strlen(message);
+        //     // Remove '\0' character at the end of string and just copy the content.
+        //     payload->payload = g_memdup(message, len);
+        //     payload->payloadSize = len;
+        //     g_free(message);
+        // }
+        message = generate_dsmeta_message_minimal_custom(ctx->privData, frame_meta);
         if (message) {
             len = strlen(message);
             // Remove '\0' character at the end of string and just copy the content.
@@ -190,9 +226,24 @@ NvDsPayload *nvds_msg2p_generate_new(NvDsMsg2pCtx *ctx, void *metadataInfo)
             payload->payloadSize = len;
             g_free(message);
         }
+        ////////////////
+        /* End Custom */
+        ////////////////
     } else if (ctx->payloadType == NVDS_PAYLOAD_CUSTOM) {
-        payload->payload = (gpointer)g_strdup("CUSTOM Schema");
-        payload->payloadSize = strlen((char *)payload->payload) + 1;
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        message = generate_dsmeta_message_custom(ctx->privData, frame_meta, obj_meta);
+        if (message) {
+            len = strlen(message);
+            // Remove '\0' character at the end of string and just copy the content.
+            payload->payload = g_memdup(message, len);
+            payload->payloadSize = len;
+            g_free(message);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
     } else
         payload->payload = NULL;
 
@@ -226,7 +277,22 @@ NvDsPayload **nvds_msg2p_generate_multiple_new(NvDsMsg2pCtx *ctx,
             g_free(message);
         }
     } else if (ctx->payloadType == NVDS_PAYLOAD_DEEPSTREAM_MINIMAL) {
-        message = generate_dsmeta_message_minimal(ctx->privData, frame_meta);
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        // message = generate_dsmeta_message_minimal(ctx->privData, frame_meta);
+        // if (message)
+        // {
+        //     len = strlen(message);
+        //     payloads[*payloadCount] = (NvDsPayload *)g_malloc0(sizeof(NvDsPayload));
+        //     // Remove '\0' character at the end of string and just copy the content.
+        //     payloads[*payloadCount]->payload = g_memdup(message, len);
+        //     payloads[*payloadCount]->payloadSize = len;
+        //     ++(*payloadCount);
+        //     g_free(message);
+        // }
+
+        message = generate_dsmeta_message_minimal_custom(ctx->privData, frame_meta);
         if (message) {
             len = strlen(message);
             payloads[*payloadCount] = (NvDsPayload *)g_malloc0(sizeof(NvDsPayload));
@@ -236,11 +302,26 @@ NvDsPayload **nvds_msg2p_generate_multiple_new(NvDsMsg2pCtx *ctx,
             ++(*payloadCount);
             g_free(message);
         }
+        ////////////////
+        /* End Custom */
+        ////////////////
     } else if (ctx->payloadType == NVDS_PAYLOAD_CUSTOM) {
-        payloads[*payloadCount] = (NvDsPayload *)g_malloc0(sizeof(NvDsPayload));
-        payloads[*payloadCount]->payload = (gpointer)g_strdup("CUSTOM Schema");
-        payloads[*payloadCount]->payloadSize = strlen((char *)payloads[*payloadCount]->payload) + 1;
-        ++(*payloadCount);
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        message = generate_dsmeta_message_custom(ctx->privData, frame_meta, obj_meta);
+        if (message) {
+            payloads[*payloadCount] = (NvDsPayload *)g_malloc0(sizeof(NvDsPayload));
+            len = strlen(message);
+            // Remove '\0' character at the end of string and just copy the content.
+            payloads[*payloadCount]->payload = g_memdup(message, len);
+            payloads[*payloadCount]->payloadSize = len;
+            ++(*payloadCount);
+            g_free(message);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
     } else
         payloads = NULL;
 

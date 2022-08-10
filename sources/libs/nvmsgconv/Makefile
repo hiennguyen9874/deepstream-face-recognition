@@ -10,6 +10,11 @@
 #
 ###############################################################################
 
+CUDA_VER?=11.4
+ifeq ($(CUDA_VER),)
+  $(error "CUDA_VER is not set")
+endif
+
 CC:= g++
 
 PKGS:= glib-2.0 gobject-2.0 json-glib-1.0 uuid
@@ -20,10 +25,23 @@ LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
 
 CFLAGS:= -Wall -std=c++11 -shared -fPIC
 
-CFLAGS+= -I../../includes -I./deepstream_schema
+CFLAGS+= -fPIC -DDS_VERSION=\"6.0.0\" \
+  -I /usr/local/cuda-$(CUDA_VER)/include \
+  -I../../includes \
+  -I./deepstream_schema
 
 CFLAGS+= $(shell pkg-config --cflags $(PKGS))
+
 LIBS:= $(shell pkg-config --libs $(PKGS))
+
+LIBS+= -shared -Wl,-no-undefined \
+   -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -ldl \
+	 -lcudart -lpthread -I/usr/include/gstreamer-1.0 \
+   -I/usr/include/glib-2.0 \
+   -I/usr/lib/x86_64-linux-gnu/glib-2.0/include \
+	 -lnppc -lnppig -lnpps -lnppicc -lnppidei \
+   -L$(LIB_INSTALL_DIR) -lnvdsgst_helper -lnvdsgst_meta -lnvds_meta -lnvbufsurface -lnvbufsurftransform\
+	 -Wl,-rpath,$(LIB_INSTALL_DIR)
 
 SRCFILES:= nvmsgconv.cpp  \
   deepstream_schema/eventmsg_payload.cpp \
@@ -37,7 +55,7 @@ $(TARGET_LIB) : $(SRCFILES)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 install: $(TARGET_LIB)
-	cp -rv $(TARGET_LIB) $(LIB_INSTALL_DIR)
+	cp -rv $(TARGET_LIB) ../../../lib
 
 clean:
 	rm -rf $(TARGET_LIB)

@@ -35,6 +35,35 @@ container=1
 codec=1
 output-file=./outputs/videos/Friends.mp4
 
+[sink1]
+enable=1
+sync=0
+# source-id=0
+# msg-conv-broker-on-demux=1
+#Type - 1=FakeSink 2=EglSink 3=File 4=UDPSink 5=nvoverlaysink 6=MsgConvBroker
+type=6
+msg-conv-config=config_msgconv.txt
+#(0): PAYLOAD_DEEPSTREAM - Deepstream schema payload
+#(1): PAYLOAD_DEEPSTREAM_MINIMAL - Deepstream schema payload minimal
+#(256): PAYLOAD_RESERVED - Reserved type
+#(257): PAYLOAD_CUSTOM   - Custom schema payload
+msg-conv-payload-type=1
+#(0): Create payload using NvdsEventMsgMeta
+#(1): New Api to create payload using NvDsFrameMeta
+msg-conv-msg2p-new-api=1
+#Frame interval at which payload is generated
+msg-conv-frame-interval=1
+msg-conv-msg2p-lib=../../lib/libnvds_msgconv.so
+msg-broker-proto-lib=/opt/nvidia/deepstream/deepstream/lib/libnvds_kafka_proto.so
+#Provide your msg-broker-conn-str here
+msg-broker-conn-str=10.1.1.41;9092
+topic=face-detection
+#Optional:
+msg-broker-config=config_nvmsgbroker.txt
+#(0) Use message adapter library api's
+#(1) Use new msgbroker library api's
+new-api=1
+
 [osd]
 enable=1
 gpu-id=0
@@ -85,6 +114,22 @@ interval=0
 gie-unique-id=1
 nvbuf-memory-type=0
 config-file=./config_infer_primary.txt
+
+[tracker]
+enable=1
+gpu-id=0
+# For NvDCF and DeepSORT tracker, tracker-width and tracker-height must be a multiple of 32, respectively
+tracker-width=640
+tracker-height=384
+ll-lib-file=/opt/nvidia/deepstream/deepstream-6.0/lib/libnvds_nvmultiobjecttracker.so
+# ll-config-file required to set different tracker types
+# ll-config-file=config_tracker_IOU.yml
+# ll-config-file=config_tracker_NvDCF_perf.yml
+ll-config-file=config_tracker_NvDCF_accuracy.yml
+# ll-config-file=config_tracker_DeepSORT.yml
+enable-batch-process=1
+enable-past-frame=0
+display-tracking-id=1
 
 [secondary-gie0]
 enable=1

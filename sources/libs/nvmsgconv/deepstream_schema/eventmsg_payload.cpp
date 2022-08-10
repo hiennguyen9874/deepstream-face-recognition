@@ -40,28 +40,28 @@ static JsonObject *generate_place_object(void *privData, NvDsEventMsgMeta *meta)
     }
 
     /* place object
-     * "place":
-       {
-         "id": "string",
-         "name": "endeavor",
-         “type”: “garage”,
-         "location": {
-           "lat": 30.333,
-           "lon": -40.555,
-           "alt": 100.00
-         },
-         "entrance/aisle": {
-           "name": "walsh",
-           "lane": "lane1",
-           "level": "P2",
-           "coordinate": {
-             "x": 1.0,
-             "y": 2.0,
-             "z": 3.0
-           }
+   * "place":
+     {
+       "id": "string",
+       "name": "endeavor",
+       “type”: “garage”,
+       "location": {
+         "lat": 30.333,
+         "lon": -40.555,
+         "alt": 100.00
+       },
+       "entrance/aisle": {
+         "name": "walsh",
+         "lane": "lane1",
+         "level": "P2",
+         "coordinate": {
+           "x": 1.0,
+           "y": 2.0,
+           "z": 3.0
          }
        }
-     */
+     }
+   */
 
     placeObj = json_object_new();
     json_object_set_string_member(placeObj, "id", dsPlaceObj->id.c_str());
@@ -141,22 +141,22 @@ static JsonObject *generate_sensor_object(void *privData, NvDsEventMsgMeta *meta
     }
 
     /* sensor object
-     * "sensor": {
-         "id": "string",
-         "type": "Camera/Puck",
-         "location": {
-           "lat": 45.99,
-           "lon": 35.54,
-           "alt": 79.03
-         },
-         "coordinate": {
-           "x": 5.2,
-           "y": 10.1,
-           "z": 11.2
-         },
-         "description": "Entrance of Endeavor Garage Right Lane"
-       }
-     */
+   * "sensor": {
+       "id": "string",
+       "type": "Camera/Puck",
+       "location": {
+         "lat": 45.99,
+         "lon": 35.54,
+         "alt": 79.03
+       },
+       "coordinate": {
+         "x": 5.2,
+         "y": 10.1,
+         "z": 11.2
+       },
+       "description": "Entrance of Endeavor Garage Right Lane"
+     }
+   */
 
     // sensor object
     sensorObj = json_object_new();
@@ -200,14 +200,14 @@ static JsonObject *generate_analytics_module_object(void *privData, NvDsEventMsg
     }
 
     /* analytics object
-     * "analyticsModule": {
-         "id": "string",
-         "description": "Vehicle Detection and License Plate Recognition",
-         "confidence": 97.79,
-         "source": "OpenALR",
-         "version": "string"
-       }
-     */
+   * "analyticsModule": {
+       "id": "string",
+       "description": "Vehicle Detection and License Plate Recognition",
+       "confidence": 97.79,
+       "source": "OpenALR",
+       "version": "string"
+     }
+   */
 
     // analytics object
     analyticsObj = json_object_new();
@@ -226,11 +226,11 @@ static JsonObject *generate_event_object(void *privData, NvDsEventMsgMeta *meta)
     gchar uuidStr[37];
 
     /*
-     * "event": {
-         "id": "event-id",
-         "type": "entry / exit"
-       }
-     */
+   * "event": {
+       "id": "event-id",
+       "type": "entry / exit"
+     }
+   */
 
     uuid_generate_random(uuid);
     uuid_unparse_lower(uuid, uuidStr);
@@ -526,6 +526,299 @@ static JsonObject *generate_object_object(void *privData, NvDsEventMsgMeta *meta
     return objectObj;
 }
 
+/////////////////
+/* Start Custom */
+/////////////////
+
+// TODO: Add custom payload generate event message
+
+static JsonObject *generate_object_object_custom(void *privData, NvDsEventMsgMeta *meta)
+{
+    JsonObject *objectObj;
+    JsonObject *jobject;
+    guint i;
+    gchar tracking_id[64];
+    GList *objectMask = NULL;
+
+    // object object
+    objectObj = json_object_new();
+    if (snprintf(tracking_id, sizeof(tracking_id), "%lu", meta->trackingId) >=
+        (int)sizeof(tracking_id))
+        g_warning("Not enough space to copy trackingId");
+
+    json_object_set_string_member(objectObj, "id", tracking_id);
+    json_object_set_double_member(objectObj, "speed", 0);
+    json_object_set_double_member(objectObj, "direction", 0);
+    json_object_set_double_member(objectObj, "orientation", 0);
+
+    switch (meta->objType) {
+    case NVDS_OBJECT_TYPE_VEHICLE:
+        // vehicle sub object
+        jobject = json_object_new();
+
+        if (meta->extMsgSize) {
+            NvDsVehicleObject *dsObj = (NvDsVehicleObject *)meta->extMsg;
+            if (dsObj) {
+                json_object_set_string_member(jobject, "type", dsObj->type);
+                json_object_set_string_member(jobject, "make", dsObj->make);
+                json_object_set_string_member(jobject, "model", dsObj->model);
+                json_object_set_string_member(jobject, "color", dsObj->color);
+                json_object_set_string_member(jobject, "licenseState", dsObj->region);
+                json_object_set_string_member(jobject, "license", dsObj->license);
+                json_object_set_double_member(jobject, "confidence", meta->confidence);
+            }
+        } else {
+            // No vehicle object in meta data. Attach empty vehicle sub object.
+            json_object_set_string_member(jobject, "type", "");
+            json_object_set_string_member(jobject, "make", "");
+            json_object_set_string_member(jobject, "model", "");
+            json_object_set_string_member(jobject, "color", "");
+            json_object_set_string_member(jobject, "licenseState", "");
+            json_object_set_string_member(jobject, "license", "");
+            json_object_set_double_member(jobject, "confidence", 1.0);
+        }
+        json_object_set_object_member(objectObj, "vehicle", jobject);
+        break;
+    case NVDS_OBJECT_TYPE_PERSON:
+        // person sub object
+        jobject = json_object_new();
+
+        if (meta->extMsgSize) {
+            NvDsPersonObject *dsObj = (NvDsPersonObject *)meta->extMsg;
+            if (dsObj) {
+                json_object_set_int_member(jobject, "age", dsObj->age);
+                json_object_set_string_member(jobject, "gender", dsObj->gender);
+                json_object_set_string_member(jobject, "hair", dsObj->hair);
+                json_object_set_string_member(jobject, "cap", dsObj->cap);
+                json_object_set_string_member(jobject, "apparel", dsObj->apparel);
+                json_object_set_double_member(jobject, "confidence", meta->confidence);
+            }
+        } else {
+            // No person object in meta data. Attach empty person sub object.
+            json_object_set_int_member(jobject, "age", 0);
+            json_object_set_string_member(jobject, "gender", "");
+            json_object_set_string_member(jobject, "hair", "");
+            json_object_set_string_member(jobject, "cap", "");
+            json_object_set_string_member(jobject, "apparel", "");
+            json_object_set_double_member(jobject, "confidence", 1.0);
+        }
+        json_object_set_object_member(objectObj, "person", jobject);
+        break;
+    case NVDS_OBJECT_TYPE_FACE:
+        // face sub object
+        jobject = json_object_new();
+
+        if (meta->extMsgSize) {
+            NvDsFaceObject *dsObj = (NvDsFaceObject *)meta->extMsg;
+            if (dsObj) {
+                json_object_set_int_member(jobject, "age", dsObj->age);
+                json_object_set_string_member(jobject, "gender", dsObj->gender);
+                json_object_set_string_member(jobject, "hair", dsObj->hair);
+                json_object_set_string_member(jobject, "cap", dsObj->cap);
+                json_object_set_string_member(jobject, "glasses", dsObj->glasses);
+                json_object_set_string_member(jobject, "facialhair", dsObj->facialhair);
+                json_object_set_string_member(jobject, "name", dsObj->name);
+                json_object_set_string_member(jobject, "eyecolor", dsObj->eyecolor);
+                json_object_set_double_member(jobject, "confidence", meta->confidence);
+            }
+        } else {
+            // No face object in meta data. Attach empty face sub object.
+            json_object_set_int_member(jobject, "age", 0);
+            json_object_set_string_member(jobject, "gender", "");
+            json_object_set_string_member(jobject, "hair", "");
+            json_object_set_string_member(jobject, "cap", "");
+            json_object_set_string_member(jobject, "glasses", "");
+            json_object_set_string_member(jobject, "facialhair", "");
+            json_object_set_string_member(jobject, "name", "");
+            json_object_set_string_member(jobject, "eyecolor", "");
+            json_object_set_double_member(jobject, "confidence", 1.0);
+        }
+        json_object_set_object_member(objectObj, "face", jobject);
+        break;
+    case NVDS_OBJECT_TYPE_VEHICLE_EXT:
+        // vehicle sub object
+        jobject = json_object_new();
+
+        if (meta->extMsgSize) {
+            NvDsVehicleObjectExt *dsObj = (NvDsVehicleObjectExt *)meta->extMsg;
+            if (dsObj) {
+                json_object_set_string_member(jobject, "type", dsObj->type);
+                json_object_set_string_member(jobject, "make", dsObj->make);
+                json_object_set_string_member(jobject, "model", dsObj->model);
+                json_object_set_string_member(jobject, "color", dsObj->color);
+                json_object_set_string_member(jobject, "licenseState", dsObj->region);
+                json_object_set_string_member(jobject, "license", dsObj->license);
+                json_object_set_double_member(jobject, "confidence", meta->confidence);
+
+                objectMask = dsObj->mask;
+            }
+        } else {
+            // No vehicle object in meta data. Attach empty vehicle sub object.
+            json_object_set_string_member(jobject, "type", "");
+            json_object_set_string_member(jobject, "make", "");
+            json_object_set_string_member(jobject, "model", "");
+            json_object_set_string_member(jobject, "color", "");
+            json_object_set_string_member(jobject, "licenseState", "");
+            json_object_set_string_member(jobject, "license", "");
+            json_object_set_double_member(jobject, "confidence", 1.0);
+        }
+        json_object_set_object_member(objectObj, "vehicle", jobject);
+        break;
+    case NVDS_OBJECT_TYPE_PERSON_EXT:
+        // person sub object
+        jobject = json_object_new();
+
+        if (meta->extMsgSize) {
+            NvDsPersonObjectExt *dsObj = (NvDsPersonObjectExt *)meta->extMsg;
+            if (dsObj) {
+                json_object_set_int_member(jobject, "age", dsObj->age);
+                json_object_set_string_member(jobject, "gender", dsObj->gender);
+                json_object_set_string_member(jobject, "hair", dsObj->hair);
+                json_object_set_string_member(jobject, "cap", dsObj->cap);
+                json_object_set_string_member(jobject, "apparel", dsObj->apparel);
+                json_object_set_double_member(jobject, "confidence", meta->confidence);
+
+                objectMask = dsObj->mask;
+            }
+        } else {
+            // No person object in meta data. Attach empty person sub object.
+            json_object_set_int_member(jobject, "age", 0);
+            json_object_set_string_member(jobject, "gender", "");
+            json_object_set_string_member(jobject, "hair", "");
+            json_object_set_string_member(jobject, "cap", "");
+            json_object_set_string_member(jobject, "apparel", "");
+            json_object_set_double_member(jobject, "confidence", 1.0);
+        }
+        json_object_set_object_member(objectObj, "person", jobject);
+        break;
+    case NVDS_OBJECT_TYPE_FACE_EXT:
+        // face sub object
+        jobject = json_object_new();
+
+        if (meta->extMsgSize) {
+            NvDsFaceObjectExt *dsObj = (NvDsFaceObjectExt *)meta->extMsg;
+            if (dsObj) {
+                json_object_set_int_member(jobject, "age", dsObj->age);
+                json_object_set_string_member(jobject, "gender", dsObj->gender);
+                json_object_set_string_member(jobject, "hair", dsObj->hair);
+                json_object_set_string_member(jobject, "cap", dsObj->cap);
+                json_object_set_string_member(jobject, "glasses", dsObj->glasses);
+                json_object_set_string_member(jobject, "facialhair", dsObj->facialhair);
+                json_object_set_string_member(jobject, "name", dsObj->name);
+                json_object_set_string_member(jobject, "eyecolor", dsObj->eyecolor);
+                json_object_set_double_member(jobject, "confidence", meta->confidence);
+
+                objectMask = dsObj->mask;
+            }
+        } else {
+            // No face object in meta data. Attach empty face sub object.
+            json_object_set_int_member(jobject, "age", 0);
+            json_object_set_string_member(jobject, "gender", "");
+            json_object_set_string_member(jobject, "hair", "");
+            json_object_set_string_member(jobject, "cap", "");
+            json_object_set_string_member(jobject, "glasses", "");
+            json_object_set_string_member(jobject, "facialhair", "");
+            json_object_set_string_member(jobject, "name", "");
+            json_object_set_string_member(jobject, "eyecolor", "");
+            json_object_set_double_member(jobject, "confidence", 1.0);
+        }
+        json_object_set_object_member(objectObj, "face", jobject);
+        break;
+    case NVDS_OBJECT_TYPE_UNKNOWN:
+        if (!meta->objectId) {
+            break;
+        }
+        /** No information to add; object type unknown within NvDsEventMsgMeta */
+        jobject = json_object_new();
+        json_object_set_object_member(objectObj, meta->objectId, jobject);
+        break;
+    default:
+        cout << "Object type not implemented" << endl;
+    }
+
+    // bbox sub object
+    jobject = json_object_new();
+    json_object_set_int_member(jobject, "topleftx", meta->bbox.left);
+    json_object_set_int_member(jobject, "toplefty", meta->bbox.top);
+    json_object_set_int_member(jobject, "bottomrightx", meta->bbox.left + meta->bbox.width);
+    json_object_set_int_member(jobject, "bottomrighty", meta->bbox.top + meta->bbox.height);
+    json_object_set_object_member(objectObj, "bbox", jobject);
+
+    if (objectMask) {
+        GList *l;
+        JsonArray *maskArray = json_array_sized_new(g_list_length(objectMask));
+
+        for (l = objectMask; l != NULL; l = l->next) {
+            GArray *polygon = (GArray *)l->data;
+            JsonArray *polygonArray = json_array_sized_new(polygon->len);
+
+            for (i = 0; i < polygon->len; i++) {
+                gdouble value = g_array_index(polygon, gdouble, i);
+
+                json_array_add_double_element(polygonArray, value);
+            }
+
+            json_array_add_array_element(maskArray, polygonArray);
+        }
+
+        json_object_set_array_member(objectObj, "maskoutline", maskArray);
+    }
+
+    // signature sub array
+    if (meta->objSignature.size) {
+        JsonArray *jArray = json_array_sized_new(meta->objSignature.size);
+
+        for (i = 0; i < meta->objSignature.size; i++) {
+            json_array_add_double_element(jArray, meta->objSignature.signature[i]);
+        }
+        json_object_set_array_member(objectObj, "signature", jArray);
+    }
+
+    return objectObj;
+}
+
+gchar *generate_event_message_custom(void *privData, NvDsEventMsgMeta *meta)
+{
+    JsonNode *rootNode;
+    JsonObject *rootObj;
+    JsonObject *objectObj;
+    gchar *message;
+
+    uuid_t msgId;
+    gchar msgIdStr[37];
+
+    uuid_generate_random(msgId);
+    uuid_unparse_lower(msgId, msgIdStr);
+
+    // object object
+    objectObj = generate_object_object_custom(privData, meta);
+
+    // root object
+    rootObj = json_object_new();
+    json_object_set_string_member(rootObj, "messageid", msgIdStr);
+    json_object_set_string_member(rootObj, "mdsversion", "1.0");
+    json_object_set_string_member(rootObj, "@timestamp", meta->ts);
+    json_object_set_object_member(rootObj, "object", objectObj);
+
+    if (meta->videoPath)
+        json_object_set_string_member(rootObj, "videoPath", meta->videoPath);
+    else
+        json_object_set_string_member(rootObj, "videoPath", "");
+
+    rootNode = json_node_new(JSON_NODE_OBJECT);
+    json_node_set_object(rootNode, rootObj);
+
+    message = json_to_string(rootNode, TRUE);
+    json_node_free(rootNode);
+    json_object_unref(rootObj);
+
+    return message;
+}
+
+////////////////
+/* End Custom */
+////////////////
+
 gchar *generate_event_message(void *privData, NvDsEventMsgMeta *meta)
 {
     JsonNode *rootNode;
@@ -660,33 +953,33 @@ static void generate_mask_array(NvDsEventMsgMeta *meta, JsonArray *jArray, GList
 gchar *generate_event_message_minimal(void *privData, NvDsEvent *events, guint size)
 {
     /*
-    The JSON structure of the frame
-    {
-     "version": "4.0",
-     "id": "frame-id",
-     "@timestamp": "2018-04-11T04:59:59.828Z",
-     "sensorId": "sensor-id",
-     "objects": [
-        ".......object-1 attributes...........",
-        ".......object-2 attributes...........",
-        ".......object-3 attributes..........."
-      ]
-    }
-    */
+  The JSON structure of the frame
+  {
+   "version": "4.0",
+   "id": "frame-id",
+   "@timestamp": "2018-04-11T04:59:59.828Z",
+   "sensorId": "sensor-id",
+   "objects": [
+      ".......object-1 attributes...........",
+      ".......object-2 attributes...........",
+      ".......object-3 attributes..........."
+    ]
+  }
+  */
 
     /*
-    An example object with Vehicle object-type
-    {
-      "version": "4.0",
-      "id": "frame-id",
-      "@timestamp": "2018-04-11T04:59:59.828Z",
-      "sensorId": "sensor-id",
-      "objects": [
-          "957|1834|150|1918|215|Vehicle|#|sedan|Bugatti|M|blue|CA 444|California|0.8",
-          "..........."
-      ]
-    }
-     */
+  An example object with Vehicle object-type
+  {
+    "version": "4.0",
+    "id": "frame-id",
+    "@timestamp": "2018-04-11T04:59:59.828Z",
+    "sensorId": "sensor-id",
+    "objects": [
+        "957|1834|150|1918|215|Vehicle|#|sedan|Bugatti|M|blue|CA 444|California|0.8",
+        "..........."
+    ]
+  }
+   */
 
     JsonNode *rootNode;
     JsonObject *jobject;
