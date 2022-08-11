@@ -16,7 +16,7 @@ force-implicit-batch-dim=0
 
 batch-size=8
 
-labelfile-path=../models/Secondary_Attribute/labels.txt
+labelfile-path=../models/Secondary_Recognition/labels.txt
 
 interval=0
 
@@ -26,7 +26,14 @@ gie-unique-id=2
 process-mode=2
 
 # 0=Detector, 1=Classifier, 2=Segmentation, 100=Other
-network-type=100
+network-type=1
+
+# current not working with deepstream 6.0.1
+classifier-type=facerecognition
+classifier-async-mode=1
+classifier-threshold=0.25
+
+secondary-reinfer-interval=30
 
 # 0:FP32 1:INT8 2:FP16
 network-mode=2
@@ -50,3 +57,6 @@ maintain-aspect-ratio=0
 
 input-object-min-height=0
 input-object-min-width=0
+
+parse-classifier-func-name=NvDsInferClassiferParseCustomFaceRecognition
+custom-lib-path=../../lib/libnvds_infercustomparser.so
