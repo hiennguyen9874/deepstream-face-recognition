@@ -406,8 +406,8 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
                     gie_config = NULL;
                 }
             }
-            // g_free(obj->text_params.display_text);
-            // obj->text_params.display_text = NULL;
+            g_free(obj->text_params.display_text);
+            obj->text_params.display_text = NULL;
 
             if (gie_config != NULL) {
                 if (g_hash_table_contains(gie_config->bbox_border_color_table,
@@ -441,18 +441,13 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
                 obj->text_params.set_bg_clr = 1;
                 obj->text_params.text_bg_clr = appCtx->config.osd_config.text_bg_color;
             }
-            /////////////////
-            /* Start Custom */
-            /////////////////
+
             obj->text_params.display_text = g_malloc(128);
-            ////////////////
-            /* End Custom */
-            ////////////////
             obj->text_params.display_text[0] = '\0';
             str_ins_pos = obj->text_params.display_text;
 
-            if (obj->obj_label[0] != '\0')
-                sprintf(str_ins_pos, "%s", obj->obj_label);
+            // if (obj->obj_label[0] != '\0')
+            //     sprintf(str_ins_pos, "%s", obj->obj_label);
             str_ins_pos += strlen(str_ins_pos);
 
             if (obj->object_id != UNTRACKED_OBJECT_ID) {
@@ -472,26 +467,16 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
             for (NvDsMetaList *l_class = obj->classifier_meta_list; l_class != NULL;
                  l_class = l_class->next) {
                 NvDsClassifierMeta *cmeta = (NvDsClassifierMeta *)l_class->data;
-
-                /////////////////
-                /* Start Custom */
-                /////////////////
-                // TODO: Change to type
-                if (cmeta->unique_component_id == 2)
-                    continue;
-                ////////////////
-                /* End Custom */
-                ////////////////
-
                 for (NvDsMetaList *l_label = cmeta->label_info_list; l_label != NULL;
                      l_label = l_label->next) {
                     NvDsLabelInfo *label = (NvDsLabelInfo *)l_label->data;
-
                     if (label->pResult_label) {
                         sprintf(str_ins_pos, " %s", label->pResult_label);
-                    } else if (label->result_label != NULL && label->result_label[0] != '\0') {
+                    } else if (label->result_label[0] != '\0') {
                         sprintf(str_ins_pos, " %s", label->result_label);
                     }
+                    str_ins_pos += strlen(str_ins_pos);
+                    sprintf(str_ins_pos, " %f", label->result_prob);
                     str_ins_pos += strlen(str_ins_pos);
                 }
             }

@@ -31,17 +31,18 @@ CFLAGS:= -Wall -std=c++11
 
 LIB_INSTALL_DIR?=../../../lib
 
-CFLAGS+= -shared -fPIC
+CFLAGS+= -shared -fPIC -fopenmp
 
 CFLAGS+= -I../../includes \
-         -I/usr/local/cuda-$(CUDA_VER)/include
+         -I/usr/local/cuda-$(CUDA_VER)/include -I/usr/local/include/faiss
 
 LIBS:= -lnvinfer -lnvparsers
 LIBS+= -L/usr/local/cuda-$(CUDA_VER)/lib64 -lcudart -lcublas
+LIBS+= -L/usr/local/lib/ -lfaiss /usr/local/lib/libfaiss.a
 
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 
-SRCFILES:= nvdsinfer_custombboxparser.cpp nvdsinfer_customfacedetectionparser.cpp
+SRCFILES:= nvdsinfer_custombboxparser.cpp nvdsinfer_customfacedetectionparser.cpp nvdsinfer_customfacerecognition.cpp
 TARGET_LIB:= libnvds_infercustomparser.so
 
 all: $(TARGET_LIB)
