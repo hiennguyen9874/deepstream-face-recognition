@@ -14,6 +14,7 @@
 
 const static int kNUM_CLASSES = 1;
 const static float kNMS_THRESH = 0.45;
+const static float kLANDMARK_THRES = 0.5;
 
 static std::vector<NvDsInferFaceDetectionLandmarkInfo> nonMaximumSuppression(
     const float nmsThresh,
@@ -309,6 +310,99 @@ extern "C" bool NvDsInferParseCustomBatchedNMSTLTYoloFaceDetection(
     return true;
 }
 
+
+extern "C" bool NvDsInferParseCustomBatchedNMSTLTYoloFaceDetection2(
+    std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+    NvDsInferNetworkInfo const &networkInfo,
+    NvDsInferParseDetectionParams const &detectionParams,
+    std::vector<NvDsInferFaceDetectionLandmarkInfo> &objectList)
+{
+    if (outputLayersInfo.size() != 5) {
+        std::cerr << "Mismatch in the number of output buffers."
+                  << "Expected 5 output buffers, detected in the network :"
+                  << outputLayersInfo.size() << std::endl;
+        return false;
+    }
+
+    /* Host memory for "BatchedNMS"
+       BatchedNMS has 4 output bindings, the order is:
+       keepCount, bboxes, scores, classes
+    */
+
+    int *p_keep_count = (int *)outputLayersInfo[0].buffer;
+    float *p_bboxes = (float *)outputLayersInfo[1].buffer;
+    float *p_scores = (float *)outputLayersInfo[2].buffer;
+    float *p_classes = (float *)outputLayersInfo[3].buffer;
+    float *p_landmarks = (float *)outputLayersInfo[4].buffer;
+
+    const float threshold = detectionParams.perClassThreshold[0];
+
+    // Must same as onnx config
+    const int keep_top_k = outputLayersInfo[1].inferDims.d[0];
+
+    const int num_landmark = (int)(outputLayersInfo[4].inferDims.d[1] / 2);
+
+    const bool log_enable = false;
+
+    if (log_enable) {
+        std::cout << "keep cout: " << p_keep_count[0] << std::endl;
+    }
+
+    for (int i = 0; i < p_keep_count[0] && objectList.size() <= keep_top_k; i++) {
+        if (p_scores[i] < threshold)
+            continue;
+
+        if (log_enable) {
+            std::cout << "label/conf/ x/y x/y -- " << p_classes[i] << " " << p_scores[i] << " "
+                      << p_bboxes[4 * i] << " " << p_bboxes[4 * i + 1] << " " << p_bboxes[4 * i + 2]
+                      << " " << p_bboxes[4 * i + 3] << " " << std::endl;
+        }
+
+        if ((unsigned int)p_classes[i] >= detectionParams.numClassesConfigured)
+            continue;
+
+        if (p_bboxes[4 * i + 2] < p_bboxes[4 * i] || p_bboxes[4 * i + 3] < p_bboxes[4 * i + 1])
+            continue;
+
+        if (p_landmarks[(num_landmark * 2 + 1) * i + 10] < kLANDMARK_THRES)
+            continue;
+
+        // std::cout << p_landmarks[(num_landmark * 2 + 1) * i + 10] << std::endl;
+
+        NvDsInferFaceDetectionLandmarkInfo object;
+        object.num_landmark = 0;
+        object.landmark_size = 0;
+        object.landmark = NULL;
+
+        object.classId = (int)p_classes[i];
+        object.detectionConfidence = p_scores[i];
+
+        object.landmark = new float[10]{
+            p_landmarks[(num_landmark * 2 + 1) * i + 0], p_landmarks[(num_landmark * 2 + 1) * i + 1],
+            p_landmarks[(num_landmark * 2 + 1) * i + 2], p_landmarks[(num_landmark * 2 + 1) * i + 3],
+            p_landmarks[(num_landmark * 2 + 1) * i + 4], p_landmarks[(num_landmark * 2 + 1) * i + 5],
+            p_landmarks[(num_landmark * 2 + 1) * i + 6], p_landmarks[(num_landmark * 2 + 1) * i + 7],
+            p_landmarks[(num_landmark * 2 + 1) * i + 8], p_landmarks[(num_landmark * 2 + 1) * i + 9],
+        };
+        object.num_landmark = num_landmark;
+        object.landmark_size = sizeof(float) * num_landmark * 2;
+
+        /* Clip object box co-ordinates to network resolution */
+        object.left = CLIP(p_bboxes[4 * i], 0, networkInfo.width - 1);
+        object.top = CLIP(p_bboxes[4 * i + 1], 0, networkInfo.height - 1);
+        object.width = CLIP(p_bboxes[4 * i + 2], 0, networkInfo.width - 1) - object.left;
+        object.height = CLIP(p_bboxes[4 * i + 3], 0, networkInfo.height - 1) - object.top;
+
+        if (object.height <= 0 || object.width <= 0)
+            continue;
+
+        objectList.push_back(object);
+    }
+    return true;
+}
+
 CHECK_CUSTOM_FACE_DETECTION_LANDMARK_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomYoloFaceDetection);
 CHECK_CUSTOM_FACE_DETECTION_LANDMARK_PARSE_FUNC_PROTOTYPE(
     NvDsInferParseCustomBatchedNMSTLTYoloFaceDetection);
+CHECK_CUSTOM_FACE_DETECTION_LANDMARK_PARSE_FUNC_PROTOTYPE(
+    NvDsInferParseCustomBatchedNMSTLTYoloFaceDetection2);

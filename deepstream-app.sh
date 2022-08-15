@@ -9,7 +9,7 @@ export GST_DEBUG_DUMP_DOT_DIR="logs/"
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/:/lib/x86_64-linux-gnu/:/lib/x86_64-linux-gnu/:/lib64/
 
 sudo rm -rf **/*.so
-sudo bash sources/uninstall.sh
+# sudo bash sources/uninstall.sh
 sudo bash sources/default.sh
 sudo bash sources/install.sh
 rm -rf logs/*
