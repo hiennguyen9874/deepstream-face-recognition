@@ -9,20 +9,41 @@ enable=0
 enable=1
 gpu-id=0
 #Type - 1=CameraV4L2 2=URI 3=MultiURI 4: RTSP
-type=2
-#type=4
-uri=file://../videos/Friends.mp4
+#type=2
+type=4
+#uri=file://../videos/Friends.mp4
+#uri=rtsp://admin:dt%4012345@42.112.222.2:5554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
+uri=rtsp://hpt:Hpt%4012345@shondohbt.cameraddns.net:554
 # (0): memtype_device   - Memory type Device
 # (1): memtype_pinned   - Memory type Host Pinned
 # (2): memtype_unified  - Memory type Unified
+drop-on-latency=1
+do-retransmission=1
+latency=2000
 cudadec-memtype=0
 nvbuf-memory-type=0
 select-rtp-protocol=0
 rtsp-reconnect-interval-sec=60
 rtsp-reconnect-attempts=5
 
+# [source-list]
+# num-source-bins=5
+# list=rtsp://hpt:Hpt%4012345@shondohbt.cameraddns.net:554;rtsp://hpt:Hpt%4012345@shondohbt.cameraddns.net:554;rtsp://hpt:Hpt%4012345@shondohbt.cameraddns.net:554;rtsp://hpt:Hpt%4012345@shondohbt.cameraddns.net:554;rtsp://hpt:Hpt%4012345@shondohbt.cameraddns.net:554
+# sgie-batch-size=40
+#
+# [source-attr-all]
+# enable=1
+# #Type - 1=CameraV4L2 2=URI 3=MultiURI
+# type=2
+# # (0): memtype_device   - Memory type Device
+# # (1): memtype_pinned   - Memory type Host Pinned
+# # (2): memtype_unified  - Memory type Unified
+# # drop-frame-interval=2
+# cudadec-memtype=0
+# nvbuf-memory-type=0
+
 [sink0]
-enable=1
+enable=0
 gpu-id=0
 #Type - 1=FakeSink 2=EglSink 3=File 4=UDPSink 5=nvoverlaysink 6=MsgConvBroker
 type=3
@@ -36,6 +57,25 @@ codec=1
 output-file=./outputs/videos/Friends.mp4
 
 [sink1]
+enable=0
+source-id=0
+gpu-id=0
+#Type - 1=FakeSink 2=EglSink 3=File 4=RTSPStreaming 5=Overlay
+type=4
+#1=h264 2=h265
+codec=1
+#encoder type 0=Hardware 1=Software
+enc-type=0
+sync=1
+bitrate=4000000
+#H264 Profile - 0=Baseline 2=Main 4=High
+#H265 Profile - 0=Main 1=Main10
+profile=0
+# set below properties in case of RTSPStreaming
+rtsp-port=8554
+udp-port=5400
+
+[sink2]
 enable=0
 sync=0
 # source-id=0
@@ -64,6 +104,27 @@ msg-broker-config=config_nvmsgbroker.txt
 #(1) Use new msgbroker library api's
 new-api=1
 
+[sink3]
+enable=1
+source-id=0
+gpu-id=0
+#Type - 1=FakeSink 2=EglSink 3=File 4=RTSPStreaming 5=Overlay 6=MsgConvBroker 7=Hlssink
+type=7
+#1=h264 2=h265
+codec=1
+#encoder type 0=Hardware 1=Software
+enc-type=0
+sync=1
+bitrate=4000000
+#H264 Profile - 0=Baseline 2=Main 4=High
+#H265 Profile - 0=Main 1=Main10
+profile=0
+hls-location=./outputs/hls/segment%05d.ts
+hls-max-files=10
+hls-playlist-length=5
+hls-playlist-location=./outputs/hls/playlist.m3u8
+hls-target-duration=1
+
 [osd]
 enable=1
 gpu-id=0
@@ -85,7 +146,7 @@ display-text=1
 [streammux]
 gpu-id=0
 ##Boolean property to inform muxer that sources are live
-live-source=0
+live-source=1
 # buffer-pool-size=1
 batch-size=1
 ##time out in usec, to wait after the first buffer is available
@@ -100,7 +161,8 @@ height=1080
 nvbuf-memory-type=0
 ## If set to TRUE, system timestamp will be attached as ntp timestamp
 ## If set to FALSE, ntp timestamp from rtspsrc, if available, will be attached
-attach-sys-ts-as-ntp=1
+attach-sys-ts-as-ntp=0
+sync-inputs=1
 # config-file=config_sreammux.txt
 
 # config-file property is mandatory for any gie section.

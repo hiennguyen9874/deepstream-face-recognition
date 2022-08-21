@@ -1283,7 +1283,13 @@ gboolean create_pipeline(AppCtx *appCtx,
             gst_object_unref(demux_src_pad);
 
             for (int k = 0; k < MAX_SINK_BINS; k++) {
-                if (pipeline->instance_bins[i].sink_bin.sub_bins[k].sink) {
+                if (strncmp(GST_ELEMENT_NAME(pipeline->instance_bins[i].sink_bin.sub_bins[k].sink),
+                            "sink_sub_bin_hlssink", 20) == 0) {
+                    NVGSTDS_ELEM_ADD_PROBE(
+                        latency_probe_id, pipeline->instance_bins[i].sink_bin.sub_bins[k].sink,
+                        "video", latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx);
+                    break;
+                } else if (pipeline->instance_bins[i].sink_bin.sub_bins[k].sink) {
                     NVGSTDS_ELEM_ADD_PROBE(
                         latency_probe_id, pipeline->instance_bins[i].sink_bin.sub_bins[k].sink,
                         "sink", latency_measurement_buf_prob, GST_PAD_PROBE_TYPE_BUFFER, appCtx);

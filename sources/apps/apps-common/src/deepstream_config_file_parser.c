@@ -175,6 +175,12 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_SINK_OFFSET_X "offset-x"
 #define CONFIG_GROUP_SINK_OFFSET_Y "offset-y"
 #define CONFIG_GROUP_SINK_ONLY_FOR_DEMUX "link-to-demux"
+#define CONFIG_GROUP_SINK_HLS_LOCATION "hls-location"
+#define CONFIG_GROUP_SINK_HLS_MAX_FILES "hls-max-files"
+#define CONFIG_GROUP_SINK_HLS_PLAYLIST_LENGTH "hls-playlist-length"
+#define CONFIG_GROUP_SINK_HLS_PLAYLIST_LOCATION "hls-playlist-location"
+#define CONFIG_GROUP_SINK_HLS_PLAYLIST_ROOT "hls-playlist-root"
+#define CONFIG_GROUP_SINK_HLS_TARGET_DURATION "hls-target-duration"
 
 /////////////////
 /* Start Custom */
@@ -1525,6 +1531,14 @@ gboolean parse_sink(NvDsSinkSubBinConfig *config,
 
     config->encoder_config.rtsp_port = 8554;
     config->encoder_config.udp_port = 5000;
+
+    config->encoder_config.hls_location = g_strdup("segment%05d.ts");
+    config->encoder_config.hls_max_files = 10;
+    config->encoder_config.hls_playlist_length = 5;
+    config->encoder_config.hls_playlist_location = g_strdup("playlist.m3u8");
+    config->encoder_config.hls_playlist_root = NULL;
+    config->encoder_config.hls_target_duration = 15;
+
     config->render_config.qos = FALSE;
     config->link_to_demux = FALSE;
     config->msg_conv_broker_config.new_api = FALSE;
@@ -1633,6 +1647,30 @@ gboolean parse_sink(NvDsSinkSubBinConfig *config,
         } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_UDP_BUFFER_SIZE)) {
             config->encoder_config.udp_buffer_size =
                 g_key_file_get_uint64(key_file, group, CONFIG_GROUP_SINK_UDP_BUFFER_SIZE, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_LOCATION)) {
+            config->encoder_config.hls_location =
+                g_key_file_get_string(key_file, group, CONFIG_GROUP_SINK_HLS_LOCATION, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_MAX_FILES)) {
+            config->encoder_config.hls_max_files =
+                g_key_file_get_integer(key_file, group, CONFIG_GROUP_SINK_HLS_MAX_FILES, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_PLAYLIST_LENGTH)) {
+            config->encoder_config.hls_playlist_length = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SINK_HLS_PLAYLIST_LENGTH, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_PLAYLIST_LOCATION)) {
+            config->encoder_config.hls_playlist_location = g_key_file_get_string(
+                key_file, group, CONFIG_GROUP_SINK_HLS_PLAYLIST_LOCATION, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_PLAYLIST_ROOT)) {
+            config->encoder_config.hls_playlist_root =
+                g_key_file_get_string(key_file, group, CONFIG_GROUP_SINK_HLS_PLAYLIST_ROOT, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_TARGET_DURATION)) {
+            config->encoder_config.hls_target_duration = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SINK_HLS_TARGET_DURATION, &error);
             CHECK_ERROR(error);
         } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_OVERLAY_ID)) {
             config->render_config.overlay_id =
