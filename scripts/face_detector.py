@@ -223,7 +223,7 @@ class FaceDetector(object):
 
         bboxes = bboxes[: int(keepCount) * 4].reshape(-1, 4)
         scores = scores[: int(keepCount)]
-        landmarks = landmarks[: int(keepCount) * 10].reshape(-1, 10)
+        landmarks = landmarks[: int(keepCount) * 11].reshape(-1, 11)[..., :10]
 
         bboxes = self.remove_scale_padding(
             bboxes,

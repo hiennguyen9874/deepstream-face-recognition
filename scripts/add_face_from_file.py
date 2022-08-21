@@ -10,6 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 from face_alignment import FaceAligment
 from face_detector import FaceDetector
 from feature_extractor import FeatureExtractor
+from visualize import visualize
 
 
 def box_size(bbox):
@@ -27,11 +28,26 @@ def get_feature_vector(face_detector, feature_extractor, face_alignment, image_p
     idx_bbox = max(enumerate(bboxes_size), key=lambda x: x[1])[0]
     bbox, score, landmark = bboxes[idx_bbox], scores[idx_bbox], landmarks[idx_bbox]
 
+    # debug_image = visualize(
+    #     image_origin,
+    #     [bbox],
+    #     [landmark],
+    #     [1],
+    #     bbox_type="pascal_voc",
+    #     radius=10,
+    #     landmark_normalized=False,
+    # )
+    # image_path_debug = os.path.join(
+    #     "debugs", f"{os.path.splitext(os.path.basename(image_path))[0]}_detec.jpg"
+    # )
+    # os.makedirs(os.path.dirname(image_path_debug), exist_ok=True)
+    # cv2.imwrite(image_path_debug, debug_image)
+
     # Increase size of bbox
-    bbox[0] = max(0, bbox[0] - int((bbox[2] - bbox[0]) * 0.15))
-    bbox[1] = max(0, bbox[1] - int((bbox[3] - bbox[1]) * 0.15))
-    bbox[2] = min(bbox[2] + int((bbox[2] - bbox[0]) * 0.15), image_origin.shape[1])
-    bbox[3] = min(bbox[3] + int((bbox[3] - bbox[1]) * 0.15), image_origin.shape[0])
+    bbox[0] = max(0, bbox[0] - int((bbox[2] - bbox[0]) * 0.2))
+    bbox[1] = max(0, bbox[1] - int((bbox[3] - bbox[1]) * 0.2))
+    bbox[2] = min(bbox[2] + int((bbox[2] - bbox[0]) * 0.2), image_origin.shape[1])
+    bbox[3] = min(bbox[3] + int((bbox[3] - bbox[1]) * 0.2), image_origin.shape[0])
 
     # Crop box
     image_crop = image_origin.copy()[int(bbox[1]) : int(bbox[3]), int(bbox[0]) : int(bbox[2]), :]
@@ -49,6 +65,13 @@ def get_feature_vector(face_detector, feature_extractor, face_alignment, image_p
     # Aligment
     image_align = face_alignment(image_crop, landmark)
 
+    # image_path_debug = os.path.join(
+    #     "debugs", f"{os.path.splitext(os.path.basename(image_path))[0]}_align.jpg"
+    # )
+    # print(image_path_debug)
+    # os.makedirs(os.path.dirname(image_path_debug), exist_ok=True)
+    # cv2.imwrite(image_path_debug, image_align)
+
     # Extract feature
     return feature_extractor(image_align)
 
@@ -63,7 +86,7 @@ def main(image_path: str, image_name: str, faiss_path: str, label_path: str):
             "samples",
             "engines",
             "Primary_Detector",
-            "yolov5_6_n_fa_widerface_640_1_fp16_simplify_dynamic_1_16_0.2_0.6_100_nms_0807_193941.trt",
+            "yolov5_6_n_fa_widerface_640_4_fp16_simplify_dynamic_1_16_0.2_0.5_100_nms_0813_214508.trt",
         )
     )
 
