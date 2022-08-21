@@ -263,3 +263,4 @@ backup/
 faiss.index
 labels.txt
 faiss_xx/
+tris/
