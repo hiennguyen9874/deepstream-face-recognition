@@ -5,6 +5,7 @@ gpu-id=0
 net-scale-factor=0.00784313725
 offsets=127.5;127.5;127.5
 
+# Working with nvinfer-debug
 # net-scale-factor=0.0039215697906911373
 
 # 0: RGB 1: BGR 2: GRAY

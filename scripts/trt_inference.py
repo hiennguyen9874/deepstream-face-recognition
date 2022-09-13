@@ -96,7 +96,7 @@ def load_engine(trt_runtime, engine_path):
 class TRTInference(object):
     """Manages TensorRT objects for model inference."""
 
-    def __init__(self, trt_engine_path, max_batch_size, binding_to_type):
+    def __init__(self, trt_engine_path, max_batch_size):
         """Initializes TensorRT objects needed for model inference.
         Args:
             trt_engine_path (str): path where TensorRT engine should be stored
@@ -119,10 +119,19 @@ class TRTInference(object):
         print("Loading cached TensorRT engine from {}".format(trt_engine_path))
         self.trt_engine = load_engine(self.trt_runtime, trt_engine_path)
 
+        self.binding_to_type = dict()
+        for index in range(self.trt_engine.num_bindings):
+            name = self.trt_engine.get_binding_name(index)
+            dtype = trt.nptype(self.trt_engine.get_binding_dtype(index))
+            shape = tuple(self.trt_engine.get_binding_shape(index))
+            shape = list(map(lambda x: 1 if x == -1 else x, shape))
+            # data = torch.from_numpy(np.empty(shape, dtype=np.dtype(dtype))).to(device)
+            self.binding_to_type[name] = dtype
+
         # This allocates memory for network inputs/outputs on both CPU and GPU
         (self.inputs, self.outputs, self.bindings, self.stream, self.image_size) = allocate_buffers(
             self.trt_engine,
-            binding_to_type,
+            self.binding_to_type,
             self.max_batch_size,  # for dynamic shapes
         )
 

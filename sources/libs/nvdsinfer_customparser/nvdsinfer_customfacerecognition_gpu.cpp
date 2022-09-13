@@ -1,6 +1,13 @@
 #include <assert.h>
 #include <faiss/Index.h>
 #include <faiss/IndexFlat.h>
+#include <faiss/gpu/GpuAutoTune.h>
+#include <faiss/gpu/GpuCloner.h>
+#include <faiss/gpu/GpuClonerOptions.h>
+#include <faiss/gpu/GpuIndexFlat.h>
+#include <faiss/gpu/GpuIndexIVFFlat.h>
+#include <faiss/gpu/GpuResources.h>
+#include <faiss/gpu/StandardGpuResources.h>
 #include <faiss/index_io.h>
 #include <faiss/utils/distances.h>
 #include <stdio.h>
@@ -17,25 +24,27 @@
 #include "nvdsinfer_custom_impl.h"
 
 /* C-linkage to prevent name-mangling */
-extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
+extern "C" bool NvDsInferClassiferParseCustomFaceRecognitionGpu(
     std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
     NvDsInferNetworkInfo const &networkInfo,
     float classifierThreshold,
     std::vector<NvDsInferAttribute> &attrList,
     std::string &descString);
 
-extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
+extern "C" bool NvDsInferClassiferParseCustomFaceRecognitionGpu(
     std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
     NvDsInferNetworkInfo const &networkInfo,
     float classifierThreshold,
     std::vector<NvDsInferAttribute> &attrList,
     std::string &descString)
 {
-    static faiss::Index *faiss_index = nullptr;
+    static faiss::gpu::StandardGpuResources res;
+    static faiss::Index *faiss_cpu_index = nullptr;
+    static faiss::gpu::GpuIndex *faiss_gpu_index = nullptr;
     static std::vector<std::string> labels;
 
-    if (faiss_index == NULL) {
-        faiss_index = faiss::read_index(
+    if (faiss_cpu_index == NULL) {
+        faiss_cpu_index = faiss::read_index(
             "/home/jovyan/workspace/deepstreams/deepstream_face_detection/faiss.index");
 
         printf("index loaded!\n");
@@ -50,10 +59,14 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
                 printf("\t%s\n", line.c_str());
             }
             printf("\n");
-
         } else {
             fprintf(stderr, "failed to load labels file\n");
         }
+    }
+
+    if (faiss_gpu_index == NULL) {
+        faiss_gpu_index = reinterpret_cast<faiss::gpu::GpuIndex *>(
+            faiss::gpu::index_cpu_to_gpu(&res, 0, faiss_cpu_index));
     }
 
     const NvDsInferLayerInfo &layer = outputLayersInfo[0];
@@ -65,16 +78,16 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
     long I = 0;
     float D = 0;
 
-    faiss_index->search(1, buffer, 1, &D, &I);
+    faiss_gpu_index->search(1, buffer, 1, &D, &I);
 
     // std::cout << "I: " << I << " D: " << D << std::endl;
 
     if (D > classifierThreshold) {
         NvDsInferAttribute attr;
 
-        attr.attributeIndex = static_cast<unsigned int>(I);
+        attr.attributeIndex = I;
         attr.attributeValue = 1;
-        attr.attributeConfidence = static_cast<float>(D);
+        attr.attributeConfidence = D;
         attr.attributeLabel = strdup(labels[static_cast<std::size_t>(I)].c_str());
 
         attrList.push_back(attr);
@@ -86,4 +99,4 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
 }
 
 /* Check that the custom function has been defined correctly */
-CHECK_CUSTOM_CLASSIFIER_PARSE_FUNC_PROTOTYPE(NvDsInferClassiferParseCustomFaceRecognition);
+CHECK_CUSTOM_CLASSIFIER_PARSE_FUNC_PROTOTYPE(NvDsInferClassiferParseCustomFaceRecognitionGpu);
