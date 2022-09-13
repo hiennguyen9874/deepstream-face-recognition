@@ -12,8 +12,8 @@ offsets=127.5;127.5;127.5
 model-color-format=0
 
 # For ONNX Model
-model-engine-file=../engines/Secondary_Recognition/default_ms1mv2_112x112_8_fp16_simplify_dynamic_1_64.trt
-#model-engine-file=../engines/Secondary_Recognition/webface_r50.trt
+#model-engine-file=../engines/Secondary_Recognition/default_ms1mv2_112x112_8_fp16_simplify_dynamic_1_64.trt
+model-engine-file=../engines/Secondary_Recognition/webface_r50.trt
 force-implicit-batch-dim=0
 
 batch-size=8
