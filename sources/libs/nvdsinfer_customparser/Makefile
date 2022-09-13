@@ -38,11 +38,15 @@ CFLAGS+= -I../../includes \
 
 LIBS:= -lnvinfer -lnvparsers
 LIBS+= -L/usr/local/cuda-$(CUDA_VER)/lib64 -lcudart -lcublas
-LIBS+= -L/usr/local/lib/ -lfaiss /usr/local/lib/libfaiss.a
+LIBS+= -L/usr/local/lib/ -lfaiss /usr/local/lib/libfaiss.so
 
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 
-SRCFILES:= nvdsinfer_custombboxparser.cpp nvdsinfer_customfacedetectionparser.cpp nvdsinfer_customfacerecognition.cpp
+SRCFILES:= nvdsinfer_custombboxparser.cpp \
+		nvdsinfer_customfacedetectionparser.cpp \
+		nvdsinfer_customfacerecognition.cpp \
+		nvdsinfer_customfacerecognition_gpu.cpp
+
 TARGET_LIB:= libnvds_infercustomparser.so
 
 all: $(TARGET_LIB)

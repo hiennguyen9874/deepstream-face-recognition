@@ -19,11 +19,7 @@ class FeatureExtractor(object):
         self.batch_size = 1
         self.feature_dim = 512
 
-        self.model = TRTInference(
-            trt_engine_path,
-            -1,
-            {"images": np.float32, "output": np.float32},
-        )
+        self.model = TRTInference(trt_engine_path, -1)
 
         self.image_size = self.model.image_size
 
@@ -52,7 +48,7 @@ class FeatureExtractor(object):
 
 
 if __name__ == "__main__":
-    image_path = os.path.join(os.path.dirname(__file__), "..", "docs", "face_detection_sample.jpg")
+    image_path = os.path.join(os.path.dirname(__file__), "..", "docs", "A.png")
     bbox = [361.6000061, 271.40000153, 494.3999939, 434.40000916]
     bbox = [int(x) for x in bbox]
 
@@ -67,7 +63,7 @@ if __name__ == "__main__":
             "samples",
             "engines",
             "Secondary_Recognition",
-            "default_ms1mv2_112x112_8_fp16_simplify_dynamic_1_64.trt",
+            "webface_r50.trt",
         )
     )
 

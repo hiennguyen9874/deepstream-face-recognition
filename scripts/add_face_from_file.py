@@ -65,12 +65,11 @@ def get_feature_vector(face_detector, feature_extractor, face_alignment, image_p
     # Aligment
     image_align = face_alignment(image_crop, landmark)
 
-    # image_path_debug = os.path.join(
-    #     "debugs", f"{os.path.splitext(os.path.basename(image_path))[0]}_align.jpg"
-    # )
-    # print(image_path_debug)
-    # os.makedirs(os.path.dirname(image_path_debug), exist_ok=True)
-    # cv2.imwrite(image_path_debug, image_align)
+    image_path_debug = os.path.join(
+        "debugs", f"{os.path.splitext(os.path.basename(image_path))[0]}_align.jpg"
+    )
+    os.makedirs(os.path.dirname(image_path_debug), exist_ok=True)
+    cv2.imwrite(image_path_debug, cv2.cvtColor(image_align, cv2.COLOR_RGB2BGR))
 
     # Extract feature
     return feature_extractor(image_align)
@@ -97,6 +96,7 @@ def main(image_path: str, image_name: str, faiss_path: str, label_path: str):
             "samples",
             "engines",
             "Secondary_Recognition",
+            # "webface_r50.trt",
             "default_ms1mv2_112x112_8_fp16_simplify_dynamic_1_64.trt",
         )
     )
@@ -118,7 +118,10 @@ def main(image_path: str, image_name: str, faiss_path: str, label_path: str):
 
     print("index.is_trained", index.is_trained)
 
-    index.add(np.expand_dims(feature_vector, axis=0))
+    feature_vector = np.expand_dims(feature_vector, axis=0)
+    faiss.normalize_L2(feature_vector)
+
+    index.add(feature_vector)
     labels.append(image_name)
 
     print("index.ntotal", index.ntotal)

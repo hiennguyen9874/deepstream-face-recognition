@@ -9,11 +9,11 @@ enable=0
 enable=1
 gpu-id=0
 #Type - 1=CameraV4L2 2=URI 3=MultiURI 4: RTSP
-#type=2
-type=4
-#uri=file://../videos/Friends.mp4
+type=2
+#type=4
+uri=file://../videos/Friends.mp4
 #uri=rtsp://admin:dt%4012345@42.112.222.2:5554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-uri=rtsp://hpt:Hpt%4012345@shondohbt.cameraddns.net:554
+#uri=rtsp://hpt:Hpt%4012345@shondohbt.cameraddns.net:554
 # (0): memtype_device   - Memory type Device
 # (1): memtype_pinned   - Memory type Host Pinned
 # (2): memtype_unified  - Memory type Unified
@@ -43,7 +43,7 @@ rtsp-reconnect-attempts=5
 # nvbuf-memory-type=0
 
 [sink0]
-enable=0
+enable=1
 gpu-id=0
 #Type - 1=FakeSink 2=EglSink 3=File 4=UDPSink 5=nvoverlaysink 6=MsgConvBroker
 type=3
@@ -105,7 +105,7 @@ msg-broker-config=config_nvmsgbroker.txt
 new-api=1
 
 [sink3]
-enable=1
+enable=0
 source-id=0
 gpu-id=0
 #Type - 1=FakeSink 2=EglSink 3=File 4=RTSPStreaming 5=Overlay 6=MsgConvBroker 7=Hlssink
@@ -146,7 +146,7 @@ display-text=1
 [streammux]
 gpu-id=0
 ##Boolean property to inform muxer that sources are live
-live-source=1
+live-source=0
 # buffer-pool-size=1
 batch-size=1
 ##time out in usec, to wait after the first buffer is available

@@ -1592,61 +1592,63 @@ NvDsInferStatus NvDsInferContextImpl::queueInputBatch(NvDsInferContextBatchInput
     assert(m_InferStream && m_InputConsumedEvent && m_InferCompleteEvent);
 
 #ifdef DUMP_INPUT_TO_FILE
-#define DUMP_FRAME_CNT_START (500)
-#define DUMP_FRAME_CNT_STOP (1000)
-    if ((m_FrameCnt++ >= DUMP_FRAME_CNT_START) && (m_FrameCnt <= DUMP_FRAME_CNT_STOP)) {
-        void *hBuffer;
-        float scale = m_Preprocessor->getScale();
-        NvDsInferFormat format = m_Preprocessor->getNetworkFormat();
+#define DUMP_FRAME_CNT_START (0)
+#define DUMP_FRAME_CNT_STOP (100000)
+    if (m_UniqueID == 2) {
+        if ((m_FrameCnt++ >= DUMP_FRAME_CNT_START) && (m_FrameCnt <= DUMP_FRAME_CNT_STOP)) {
+            void *hBuffer;
+            float scale = m_Preprocessor->getScale();
+            NvDsInferFormat format = m_Preprocessor->getNetworkFormat();
 
-        printf("batchDims.batchSize = %d, scale = %f, format = %d\n", batchSize, scale, format);
-        assert(m_AllLayerInfo.size());
-        for (size_t i = 0; i < m_AllLayerInfo.size(); i++) {
-            NvDsInferLayerInfo &info = m_AllLayerInfo[i];
-            assert(info.inferDims.numElements > 0);
+            printf("batchDims.batchSize = %d, scale = %f, format = %d\n", batchSize, scale, format);
+            assert(m_AllLayerInfo.size());
+            for (size_t i = 0; i < m_AllLayerInfo.size(); i++) {
+                NvDsInferLayerInfo &info = m_AllLayerInfo[i];
+                assert(info.inferDims.numElements > 0);
 
-            if (info.isInput) {
-                int sizePerBatch = getElementSize(info.dataType) * info.inferDims.numElements;
+                if (info.isInput) {
+                    int sizePerBatch = getElementSize(info.dataType) * info.inferDims.numElements;
 
-                cudaDeviceSynchronize();
+                    cudaDeviceSynchronize();
 
-                for (int b = 0; b < batchSize; b++) {
-                    float *indBuf = (float *)bindings[i] + b * info.inferDims.numElements;
-                    int w = info.inferDims.d[2];
-                    int h = info.inferDims.d[1];
+                    for (int b = 0; b < batchSize; b++) {
+                        float *indBuf = (float *)bindings[i] + b * info.inferDims.numElements;
+                        int w = info.inferDims.d[2];
+                        int h = info.inferDims.d[1];
 
-                    if (scale < 1.0) {
-                        // R or B
-                        NvDsInferConvert_FtFTensor((float *)m_inputDumpDeviceBuf, indBuf, w, h, w,
-                                                   1 / scale, NULL, NULL);
-                        // G
-                        NvDsInferConvert_FtFTensor(((float *)m_inputDumpDeviceBuf + w * h),
-                                                   ((float *)indBuf + w * h), w, h, w, 1 / scale,
-                                                   NULL, NULL);
-                        // B or R
-                        NvDsInferConvert_FtFTensor(((float *)m_inputDumpDeviceBuf + 2 * w * h),
-                                                   ((float *)indBuf + 2 * w * h), w, h, w,
-                                                   1 / scale, NULL, NULL);
-                        indBuf = (float *)m_inputDumpDeviceBuf;
+                        if (scale < 1.0) {
+                            // R or B
+                            NvDsInferConvert_FtFTensor((float *)m_inputDumpDeviceBuf, indBuf, w, h,
+                                                       w, 1 / scale, NULL, NULL);
+                            // G
+                            NvDsInferConvert_FtFTensor(((float *)m_inputDumpDeviceBuf + w * h),
+                                                       ((float *)indBuf + w * h), w, h, w,
+                                                       1 / scale, NULL, NULL);
+                            // B or R
+                            NvDsInferConvert_FtFTensor(((float *)m_inputDumpDeviceBuf + 2 * w * h),
+                                                       ((float *)indBuf + 2 * w * h), w, h, w,
+                                                       1 / scale, NULL, NULL);
+                            indBuf = (float *)m_inputDumpDeviceBuf;
+                        }
+
+                        RETURN_CUDA_ERR(cudaMemcpy(m_inputDumpHostBuf, (void *)indBuf, sizePerBatch,
+                                                   cudaMemcpyDeviceToHost),
+                                        "postprocessing cudaMemcpyAsync for output buffers failed");
+
+                        bool dumpToRaw = false;
+
+                        std::string filename = "frame-" + std::to_string(m_FrameCnt) + "_gie-" +
+                                               std::to_string(m_UniqueID) + "_input-" +
+                                               std::to_string(i) + "_batch-" + std::to_string(b);
+
+                        if (dumpToRaw)
+                            filename += ".raw";
+                        else
+                            filename += ".png";
+
+                        dump_to_file(filename.c_str(), (unsigned char *)m_inputDumpHostBuf,
+                                     sizePerBatch, w, h, dumpToRaw, format);
                     }
-
-                    RETURN_CUDA_ERR(cudaMemcpy(m_inputDumpHostBuf, (void *)indBuf, sizePerBatch,
-                                               cudaMemcpyDeviceToHost),
-                                    "postprocessing cudaMemcpyAsync for output buffers failed");
-
-                    bool dumpToRaw = false;
-
-                    std::string filename = "frame-" + std::to_string(m_FrameCnt) + "_gie-" +
-                                           std::to_string(m_UniqueID) + "_input-" +
-                                           std::to_string(i) + "_batch-" + std::to_string(b);
-
-                    if (dumpToRaw)
-                        filename += ".raw";
-                    else
-                        filename += ".png";
-
-                    dump_to_file(filename.c_str(), (unsigned char *)m_inputDumpHostBuf,
-                                 sizePerBatch, w, h, dumpToRaw, format);
                 }
             }
         }

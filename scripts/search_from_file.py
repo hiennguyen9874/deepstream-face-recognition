@@ -63,7 +63,7 @@ def main(image_path: str, faiss_path: str, label_path: str):
             "samples",
             "engines",
             "Primary_Detector",
-            "yolov5_6_n_fa_widerface_640_1_fp16_simplify_dynamic_1_16_0.2_0.6_100_nms_0807_193941.trt",
+            "yolov5_6_n_fa_widerface_640_4_fp16_simplify_dynamic_1_16_0.2_0.5_100_nms_0813_214508.trt",
         )
     )
 
@@ -74,7 +74,7 @@ def main(image_path: str, faiss_path: str, label_path: str):
             "samples",
             "engines",
             "Secondary_Recognition",
-            "default_ms1mv2_112x112_8_fp16_simplify_dynamic_1_64.trt",
+            "webface_r50.trt",
         )
     )
 

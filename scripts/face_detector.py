@@ -18,18 +18,7 @@ class FaceDetector(object):
     def __init__(self, trt_engine_path: str):
         self.batch_size = 1
 
-        self.model = TRTInference(
-            trt_engine_path,
-            -1,
-            {
-                "images": np.float32,
-                "num_detections": np.int32,
-                "nms_bboxes": np.float32,
-                "nms_probs": np.float32,
-                "nms_classes": np.float32,
-                "nms_landmarks": np.float32,
-            },
-        )
+        self.model = TRTInference(trt_engine_path, -1)
 
         self.image_size = self.model.image_size
 
@@ -111,6 +100,8 @@ class FaceDetector(object):
             target_shape=self.image_size,
             rect_crop=False,
         )
+
+        # cv2.imwrite("debug.jpg", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
 
         input_array = np.ascontiguousarray(image.transpose((2, 0, 1)).astype(np.float32)) / 255.0
         input_array = np.expand_dims(input_array, axis=0)
@@ -213,7 +204,7 @@ class FaceDetector(object):
         return landmarks
 
     def __call__(self, image_path):
-        image_origin = self._imread(image_path)
+        image_origin = self._bgr2rgb(self._imread(image_path))
 
         input_array, shape_info = self._preprocess(image_origin)
 
@@ -252,12 +243,8 @@ if __name__ == "__main__":
             "samples",
             "engines",
             "Primary_Detector",
-            "yolov5_6_n_fa_widerface_640_1_fp16_simplify_dynamic_1_16_0.2_0.6_100_nms_0807_193941.trt",
+            "yolov5_6_n_fa_widerface_640_4_fp16_simplify_dynamic_1_16_0.2_0.5_100_nms_0813_214508.trt",
         )
     )
 
-    print(
-        face_detector(
-            os.path.join(os.path.dirname(__file__), "..", "docs", "face_detection_sample.jpg")
-        )[:3]
-    )
+    print(face_detector(os.path.join(os.path.dirname(__file__), "..", "docs", "A.png"))[:3])
