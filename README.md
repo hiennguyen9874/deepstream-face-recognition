@@ -1,3 +1,5 @@
+# Deepstream face recognition
+
 ## Export
 
 ### Export yolo face detection model
@@ -9,7 +11,12 @@
 ### Export face recognition model
 
 -   `python3 src/export_trt.py --cfg-source configs/source/ms1mv2.yml --cfg-model configs/model/default.yml --checkpoint-path saved/checkpoints/0805_100219/val_best_accuracy_agedb_30.pth --image-size 112,112 --batch-size 8 --min-batch-size 1 --max-batch-size 64 --half --simplify --dynamic --device 0`
+-   `python3 scripts/onnx2tensorrt.py --onnx-path weights_export/webface_r50.onnx --image-size 112,112 --batch-size 8 --min-batch-size 1 --max-batch-size 64 --half --simplify --dynamic`
 
 ## Add new face
 
+-   `python3 scripts/add_face_from_folder.py docs`
+
 ## Test
+
+-   `bash ./deepstream-app.sh`
