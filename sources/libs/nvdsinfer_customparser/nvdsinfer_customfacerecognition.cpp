@@ -36,13 +36,13 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
 
     if (faiss_index == NULL) {
         faiss_index = faiss::read_index(
-            "/home/jovyan/workspace/deepstreams/deepstream_face_detection/faiss.index");
+            "./faiss.index");
 
         printf("index loaded!\n");
 
         printf("labels is:\n");
         auto labels_file =
-            std::fstream("/home/jovyan/workspace/deepstreams/deepstream_face_detection/labels.txt");
+            std::fstream("./labels.txt");
         std::string line;
         if (labels_file.is_open()) {
             while (std::getline(labels_file, line)) {
@@ -67,7 +67,7 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
 
     faiss_index->search(1, buffer, 1, &D, &I);
 
-    // std::cout << "I: " << I << " D: " << D << std::endl;
+    std::cout << "I: " << I << " D: " << D << std::endl;
 
     if (D > classifierThreshold) {
         NvDsInferAttribute attr;

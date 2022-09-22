@@ -1,8 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 
-BOX_COLOR = (255, 0, 0)  # Red
-TEXT_COLOR = (255, 255, 255)  # White
+BOX_COLOR = (255, 0, 0)
 LEFT_COLOR = (255, 0, 0)
 CENTER_COLOR = (0, 255, 0)
 RIGHT_COLOR = (0, 0, 255)

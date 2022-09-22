@@ -7,7 +7,7 @@ net-scale-factor=0.0039215697906911373
 model-color-format=0
 
 # For Engine Model
-model-engine-file=../engines/Primary_Detector/yolov5_6_n_ws_widerface_640_1_fp16_simplify_dynamic_1_16_0.2_0.5_100_nms_0807_173751.trt
+model-engine-file=../engines/Primary_Detector/yolov7-tiny33-nms-trt.trt
 force-implicit-batch-dim=0
 
 batch-size=1
