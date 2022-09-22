@@ -85,7 +85,7 @@ def main(image_path: str, image_name: str, faiss_path: str, label_path: str):
             "samples",
             "engines",
             "Primary_Detector",
-            "yolov5_6_n_fa_widerface_640_4_fp16_simplify_dynamic_1_16_0.2_0.5_100_nms_0813_214508.trt",
+            "yolov7-tiny33-nms-trt.trt",
         )
     )
 
@@ -96,8 +96,7 @@ def main(image_path: str, image_name: str, faiss_path: str, label_path: str):
             "samples",
             "engines",
             "Secondary_Recognition",
-            # "webface_r50.trt",
-            "default_ms1mv2_112x112_8_fp16_simplify_dynamic_1_64.trt",
+            "webface_r50.trt",
         )
     )
 
@@ -139,11 +138,12 @@ def main(image_path: str, image_name: str, faiss_path: str, label_path: str):
 
 
 if __name__ == "__main__":
-    assert len(sys.argv) == 3
+    assert len(sys.argv) >= 3
 
-    main(
-        sys.argv[1],
-        sys.argv[2],
-        "faiss.index",
-        "labels.txt",
-    )
+    for i in range(2, len(sys.argv)):
+        main(
+            sys.argv[i],
+            sys.argv[1],
+            "faiss.index",
+            "labels.txt",
+        )

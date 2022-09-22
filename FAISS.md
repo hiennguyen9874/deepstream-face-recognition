@@ -11,7 +11,7 @@
 -   `cd swig-4.0.2/`
 -   `./configure --prefix=/usr/swig`
 -   `sudo make && sudo make install`
--   Add into `.zshrc`
+-   Add into `.bashrc` or `.zshrc`
     ```
     export SWIG_PATH=/usr/swig/bin
     export PATH=$SWIG_PATH:$PATH

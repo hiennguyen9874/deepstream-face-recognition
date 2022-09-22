@@ -175,7 +175,7 @@ gpu-id=0
 interval=0
 gie-unique-id=1
 nvbuf-memory-type=0
-config-file=./config_infer_primary2.txt
+config-file=./config_infer_primary.txt
 
 [tracker]
 enable=1

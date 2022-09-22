@@ -12,7 +12,6 @@ offsets=127.5;127.5;127.5
 model-color-format=0
 
 # For ONNX Model
-#model-engine-file=../engines/Secondary_Recognition/default_ms1mv2_112x112_8_fp16_simplify_dynamic_1_64.trt
 model-engine-file=../engines/Secondary_Recognition/webface_r50.trt
 force-implicit-batch-dim=0
 
@@ -33,7 +32,7 @@ network-type=1
 # current not working with deepstream 6.0.1
 classifier-type=facerecognition
 classifier-async-mode=0
-classifier-threshold=0.4
+classifier-threshold=0.25
 
 secondary-reinfer-interval=15
 

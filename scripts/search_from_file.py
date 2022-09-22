@@ -63,7 +63,7 @@ def main(image_path: str, faiss_path: str, label_path: str):
             "samples",
             "engines",
             "Primary_Detector",
-            "yolov5_6_n_fa_widerface_640_4_fp16_simplify_dynamic_1_16_0.2_0.5_100_nms_0813_214508.trt",
+            "yolov7-tiny33-nms-trt.trt",
         )
     )
 

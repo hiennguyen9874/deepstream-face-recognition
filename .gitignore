@@ -251,16 +251,21 @@ cython_debug/
 #.idea/
 
 outputs/*
+faiss_xx/*
+tris/*
+debugs/*
+logs/*
+bin/*
+backup/*
+.vscode/*
+
 *.trt
 *.engine
 *.onnx
 *.bin
 *.mp4
-logs/*
-bin/*
-backup/
-.vscode
+
 faiss.index
 labels.txt
-faiss_xx/
-tris/
+
+
