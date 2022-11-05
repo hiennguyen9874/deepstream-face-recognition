@@ -1,0 +1,20 @@
+version: "3.3"
+
+services:
+  core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_CONTAINER: nvcr.io/nvidia/deepstream:6.0.1-devel
+        TRT_OSS_CHECKOUT_TAG: release/8.2
+        DGPU_ARCHS: 75
+        TENSORRT_REPO: https://github.com/hiennguyen9874/TensorRT
+    command: ["bash", "./run.sh"]
+    volumes:
+      - ./outputs:/app/outputs
+    environment:
+      # USE_NEW_NVSTREAMMUX: "yes"
+      NVIDIA_VISIBLE_DEVICES: 0
+      NVIDIA_DRIVER_CAPABILITIES: all
+    runtime: nvidia

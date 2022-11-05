@@ -53,7 +53,7 @@ pre-cluster-threshold=0.2
 roi-top-offset=0
 roi-bottom-offset=0
 
-detected-min-w=0
-detected-min-h=0
+detected-min-w=16
+detected-min-h=16
 detected-max-w=0
 detected-max-h=0

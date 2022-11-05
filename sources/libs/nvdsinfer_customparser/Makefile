@@ -25,6 +25,8 @@ ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
 endif
 
+WITH_FAISS?=0
+
 CC:= g++
 
 CFLAGS:= -Wall -std=c++11
@@ -38,14 +40,20 @@ CFLAGS+= -I../../includes \
 
 LIBS:= -lnvinfer -lnvparsers
 LIBS+= -L/usr/local/cuda-$(CUDA_VER)/lib64 -lcudart -lcublas
-LIBS+= -L/usr/local/lib/ -lfaiss /usr/local/lib/libfaiss.so
+LIBS+= -L/usr/local/lib/
+
+ifeq ($(WITH_FAISS),1)
+LIBS+= -lfaiss /usr/local/lib/libfaiss.so
+endif
 
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 
 SRCFILES:= nvdsinfer_custombboxparser.cpp \
-		nvdsinfer_customfacedetectionparser.cpp \
-		nvdsinfer_customfacerecognition.cpp \
-		nvdsinfer_customfacerecognition_gpu.cpp
+		nvdsinfer_customfacedetectionparser.cpp
+
+ifeq ($(WITH_FAISS),1)
+SRCFILES+= nvdsinfer_customfacerecognition.cpp nvdsinfer_customfacerecognition_gpu.cpp
+endif
 
 TARGET_LIB:= libnvds_infercustomparser.so
 

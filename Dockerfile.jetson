@@ -1,0 +1,15 @@
+ARG BASE_CONTAINER=hiennguyen9874/jetson-deepstream:deepstream-6.0.1-opencv
+FROM $BASE_CONTAINER as base
+
+ENV CUDA_VER=10.2
+ENV WITH_OPENCV=1
+ENV WITH_FAISS=0
+
+WORKDIR /app
+COPY ./ /app
+# RUN ["chmod", "+x", "/app/sources/install.sh"]
+# RUN ["chmod", "+x", "/app/sources/uninstall.sh"]
+# RUN ./sources/uninstall.sh
+# RUN ./sources/install.sh
+
+CMD [ "./bin/deepstream-app", "-c", "samples/configs/deepstream_app_jetson.txt" ]
