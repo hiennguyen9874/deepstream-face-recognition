@@ -33,7 +33,8 @@ LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
 
 CFLAGS+= -fPIC -Wno-deprecated-declarations -std=c++14 \
 	 -I /usr/local/cuda-$(CUDA_VER)/include \
-	 -I ../../includes -DNDEBUG
+	 -I ../../includes \
+	 -DNDEBUG
 
 ifeq ($(DUMP_INPUT_TO_FILE),1)
 CFLAGS+= -DDUMP_INPUT_TO_FILE
