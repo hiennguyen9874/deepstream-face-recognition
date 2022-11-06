@@ -27,6 +27,10 @@ https://github.com/dusty-nv/jetson-containers#docker-default-runtime
 - cp ./libnvinfer_plugin.so.8.2.3 $(find /usr/lib/aarch64-linux-gnu/ -name 'libnvinfer_plugin.so.8.*' -print -quit)
 - ldconfig
 
+# Docker
+- `docker build -t hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1 -f Dockerfile.jetson .`
+- `docker push hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1`
+
 # Install Opencv
 Inside docker or outside docker
 https://forums.developer.nvidia.com/t/jetson-docker-image-opencv/164792

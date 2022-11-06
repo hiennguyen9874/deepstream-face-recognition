@@ -52,7 +52,7 @@ SRCFILES:= nvdsinfer_custombboxparser.cpp \
 		nvdsinfer_customfacedetectionparser.cpp
 
 ifeq ($(WITH_FAISS),1)
-SRCFILES+= nvdsinfer_customfacerecognition.cpp nvdsinfer_customfacerecognition_gpu.cpp
+SRCFILES+= nvdsinfer_customfacerecognition.cpp
 endif
 
 TARGET_LIB:= libnvds_infercustomparser.so
