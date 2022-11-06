@@ -1,9 +1,61 @@
 ARG BASE_CONTAINER=hiennguyen9874/jetson-deepstream:deepstream-6.0.1-opencv
 FROM $BASE_CONTAINER as base
 
+# Enviroment
+ENV SWIG_PATH=/usr/swig/bin
+ENV PATH=$SWIG_PATH:$PATH
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libatlas-base-dev libatlas3-base \
+    clang-8 \
+    libopenblas-dev \
+    libpcre2-dev \
+    flex bison \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt autoremove \
+    && apt-get clean
+
+FROM base as builder
+
+WORKDIR /tmp
+RUN wget https://prdownloads.sourceforge.net/swig/swig-4.1.0.tar.gz
+RUN tar -xzvf swig-4.1.0.tar.gz
+WORKDIR /tmp/swig-4.1.0
+RUN ./configure --prefix=/usr/swig \
+    && make \
+    && make install
+# /usr/swig/
+ENV SWIG_PATH=/usr/swig/bin
+ENV PATH=$SWIG_PATH:$PATH
+
+WORKDIR /tmp
+RUN git clone https://github.com/facebookresearch/faiss.git
+WORKDIR /tmp/faiss
+RUN mkdir build
+RUN /cmake/bin/cmake -B build \
+    # -DCMAKE_CXX_COMPILER=clang++-8 \
+    -DFAISS_ENABLE_GPU=OFF \
+    -DFAISS_ENABLE_PYTHON=OFF \
+    -DFAISS_OPT_LEVEL=generic \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
+    -DBUILD_SHARED_LIBS=ON .
+RUN make -C build -j faiss && make -C build install
+# /usr/local/include/faiss, /usr/local/share/faiss, /usr/local/lib/libfaiss.so
+
+FROM base
+
+COPY --from=builder /usr/swig /usr/swig
+COPY --from=builder /usr/local/include/faiss /usr/local/include/faiss
+COPY --from=builder /usr/local/share/faiss /usr/local/share/faiss
+COPY --from=builder /usr/local/lib/libfaiss.so /usr/local/lib/libfaiss.so
+
 ENV CUDA_VER=10.2
 ENV WITH_OPENCV=1
-ENV WITH_FAISS=0
+ENV WITH_FAISS=1
 
 WORKDIR /app
 COPY ./ /app

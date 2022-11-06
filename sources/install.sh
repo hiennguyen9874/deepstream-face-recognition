@@ -2,7 +2,7 @@
 
 export PWD=`pwd`
 export DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-export CUDA_VER=11.4
+# export CUDA_VER=11.4
 
 cd $DIR
 
