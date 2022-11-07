@@ -17,6 +17,8 @@ ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
 endif
 
+TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
+
 CXX:= g++
 SRCS:= gstnvinfer.cpp  gstnvinfer_allocator.cpp gstnvinfer_property_parser.cpp \
        gstnvinfer_meta_utils.cpp gstnvinfer_impl.cpp
@@ -29,7 +31,8 @@ CFLAGS+= -fPIC -std=c++11 -DDS_VERSION=\"6.0.1\" \
 	 -I /usr/local/cuda-$(CUDA_VER)/include \
 	 -I ../../includes \
 	 -I ../gst-nvdspreprocess/include \
-	 -I ../../libs/nvdsinfer -DNDEBUG
+	 -I ../../libs/nvdsinfer \
+	 -DNDEBUG
 
 GST_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/gst-plugins/
 LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
@@ -49,6 +52,7 @@ ifeq ($(WITH_OPENCV),1)
 CFLAGS+= -DWITH_OPENCV
 ifeq ($(TARGET_DEVICE),aarch64)
 	PKGS+= opencv4
+	CFLAGS+= -I/usr/include/opencv4
 else
 	PKGS+= opencv
 endif

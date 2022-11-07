@@ -69,6 +69,7 @@ ifeq ($(WITH_OPENCV),1)
 CFLAGS+= -DWITH_OPENCV
 ifeq ($(TARGET_DEVICE),aarch64)
 	PKGS+= opencv4
+	CFLAGS+= -I/usr/include/opencv4
 else
 	PKGS+= opencv
 endif
