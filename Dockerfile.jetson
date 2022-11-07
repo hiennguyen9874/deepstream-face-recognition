@@ -21,29 +21,38 @@ RUN apt-get update && \
 FROM base as builder
 
 WORKDIR /tmp
-RUN wget https://prdownloads.sourceforge.net/swig/swig-4.1.0.tar.gz
-RUN tar -xzvf swig-4.1.0.tar.gz
-WORKDIR /tmp/swig-4.1.0
-RUN ./configure --prefix=/usr/swig \
+RUN wget https://prdownloads.sourceforge.net/swig/swig-4.1.0.tar.gz \
+    && tar -xzvf swig-4.1.0.tar.gz \
+    && rm swig-4.1.0.tar.gz \
+    && cd /tmp/swig-4.1.0 \
+    && ./configure --prefix=/usr/swig \
     && make \
-    && make install
+    && make install \
+    && cd /tmp \
+    && rm -rf /tmp/swig-4.1.0
 # /usr/swig/
 ENV SWIG_PATH=/usr/swig/bin
 ENV PATH=$SWIG_PATH:$PATH
 
 WORKDIR /tmp
-RUN git clone https://github.com/facebookresearch/faiss.git
-WORKDIR /tmp/faiss
-RUN mkdir build
-RUN /cmake/bin/cmake -B build \
+RUN git clone https://github.com/facebookresearch/faiss.git \
+    && cd /tmp/faiss \
+    && mkdir build \
+    && /cmake/bin/cmake -B build \
     # -DCMAKE_CXX_COMPILER=clang++-8 \
     -DFAISS_ENABLE_GPU=OFF \
-    -DFAISS_ENABLE_PYTHON=OFF \
+    -DFAISS_ENABLE_PYTHON=ON \
     -DFAISS_OPT_LEVEL=generic \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTING=OFF \
-    -DBUILD_SHARED_LIBS=ON .
-RUN make -C build -j faiss && make -C build install
+    -DBUILD_SHARED_LIBS=ON . \
+    && make -C build -j faiss \
+    && make -C build -j swigfaiss \
+    && make -C build install \
+    && cd /tmp \
+    && mkdir /tmp/faiss-python \
+    && cp -r /tmp/faiss/build/faiss /tmp/faiss-python \
+    && rm -rf /tmp/faiss
 # /usr/local/include/faiss, /usr/local/share/faiss, /usr/local/lib/libfaiss.so
 
 FROM base
@@ -52,6 +61,48 @@ COPY --from=builder /usr/swig /usr/swig
 COPY --from=builder /usr/local/include/faiss /usr/local/include/faiss
 COPY --from=builder /usr/local/share/faiss /usr/local/share/faiss
 COPY --from=builder /usr/local/lib/libfaiss.so /usr/local/lib/libfaiss.so
+
+COPY --from=builder /tmp/faiss-python /tmp/faiss-python
+WORKDIR /tmp
+RUN cd /tmp/faiss-python/faiss/python \
+    && python3 -m pip install setuptools \
+    && python3 setup.py install \
+    && cd /tmp \
+    && rm -rf /tmp/faiss-python
+
+# Pytorch
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    autoconf bc build-essential g++-8 gcc-8 clang-8 \
+    lld-8 gettext-base gfortran-8 iputils-ping libbz2-dev \
+    libc++-dev libcgal-dev libffi-dev libfreetype6-dev libhdf5-dev \
+    libjpeg-dev liblzma-dev libncurses5-dev libncursesw5-dev libpng-dev \
+    libreadline-dev libssl-dev libsqlite3-dev libxml2-dev libxslt-dev \
+    locales moreutils openssl python-openssl \
+    rsync scons python3-pip libopenblas-dev \
+    # llvm-8 \
+    locales \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt autoremove \
+    && apt-get clean
+
+ENV TORCH_INSTALL=https://developer.download.nvidia.cn/compute/redist/jp/v461/pytorch/torch-1.11.0a0+17540c5+nv22.01-cp36-cp36m-linux_aarch64.whl
+ENV LD_LIBRARY_PATH=/usr/lib/llvm-8/lib:$LD_LIBRARY_PATH
+
+# Fix scikit-image https://github.com/scikit-image/scikit-image/issues/4705
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools Cython wheel \
+    && python3 -m pip install --no-cache-dir aiohttp numpy=='1.19.4' scipy=='1.5.3' \
+    && python3 -m pip install --no-cache-dir --upgrade protobuf \
+    && python3 -m pip install --no-cache-dir $TORCH_INSTALL \
+    && ln -s /usr/include/locale.h /usr/include/xlocale.h \
+    && python3 -m pip install --no-cache-dir pycuda six 
+
+RUN python3 -m pip install --no-cache-dir scikit-image==0.17.1 matplotlib
 
 ENV CUDA_VER=10.2
 ENV WITH_OPENCV=1
