@@ -104,6 +104,12 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools Cython wheel 
 
 RUN python3 -m pip install --no-cache-dir scikit-image==0.17.1 matplotlib
 
+COPY --from=builder /tmp/faiss-python /tmp/faiss-python
+WORKDIR /tmp
+RUN cp /tmp/faiss-python/faiss/python/*.so /usr/local/lib/ \
+    && cd /tmp \
+    && rm -rf /tmp/faiss-python
+
 ENV CUDA_VER=10.2
 ENV WITH_OPENCV=1
 ENV WITH_FAISS=1

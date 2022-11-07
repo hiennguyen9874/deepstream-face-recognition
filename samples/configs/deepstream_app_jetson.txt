@@ -102,5 +102,15 @@ enable-batch-process=1
 enable-past-frame=0
 display-tracking-id=1
 
+[secondary-gie0]
+enable=1
+batch-size=8
+gpu-id=0
+gie-unique-id=2
+operate-on-gie-id=1
+# operate-on-class-ids=0;
+nvbuf-memory-type=0
+config-file=config_infer_secondary_recognition2.txt
+
 [tests]
 file-loop=0
