@@ -96,7 +96,7 @@ def main(image_path: str, image_name: str, faiss_path: str, label_path: str):
             "samples",
             "engines",
             "Secondary_Recognition",
-            "webface_r50.trt",
+            "webface_r50_dynamic_simplify_cleanup.trt",
         )
     )
 

@@ -7,7 +7,7 @@ net-scale-factor=0.0039215697906911373
 model-color-format=0
 
 # For Engine Model
-model-engine-file=../engines/Primary_Detector/yolov7-tiny33-nms-trt.trt
+model-engine-file=../engines/Primary_Detector/yolov7-tiny41-nms-trt.trt
 force-implicit-batch-dim=0
 
 batch-size=1
@@ -38,8 +38,7 @@ maintain-aspect-ratio=1
 
 symmetric-padding=1
 
-parse-bbox-face-detection-func-name=NvDsInferParseCustomBatchedNMSTLTYoloFaceDetection
-# parse-bbox-func-name=NvDsInferParseCustomBatchedNMSTLT
+parse-bbox-face-detection-func-name=NvDsInferParseCustomEfficientNMSTLTLandmark
 custom-lib-path=../../lib/libnvds_infercustomparser.so
 
 output-face-detection-landmark=1
@@ -48,11 +47,9 @@ input-object-min-height=0
 input-object-min-width=0
 
 [class-attrs-all]
-pre-cluster-threshold=0.2
-
+pre-cluster-threshold=0.25
 roi-top-offset=0
 roi-bottom-offset=0
-
 detected-min-w=0
 detected-min-h=0
 detected-max-w=0
