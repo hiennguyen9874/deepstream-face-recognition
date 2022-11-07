@@ -44,14 +44,12 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognitionGpu(
     static std::vector<std::string> labels;
 
     if (faiss_cpu_index == NULL) {
-        faiss_cpu_index = faiss::read_index(
-            "./faiss.index");
+        faiss_cpu_index = faiss::read_index("./faiss.index");
 
         printf("index loaded!\n");
 
         printf("labels is:\n");
-        auto labels_file =
-            std::fstream("./labels.txt");
+        auto labels_file = std::fstream("./labels.txt");
         std::string line;
         if (labels_file.is_open()) {
             while (std::getline(labels_file, line)) {

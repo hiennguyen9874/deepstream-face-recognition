@@ -12,7 +12,7 @@ offsets=127.5;127.5;127.5
 model-color-format=0
 
 # For ONNX Model
-model-engine-file=../engines/Secondary_Recognition/webface_r50.trt
+model-engine-file=../engines/Secondary_Recognition/webface_r50_dynamic_simplify_cleanup.trt
 force-implicit-batch-dim=0
 
 batch-size=8
@@ -60,5 +60,4 @@ input-object-min-height=0
 input-object-min-width=0
 
 parse-classifier-func-name=NvDsInferClassiferParseCustomFaceRecognition
-#parse-classifier-func-name=NvDsInferClassiferParseCustomFaceRecognitionGpu
 custom-lib-path=../../lib/libnvds_infercustomparser.so

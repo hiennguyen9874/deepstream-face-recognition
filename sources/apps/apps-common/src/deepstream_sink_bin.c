@@ -765,7 +765,6 @@ static gboolean create_hlssink_bin(NvDsSinkEncoderConfig *config, NvDsSinkBinSub
                  "playlist-location", config->hls_playlist_location, "playlist-root",
                  config->hls_playlist_root, "target-duration", config->hls_target_duration, NULL);
 
-
     gst_bin_add_many(GST_BIN(bin->bin), bin->queue, bin->cap_filter, bin->transform, bin->encoder,
                      bin->codecparse, bin->sink, NULL);
 

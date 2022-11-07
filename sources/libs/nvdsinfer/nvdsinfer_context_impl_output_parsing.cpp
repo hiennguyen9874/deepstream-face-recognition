@@ -960,7 +960,9 @@ void InferPostprocessor::releaseFrameOutput(NvDsInferFrameOutput &frameOutput)
     case NvDsInferNetworkType_FaceDetection:
         for (unsigned int j = 0; j < frameOutput.detectionOutput.numObjects; j++) {
             free(frameOutput.detectionOutput.objects[j].label);
-            if (frameOutput.detectionOutput.objects[j].landmark != NULL && frameOutput.detectionOutput.objects[j].num_landmark > 0 && frameOutput.detectionOutput.objects[j].landmark_size > 0)
+            if (frameOutput.detectionOutput.objects[j].landmark != NULL &&
+                frameOutput.detectionOutput.objects[j].num_landmark > 0 &&
+                frameOutput.detectionOutput.objects[j].landmark_size > 0)
                 delete frameOutput.detectionOutput.objects[j].landmark;
         }
         delete[] frameOutput.detectionOutput.objects;

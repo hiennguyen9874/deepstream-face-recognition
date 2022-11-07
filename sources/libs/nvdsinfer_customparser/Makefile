@@ -49,6 +49,7 @@ endif
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 
 SRCFILES:= nvdsinfer_custombboxparser.cpp \
+		nvdsinfer_custombboxlandmarkparser.cpp \
 		nvdsinfer_customfacedetectionparser.cpp
 
 ifeq ($(WITH_FAISS),1)
