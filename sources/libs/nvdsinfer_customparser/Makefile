@@ -45,7 +45,8 @@ LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 SRCFILES:= nvdsinfer_custombboxparser.cpp \
 		nvdsinfer_customfacedetectionparser.cpp \
 		nvdsinfer_customfacerecognition.cpp \
-		nvdsinfer_customfacerecognition_gpu.cpp
+		nvdsinfer_customfacerecognition_gpu.cpp \
+		nvdsinfer_custombboxlandmarkparser.cpp
 
 TARGET_LIB:= libnvds_infercustomparser.so
 

@@ -1459,7 +1459,6 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
 #ifdef DUMP_INPUT_TO_FILE
             id_cropobj++;
 #endif
-
             obj_meta = batch->frames[i].obj_meta;
 
             if (obj_meta == NULL)

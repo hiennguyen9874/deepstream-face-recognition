@@ -4,7 +4,11 @@
 #include <faiss/index_io.h>
 #include <faiss/utils/distances.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
 
 #include <codecvt>
 #include <cstring>
@@ -33,16 +37,24 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
 {
     static faiss::Index *faiss_index = nullptr;
     static std::vector<std::string> labels;
+    static char *lastModified = new char[100];
+    static char *curModified = new char[100];
+    static int intervalNumber = -1;
+    intervalNumber++;
 
-    if (faiss_index == NULL) {
-        faiss_index = faiss::read_index(
-            "./faiss.index");
+    if (intervalNumber % 10 == 0) {
+        struct stat attr;
+        stat("./faiss.index", &attr);
+        strcpy(curModified, ctime(&attr.st_mtime));
+    }
+
+    if (faiss_index == NULL || strcmp(curModified, lastModified) != 0) {
+        faiss_index = faiss::read_index("./faiss.index");
 
         printf("index loaded!\n");
 
         printf("labels is:\n");
-        auto labels_file =
-            std::fstream("./labels.txt");
+        auto labels_file = std::fstream("./labels.txt");
         std::string line;
         if (labels_file.is_open()) {
             while (std::getline(labels_file, line)) {
@@ -54,6 +66,7 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
         } else {
             fprintf(stderr, "failed to load labels file\n");
         }
+        strcpy(lastModified, curModified);
     }
 
     const NvDsInferLayerInfo &layer = outputLayersInfo[0];
@@ -67,7 +80,7 @@ extern "C" bool NvDsInferClassiferParseCustomFaceRecognition(
 
     faiss_index->search(1, buffer, 1, &D, &I);
 
-    std::cout << "I: " << I << " D: " << D << std::endl;
+    // std::cout << "I: " << I << " D: " << D << std::endl;
 
     if (D > classifierThreshold) {
         NvDsInferAttribute attr;
