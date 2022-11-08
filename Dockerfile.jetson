@@ -42,6 +42,7 @@ RUN git clone https://github.com/facebookresearch/faiss.git \
     # -DCMAKE_CXX_COMPILER=clang++-8 \
     -DFAISS_ENABLE_GPU=OFF \
     -DFAISS_ENABLE_PYTHON=ON \
+    -DPython_EXECUTABLE=$(which python3) \
     -DFAISS_OPT_LEVEL=generic \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTING=OFF \
@@ -67,6 +68,7 @@ WORKDIR /tmp
 RUN cd /tmp/faiss-python/faiss/python \
     && python3 -m pip install setuptools \
     && python3 setup.py install \
+    && cp /tmp/faiss-python/faiss/python/*.so /usr/local/lib/ \
     && cd /tmp \
     && rm -rf /tmp/faiss-python
 
@@ -100,15 +102,9 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools Cython wheel 
     && python3 -m pip install --no-cache-dir --upgrade protobuf \
     && python3 -m pip install --no-cache-dir $TORCH_INSTALL \
     && ln -s /usr/include/locale.h /usr/include/xlocale.h \
-    && python3 -m pip install --no-cache-dir pycuda six 
+    && python3 -m pip install --no-cache-dir pycuda six
 
 RUN python3 -m pip install --no-cache-dir scikit-image==0.17.1 matplotlib
-
-COPY --from=builder /tmp/faiss-python /tmp/faiss-python
-WORKDIR /tmp
-RUN cp /tmp/faiss-python/faiss/python/*.so /usr/local/lib/ \
-    && cd /tmp \
-    && rm -rf /tmp/faiss-python
 
 ENV CUDA_VER=10.2
 ENV WITH_OPENCV=1
@@ -116,9 +112,5 @@ ENV WITH_FAISS=1
 
 WORKDIR /app
 COPY ./ /app
-# RUN ["chmod", "+x", "/app/sources/install.sh"]
-# RUN ["chmod", "+x", "/app/sources/uninstall.sh"]
-# RUN ./sources/uninstall.sh
-# RUN ./sources/install.sh
 
 CMD [ "./bin/deepstream-app", "-c", "samples/configs/deepstream_app_jetson.txt" ]
