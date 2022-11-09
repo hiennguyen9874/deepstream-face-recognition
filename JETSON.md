@@ -1,6 +1,9 @@
 # Default runtime
 https://github.com/dusty-nv/jetson-containers#docker-default-runtime
 
+# Install nvidia-tensorrt
+- `sudo apt install nvidia-tensorrt`
+
 # Install custom tensorRT
 - Build tensorrt
     ```
@@ -30,6 +33,7 @@ https://github.com/dusty-nv/jetson-containers#docker-default-runtime
 # Docker
 - `docker build -t hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1 -f Dockerfile.jetson .`
 - `docker push hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1`
+- `docker run --runtime nvidia --device /dev/video1 --rm -it -v $(pwd):/app hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1 bash`
 
 # Install Opencv
 Inside docker or outside docker

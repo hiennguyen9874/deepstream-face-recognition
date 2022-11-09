@@ -106,9 +106,12 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools Cython wheel 
 
 RUN python3 -m pip install --no-cache-dir scikit-image==0.17.1 matplotlib
 
-ENV CUDA_VER=10.2
-ENV WITH_OPENCV=1
-ENV WITH_FAISS=1
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3-tk \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt autoremove \
+    && apt-get clean
 
 WORKDIR /app
 COPY ./ /app

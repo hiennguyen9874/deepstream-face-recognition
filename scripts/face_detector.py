@@ -243,7 +243,7 @@ if __name__ == "__main__":
             "samples",
             "engines",
             "Primary_Detector",
-            "yolov7-tiny33-nms-trt.trt",
+            "yolov7-tiny41-nms-trt.trt",
         )
     )
 

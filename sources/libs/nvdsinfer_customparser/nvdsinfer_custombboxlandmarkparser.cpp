@@ -87,7 +87,6 @@ extern "C" bool NvDsInferParseCustomBatchedNMSTLTLandmark(
         object.num_landmark = num_landmark;
         object.landmark_size = sizeof(float) * num_landmark * 2;
 
-
         /* Clip object box co-ordinates to network resolution */
         object.left = CLIP(p_bboxes[4 * i], 0, networkInfo.width - 1);
         object.top = CLIP(p_bboxes[4 * i + 1], 0, networkInfo.height - 1);
@@ -183,5 +182,7 @@ extern "C" bool NvDsInferParseCustomEfficientNMSTLTLandmark(
     return true;
 }
 
-CHECK_CUSTOM_FACE_DETECTION_LANDMARK_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomBatchedNMSTLTLandmark);
-CHECK_CUSTOM_FACE_DETECTION_LANDMARK_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomEfficientNMSTLTLandmark);
+CHECK_CUSTOM_FACE_DETECTION_LANDMARK_PARSE_FUNC_PROTOTYPE(
+    NvDsInferParseCustomBatchedNMSTLTLandmark);
+CHECK_CUSTOM_FACE_DETECTION_LANDMARK_PARSE_FUNC_PROTOTYPE(
+    NvDsInferParseCustomEfficientNMSTLTLandmark);

@@ -954,12 +954,20 @@ static gboolean gst_nvinfer_start(GstBaseTransform *btrans)
                 gst_object_unref(a);
         };
 
+#ifdef __aarch64__
+        std::unique_ptr<GstAllocator, decltype(allocator_deleter)> allocator_ptr(
+            gst_nvinfer_allocator_new(nvinfer->network_width, nvinfer->network_height, color_format,
+                                      nvinfer->max_batch_size, nvinfer->gpu_id, NVBUF_MEM_DEFAULT),
+            allocator_deleter);
+#else
         std::unique_ptr<GstAllocator, decltype(allocator_deleter)> allocator_ptr(
             gst_nvinfer_allocator_new(
                 nvinfer->network_width, nvinfer->network_height, color_format,
                 nvinfer->max_batch_size, nvinfer->gpu_id,
                 (nvinfer->face_alignment) ? NVBUF_MEM_CUDA_UNIFIED : NVBUF_MEM_DEFAULT),
             allocator_deleter);
+#endif
+
         memset(&allocation_params, 0, sizeof(allocation_params));
         gst_buffer_pool_config_set_allocator(config_ptr.get(), allocator_ptr.get(),
                                              &allocation_params);
@@ -1480,8 +1488,10 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
                                 ("%s:buffer map to be accessed by CPU failed", __func__), (NULL));
                             return FALSE;
                         }
-                        // sync mapped data for CPU access
-                        NvBufSurfaceSyncForCpu(mem->surf, i, 0);
+                        if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
+                            // sync mapped data for CPU access
+                            NvBufSurfaceSyncForCpu(mem->surf, i, 0);
+                        }
 
 #ifdef WITH_OPENCV
                         in_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
@@ -1572,9 +1582,11 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
                             return FALSE;
                         }
 
-                        /* Cache the mapped data for device access */
-                        if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY)
-                            NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+                        // TODO:
+                        // /* Cache the mapped data for device access */
+                        // if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
+                        //     NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+                        // }
                     }
 
                     break;
