@@ -1418,9 +1418,7 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
 
 #ifdef WITH_OPENCV
     cv::Mat in_mat;
-#ifdef DUMP_INPUT_TO_FILE
     cv::Mat out_mat;
-#endif
 #endif
 
     /* Set the transform session parameters for the conversions executed in this

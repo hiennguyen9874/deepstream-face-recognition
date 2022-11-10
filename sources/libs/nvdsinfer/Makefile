@@ -13,9 +13,9 @@ ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
 endif
 
-WITH_OPENCV?=1
+WITH_OPENCV?=0
 
-DUMP_INPUT_TO_FILE?=1
+DUMP_INPUT_TO_FILE?=0
 
 NVCC:=/usr/local/cuda-$(CUDA_VER)/bin/nvcc
 CXX:= g++
