@@ -295,6 +295,8 @@ NvDsInferStatus InferPreprocessor::transform(NvDsInferContextBatchInput &batchIn
                         "Failed to make stream wait on event");
     }
 
+    std::cout << "transform.m_NetworkInputFormat=" << m_NetworkInputFormat << std::endl;
+
     /* Find the required conversion function. */
     switch (m_NetworkInputFormat) {
     case NvDsInferFormat_RGB:

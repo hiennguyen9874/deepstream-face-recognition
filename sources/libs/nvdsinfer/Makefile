@@ -15,7 +15,7 @@ endif
 
 WITH_OPENCV?=1
 
-DUMP_INPUT_TO_FILE?=0
+DUMP_INPUT_TO_FILE?=1
 
 NVCC:=/usr/local/cuda-$(CUDA_VER)/bin/nvcc
 CXX:= g++

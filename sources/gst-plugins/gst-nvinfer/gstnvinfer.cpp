@@ -903,6 +903,8 @@ static gboolean gst_nvinfer_start(GstBaseTransform *btrans)
 
     NvBufSurfTransformSetSessionParams(&nvinfer->transform_config_params);
 
+    std::cout << "gst_nvinfer_start.init_params->networkInputFormat=" << init_params->networkInputFormat << std::endl;
+
     /* Based on the network input requirements decide the buffer pool color format. */
     switch (init_params->networkInputFormat) {
     case NvDsInferFormat_RGB:
@@ -926,6 +928,8 @@ static gboolean gst_nvinfer_start(GstBaseTransform *btrans)
                           (nullptr));
         return FALSE;
     }
+
+    std::cout << "gst_nvinfer_start.color_format=" << color_format << std::endl;
 
     if (!nvinfer->input_tensor_from_meta) {
         /* Create a buffer pool for internal memory required for scaling frames to
@@ -1172,6 +1176,8 @@ static GstFlowReturn get_converted_buffer(GstNvInfer *nvinfer,
             dest_height = dest_frame->height;
         }
 
+        std::cout << "get_converted_buffer.dest_frame->colorFormat=" << dest_frame->colorFormat << std::endl;
+
         switch (dest_frame->colorFormat) {
         case NVBUF_COLOR_FORMAT_RGBA:
             pixel_size = 4;
@@ -1342,6 +1348,8 @@ static gpointer gst_nvinfer_input_queue_loop(gpointer data)
         input_batch.inputFrames = input_frames.data();
         input_batch.numInputFrames = input_frames.size();
 
+        std::cout << "gst_nvinfer_input_queue_loop.mem->surf->surfaceList[0].colorFormat=" << mem->surf->surfaceList[0].colorFormat << std::endl;
+
         switch (mem->surf->surfaceList[0].colorFormat) {
         case NVBUF_COLOR_FORMAT_RGBA:
             input_batch.inputFormat = NvDsInferFormat_RGBA;
@@ -1482,7 +1490,8 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
 
                     if (check_landmarks(obj_meta->rect_params, *landmark_meta)) {
                         // Map the buffer so that it can be accessed by CPU
-                        if (NvBufSurfaceMap(mem->surf, i, 0, NVBUF_MAP_READ_WRITE) != 0) {
+                        // if (NvBufSurfaceMap(mem->surf, i, 0, NVBUF_MAP_READ_WRITE) != 0) {
+                        if (NvBufSurfaceMap(mem->surf, i, 0, NVBUF_MAP_READ) != 0) {
                             GST_ELEMENT_ERROR(
                                 nvinfer, STREAM, FAILED,
                                 ("%s:buffer map to be accessed by CPU failed", __func__), (NULL));
@@ -1534,19 +1543,19 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
 #else
                         cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
 #endif
-                        cv::Scalar colors[5] = {cv::Scalar(0, 0, 255), cv::Scalar(255, 0, 0),
-                                                cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255),
-                                                cv::Scalar(255, 0, 0)};
+                        // cv::Scalar colors[5] = {cv::Scalar(0, 0, 255), cv::Scalar(255, 0, 0),
+                        //                         cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255),
+                        //                         cv::Scalar(255, 0, 0)};
 
-                        for (unsigned int landmark_idx = 0;
-                             landmark_idx < landmark_meta->num_landmark; landmark_idx++) {
-                            cv::circle(
-                                out_mat,
-                                cv::Point(
-                                    GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx]),
-                                    GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx + 1])),
-                                1, colors[landmark_idx], -1);
-                        }
+                        // for (unsigned int landmark_idx = 0;
+                        //      landmark_idx < landmark_meta->num_landmark; landmark_idx++) {
+                        //     cv::circle(
+                        //         out_mat,
+                        //         cv::Point(
+                        //             GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx]),
+                        //             GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx + 1])),
+                        //         1, colors[landmark_idx], -1);
+                        // }
                         gchar *img_file_path_origin = g_strdup_printf(
                             "./outputs/images_cropped/image_origin_%d_%d_%d.jpg",
                             batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
@@ -1561,7 +1570,7 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
                         memcpy(src.data, DEFAULT_REFERENCE_5PTS,
                                2 * landmark_meta->num_landmark * sizeof(float));
                         cv::Mat M = FacePreprocess::similarTransform(dst, src);
-                        cv::warpPerspective(in_mat, in_mat, M, in_mat.size());
+                        // cv::warpPerspective(in_mat, in_mat, M, in_mat.size());
 
 #ifdef DUMP_INPUT_TO_FILE
 #if (CV_MAJOR_VERSION >= 4)
@@ -1569,6 +1578,8 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
 #else
                         cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
 #endif
+                        cv::warpPerspective(out_mat, out_mat, M, out_mat.size());
+
                         gchar *img_file_path_aligned = g_strdup_printf(
                             "./outputs/images_cropped/image_aligned_%d_%d_%d.jpg",
                             batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
@@ -1576,9 +1587,9 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
 #endif
 #endif
                         /* Cache the mapped data for device access */
-                        if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
-                            NvBufSurfaceSyncForDevice(mem->surf, i, 0);
-                        }
+                        // if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
+                        //     NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+                        // }
 
                         if (NvBufSurfaceUnMap(mem->surf, i, 0)) {
                             GST_ELEMENT_ERROR(
