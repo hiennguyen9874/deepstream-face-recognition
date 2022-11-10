@@ -295,8 +295,6 @@ NvDsInferStatus InferPreprocessor::transform(NvDsInferContextBatchInput &batchIn
                         "Failed to make stream wait on event");
     }
 
-    std::cout << "transform.m_NetworkInputFormat=" << m_NetworkInputFormat << std::endl;
-
     /* Find the required conversion function. */
     switch (m_NetworkInputFormat) {
     case NvDsInferFormat_RGB:
@@ -1639,7 +1637,7 @@ NvDsInferStatus NvDsInferContextImpl::queueInputBatch(NvDsInferContextBatchInput
 
                         bool dumpToRaw = false;
 
-                        std::string filename = "frame-" + std::to_string(m_FrameCnt) + "_gie-" +
+                        std::string filename = "./outputs/nvdsinfer/frame-" + std::to_string(m_FrameCnt) + "_gie-" +
                                                std::to_string(m_UniqueID) + "_input-" +
                                                std::to_string(i) + "_batch-" + std::to_string(b);
 
