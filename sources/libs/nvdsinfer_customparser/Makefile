@@ -25,7 +25,7 @@ ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
 endif
 
-WITH_FAISS?=0
+WITH_FAISS?=1
 
 CC:= g++
 

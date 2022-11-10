@@ -8,12 +8,12 @@
 # license agreement from NVIDIA Corporation is strictly prohibited.
 #################################################################################
 
-CUDA_VER?=
+CUDA_VER?=11.4
 ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
 endif
 
-WITH_OPENCV?=0
+WITH_OPENCV?=1
 
 DUMP_INPUT_TO_FILE?=0
 

@@ -128,8 +128,6 @@ class TRTInference(object):
             # data = torch.from_numpy(np.empty(shape, dtype=np.dtype(dtype))).to(device)
             self.binding_to_type[name] = dtype
 
-        print("self.max_batch_size: ", self.max_batch_size)
-
         # This allocates memory for network inputs/outputs on both CPU and GPU
         (self.inputs, self.outputs, self.bindings, self.stream, self.image_size) = allocate_buffers(
             self.trt_engine,

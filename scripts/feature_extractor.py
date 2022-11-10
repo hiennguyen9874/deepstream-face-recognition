@@ -23,8 +23,6 @@ class FeatureExtractor(object):
 
         self.image_size = self.model.image_size
 
-        print(self.image_size)
-
     def _resize(image):
         return cv2.resize(image, (self.image_size[1], self.image_size[0]))
 
