@@ -1575,18 +1575,17 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
                         cv::imwrite(img_file_path_aligned, out_mat);
 #endif
 #endif
+                        /* Cache the mapped data for device access */
+                        if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
+                            NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+                        }
+
                         if (NvBufSurfaceUnMap(mem->surf, i, 0)) {
                             GST_ELEMENT_ERROR(
                                 nvinfer, STREAM, FAILED,
                                 ("%s:buffer unmap to be accessed by CPU failed", __func__), (NULL));
                             return FALSE;
                         }
-
-                        // TODO:
-                        // /* Cache the mapped data for device access */
-                        // if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
-                        //     NvBufSurfaceSyncForDevice(mem->surf, i, 0);
-                        // }
                     }
 
                     break;
