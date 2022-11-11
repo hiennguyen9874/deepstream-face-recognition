@@ -1,5 +1,8 @@
-# Install custom tensorRT
-- Build tensorrt
+# Deepstream face recognition on jetson
+
+## Install custom tensorRT
+
+-   Build tensorrt
     ```
     ARG TRT_OSS_CHECKOUT_TAG=release/8.2
     ARG TENSORRT_REPO=https://github.com/nvidia/TensorRT
@@ -21,23 +24,24 @@
     RUN cp /tmp/libnvinfer_plugin.so.8.2.3 $(find /usr/lib/aarch64-linux-gnu/ -name "libnvinfer_plugin.so.8.*" -print -quit)
     RUN ldconfig
     ```
-- cp ./libnvinfer_plugin.so.8.2.3 $(find /usr/lib/aarch64-linux-gnu/ -name 'libnvinfer_plugin.so.8.*' -print -quit)
-- ldconfig
+-   cp ./libnvinfer_plugin.so.8.2.3 $(find /usr/lib/aarch64-linux-gnu/ -name 'libnvinfer_plugin.so.8.\*' -print -quit)
+-   ldconfig
 
-# Default runtime
+## Set default runtime to nvidia
+
 https://github.com/dusty-nv/jetson-containers#docker-default-runtime
 
-# Install nvidia-tensorrt
-- `sudo apt install nvidia-tensorrt`
+## Install nvidia-tensorrt
 
-# Docker
-- `docker build -t hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1 -f Dockerfile.jetson .`
-- `docker push hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1`
-- `docker run --runtime nvidia --device /dev/video1 --rm -it -v $(pwd):/app hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1 bash`
+-   `sudo apt install nvidia-tensorrt`
+
+## Docker
+
+-   Build or pull: `docker build -t hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1 -f Dockerfile.jetson .` or `docker pull hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1`
+<!-- -   `docker push hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1` -->
+-   Run: `docker run --runtime nvidia --device /dev/video1 --rm -it -v $(pwd):/app hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.0.1 bash`
 
 # Install Opencv
+
 Inside docker or outside docker
 https://forums.developer.nvidia.com/t/jetson-docker-image-opencv/164792
-
-# Install Faiss
-Inside docker

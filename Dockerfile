@@ -141,4 +141,4 @@ USER root
 WORKDIR /app
 COPY ./ /app
 
-CMD bash -c "./bin/deepstream-app -c samples/configs/deepstream_attribute_recognition.txt"
+CMD ['/bin/bash']
