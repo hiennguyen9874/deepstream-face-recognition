@@ -1,4 +1,8 @@
-# Deepstream face recognition
+# Deepstream face detection & recognition
+
+Demo output video: [![Deepstream face detection & recognition](https://img.youtube.com/vi/eim-uTRNYtg/0.jpg)](https://www.youtube.com/watch?v=eim-uTRNYtg)
+
+This docs for dGPU, for jetson using [./JETSON.md](./JETSON.md)
 
 ## Export `.engine`
 

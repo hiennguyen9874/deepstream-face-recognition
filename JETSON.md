@@ -1,5 +1,7 @@
 # Deepstream face recognition on jetson
 
+Current only support jetpack version 4.6.1
+
 ## Install custom tensorRT
 
 -   Build tensorrt
