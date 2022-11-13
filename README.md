@@ -62,10 +62,10 @@ This docs for dGPU, for jetson using [./JETSON.md](./JETSON.md)
 -   B: `python3 scripts/add_face_from_file.py B docs/B.png docs/B2.png`
 -   C: `python3 scripts/add_face_from_file.py C docs/C.png docs/C2.png`
 
-## Build
+### Build
 
 -   `sudo bash sources/install.sh`
 
-## Run
+### Run
 
 -   `./bin/deepstream-app -c samples/configs/deepstream_app.txt`
