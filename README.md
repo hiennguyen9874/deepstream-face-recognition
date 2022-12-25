@@ -9,7 +9,7 @@ This docs for dGPU, for jetson using [./JETSON.md](./JETSON.md)
 ### Face detection model
 
 -   Export checkpoint to onnx model:
-    -   Clone [yolov7-face-detection](https://github.com/hiennguyen9874/yolov7-face-detection) and cd into `yolov7-face-detection` folder
+    -   Clone [yolov7-face-detection](https://github.com/hiennguyen9874/yolov7-face-detection/tree/using-landmark) and cd into `yolov7-face-detection` folder
     -   Download weight and save into `weights/yolov7-tiny33.pt`
     -   Export to onnx: `python3 export.py --weights ./weights/yolov7-tiny33.pt --img-size 640 --batch-size 1 --dynamic-batch --grid --end2end --max-wh 640 --topk-all 100 --iou-thres 0.5 --conf-thres 0.2 --device 1 --simplify --cleanup --trt`
 -   Or download onnx file from from [github.com/hiennguyen9874/yolov7-face-detection/releases/tag/v0.1](https://github.com/hiennguyen9874/yolov7-face-detection/releases/tag/v0.1)
@@ -62,10 +62,10 @@ This docs for dGPU, for jetson using [./JETSON.md](./JETSON.md)
 -   B: `python3 scripts/add_face_from_file.py B docs/B.png docs/B2.png`
 -   C: `python3 scripts/add_face_from_file.py C docs/C.png docs/C2.png`
 
-## Build
+### Build
 
 -   `sudo bash sources/install.sh`
 
-## Run
+### Run
 
 -   `./bin/deepstream-app -c samples/configs/deepstream_app.txt`
