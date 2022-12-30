@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,32 +20,29 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __NVGSTDS_IMAGE_SAVE_H__
-#define __NVGSTDS_IMAGE_SAVE_H__
+#ifndef __NVGSTDS_SEGVISUAL_H__
+#define __NVGSTDS_SEGVISUAL_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <gst/gst.h>
+
+typedef struct {
+    GstElement *bin;
+    GstElement *queue;
+    GstElement *nvsegvisual;
+} NvSegVisualBin;
+
 typedef struct {
     gboolean enable;
-    gchar *output_folder_path;
-    gboolean save_image_full_frame;
-    gboolean save_image_cropped_object;
-    gchar *frame_to_skip_rules_path;
-    guint second_to_skip_interval;
-    gdouble min_confidence;
-    gdouble max_confidence;
-    guint min_box_width;
-    guint min_box_height;
-    /////////////////
-    /* Start Custom */
-    /////////////////
-    guint quality;
-    ////////////////
-    /* End Custom */
-    ////////////////
-} NvDsImageSave;
+    gint batch_size;
+    gint width;
+    gint height;
+} NvSegVisualConfig;
+
+gboolean create_segvisual_bin(NvSegVisualConfig *config, NvSegVisualBin *bin);
 
 #ifdef __cplusplus
 }

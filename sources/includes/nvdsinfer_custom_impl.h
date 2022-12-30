@@ -265,6 +265,46 @@ typedef bool (*NvDsInferInstanceMaskParseCustomFunc)(
                                     NvDsInferParseDetectionParams const &detectionParams,    \
                                     std::vector<NvDsInferInstanceMaskInfo> &objectList);
 
+/////////////////
+/* Start Custom */
+/////////////////
+/**
+ * Type definition for the custom bounding box and face detection parsing
+ * function.
+ *
+ * @param[in]  outputLayersInfo A vector containing information on the output
+ *                              layers of the model.
+ * @param[in]  networkInfo      Network information.
+ * @param[in]  detectionParams  Detection parameters required for parsing
+ *                              objects.
+ * @param[out] objectList       A reference to a vector in which the function
+ *                              is to add parsed objects and face detection
+ * landmark.
+ */
+typedef bool (*NvDsInferFaceDetectionLandmarkParseCustomFunc)(
+    std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+    NvDsInferNetworkInfo const &networkInfo,
+    NvDsInferParseDetectionParams const &detectionParams,
+    std::vector<NvDsInferFaceDetectionLandmarkInfo> &objectList);
+
+/**
+ * Validates a custom parser function definition. Must be called
+ * after defining the function.
+ */
+#define CHECK_CUSTOM_FACE_DETECTION_LANDMARK_PARSE_FUNC_PROTOTYPE(customParseFunc)               \
+    static void checkFunc_##customParseFunc(NvDsInferFaceDetectionLandmarkParseCustomFunc func = \
+                                                customParseFunc)                                 \
+    {                                                                                            \
+        checkFunc_##customParseFunc();                                                           \
+    };                                                                                           \
+    extern "C" bool customParseFunc(std::vector<NvDsInferLayerInfo> const &outputLayersInfo,     \
+                                    NvDsInferNetworkInfo const &networkInfo,                     \
+                                    NvDsInferParseDetectionParams const &detectionParams,        \
+                                    std::vector<NvDsInferFaceDetectionLandmarkInfo> &objectList);
+////////////////
+/* End Custom */
+////////////////
+
 /**
  * Type definition for the custom classifier output parsing function.
  *

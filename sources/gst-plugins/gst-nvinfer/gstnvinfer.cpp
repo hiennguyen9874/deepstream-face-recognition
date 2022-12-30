@@ -17,12 +17,28 @@
 #include <algorithm>
 #include <cassert>
 #include <condition_variable>
+/////////////////
+/* Start Custom */
+/////////////////
+#include <iostream>
+////////////////
+/* End Custom */
+////////////////
+
 #include <list>
 #include <memory>
 #include <mutex>
 #include <sstream>
 #include <thread>
 #include <vector>
+
+/////////////////
+/* Start Custom */
+/////////////////
+#include "face_preprocess.h"
+////////////////
+/* End Custom */
+////////////////
 
 #include "gst-nvevent.h"
 #include "gstnvdsmeta.h"
@@ -77,6 +93,14 @@ extern const int DEFAULT_REINFER_INTERVAL = G_MAXINT;
 #define IS_INSTANCE_SEGMENTATION_INSTANCE(nvinfer)          \
     (DS_NVINFER_IMPL(nvinfer)->m_InitParams->networkType == \
      NvDsInferNetworkType_InstanceSegmentation)
+/////////////////
+/* Start Custom */
+/////////////////
+#define IS_FACE_DETECTION_INSTANCE(nvinfer) \
+    (DS_NVINFER_IMPL(nvinfer)->m_InitParams->networkType == NvDsInferNetworkType_FaceDetection)
+////////////////
+/* End Custom */
+////////////////
 
 static GQuark _dsmeta_quark = 0;
 
@@ -93,8 +117,36 @@ static GQuark _dsmeta_quark = 0;
 #define DEFAULT_GPU_DEVICE_ID 0
 #define DEFAULT_OUTPUT_WRITE_TO_FILE FALSE
 #define DEFAULT_OUTPUT_TENSOR_META FALSE
+/////////////////
+/* Start Custom */
+/////////////////
+#define DEFAULT_OUTPUT_FACE_ALIGNMENT FALSE
+////////////////
+/* End Custom */
+////////////////
+
 #define DEFAULT_OUTPUT_INSTANCE_MASK FALSE
+/////////////////
+/* Start Custom */
+/////////////////
+#define DEFAULT_OUTPUT_FACE_DETECTION_LANDMARK FALSE
+////////////////
+/* End Custom */
+////////////////
+
 #define DEFAULT_INPUT_TENSOR_META FALSE
+
+/////////////////
+/* Start Custom */
+/////////////////
+static float DEFAULT_REFERENCE_5PTS[5][2] = {{38.2946f + 8.0f, 51.6963f},
+                                             {73.5318f + 8.0f, 51.5014f},
+                                             {56.0252f + 8.0f, 71.7366f},
+                                             {41.5493f + 8.0f, 92.3655f},
+                                             {70.7299f + 8.0f, 92.2041f}};
+////////////////
+/* End Custom */
+////////////////
 
 /* By default NVIDIA Hardware allocated memory flows through the pipeline. We
  * will be processing on this type of memory only. */
@@ -146,6 +198,16 @@ static void gst_nvinfer_reset_init_params(GstNvInfer *nvinfer);
 
 /* Create enum type for the process mode property. */
 #define GST_TYPE_NVDSINFER_PROCESS_MODE (gst_nvinfer_process_mode_get_type())
+
+/////////////////
+/* Start Custom */
+/////////////////
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define CLIP(a, min, max) (MAX(MIN(a, max), min))
+////////////////
+/* End Custom */
+////////////////
 
 static GType gst_nvinfer_process_mode_get_type(void)
 {
@@ -317,6 +379,19 @@ static void gst_nvinfer_class_init(GstNvInferClass *klass)
             "Attach inference tensor outputs as buffer metadata", DEFAULT_OUTPUT_TENSOR_META,
             (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | GST_PARAM_MUTABLE_READY)));
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    g_object_class_install_property(
+        gobject_class, PROP_FACE_ALIGNMENT,
+        g_param_spec_boolean(
+            "face-alignment", "Face Alignment", "Use opencv to aligment face using landmark",
+            DEFAULT_OUTPUT_FACE_ALIGNMENT,
+            (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | GST_PARAM_MUTABLE_READY)));
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     g_object_class_install_property(
         gobject_class, PROP_OUTPUT_INSTANCE_MASK,
         g_param_spec_boolean(
@@ -324,6 +399,20 @@ static void gst_nvinfer_class_init(GstNvInferClass *klass)
             "Instance mask expected in network output and attach it to metadata",
             DEFAULT_OUTPUT_INSTANCE_MASK,
             (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | GST_PARAM_MUTABLE_READY)));
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    g_object_class_install_property(
+        gobject_class, PROP_OUTPUT_FACE_DETECTION_LANDMARK,
+        g_param_spec_boolean(
+            "output-face-detection-landmark", "Output Face Detection Landmark",
+            "Face detection landmark expected in network output and attach it to metadata",
+            DEFAULT_OUTPUT_INSTANCE_MASK,
+            (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | GST_PARAM_MUTABLE_READY)));
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     g_object_class_install_property(
         gobject_class, PROP_INPUT_TENSOR_META,
@@ -374,7 +463,22 @@ static void gst_nvinfer_init(GstNvInfer *nvinfer)
     nvinfer->operate_on_class_ids = new std::vector<gboolean>;
     nvinfer->filter_out_class_ids = new std::set<uint>;
     nvinfer->output_tensor_meta = DEFAULT_OUTPUT_TENSOR_META;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    nvinfer->face_alignment = DEFAULT_OUTPUT_FACE_ALIGNMENT;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     nvinfer->output_instance_mask = DEFAULT_OUTPUT_INSTANCE_MASK;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    nvinfer->output_face_detection_landmark = DEFAULT_OUTPUT_FACE_DETECTION_LANDMARK;
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     nvinfer->max_batch_size = impl->m_InitParams->maxBatchSize = DEFAULT_BATCH_SIZE;
     nvinfer->interval = DEFAULT_INTERVAL;
@@ -525,9 +629,27 @@ static void gst_nvinfer_set_property(GObject *object,
     case PROP_OUTPUT_TENSOR_META:
         nvinfer->output_tensor_meta = g_value_get_boolean(value);
         break;
+        /////////////////
+        /* Start Custom */
+        /////////////////
+    case PROP_FACE_ALIGNMENT:
+        nvinfer->face_alignment = g_value_get_boolean(value);
+        break;
+        ////////////////
+        /* End Custom */
+        ////////////////
     case PROP_OUTPUT_INSTANCE_MASK:
         nvinfer->output_instance_mask = g_value_get_boolean(value);
         break;
+        /////////////////
+        /* Start Custom */
+        /////////////////
+    case PROP_OUTPUT_FACE_DETECTION_LANDMARK:
+        nvinfer->output_face_detection_landmark = g_value_get_boolean(value);
+        break;
+        ////////////////
+        /* End Custom */
+        ////////////////
     case PROP_INPUT_TENSOR_META:
         nvinfer->input_tensor_from_meta = g_value_get_boolean(value);
         impl->m_InitParams->inputFromPreprocessedTensor = g_value_get_boolean(value);
@@ -601,9 +723,27 @@ static void gst_nvinfer_get_property(GObject *object,
     case PROP_OUTPUT_TENSOR_META:
         g_value_set_boolean(value, nvinfer->output_tensor_meta);
         break;
+        /////////////////
+        /* Start Custom */
+        /////////////////
+    case PROP_FACE_ALIGNMENT:
+        g_value_set_boolean(value, nvinfer->face_alignment);
+        break;
+        ////////////////
+        /* End Custom */
+        ////////////////
     case PROP_OUTPUT_INSTANCE_MASK:
         g_value_set_boolean(value, nvinfer->output_instance_mask);
         break;
+        /////////////////
+        /* Start Custom */
+        /////////////////
+    case PROP_OUTPUT_FACE_DETECTION_LANDMARK:
+        g_value_set_boolean(value, nvinfer->output_face_detection_landmark);
+        break;
+        ////////////////
+        /* End Custom */
+        ////////////////
     case PROP_INPUT_TENSOR_META:
         g_value_set_boolean(value, nvinfer->input_tensor_from_meta);
         break;
@@ -793,6 +933,21 @@ static gboolean gst_nvinfer_start(GstBaseTransform *btrans)
         return FALSE;
     }
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    if (nvinfer->output_face_detection_landmark == TRUE &&
+        init_params->clusterMode != NVDSINFER_CLUSTER_NONE) {
+        GST_ELEMENT_ERROR(nvinfer, LIBRARY, SETTINGS,
+                          ("Face detection landmark output not supported with cluster mode %d",
+                           init_params->clusterMode),
+                          (nullptr));
+        return FALSE;
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     nvinfer->interval_counter = 0;
 
     /* Should not infer on objects smaller than MIN_INPUT_OBJECT_WIDTH x MIN_INPUT_OBJECT_HEIGHT
@@ -905,10 +1060,26 @@ static gboolean gst_nvinfer_start(GstBaseTransform *btrans)
             if (a)
                 gst_object_unref(a);
         };
+
+/////////////////
+/* Start Custom */
+/////////////////
+#ifdef __aarch64__
         std::unique_ptr<GstAllocator, decltype(allocator_deleter)> allocator_ptr(
             gst_nvinfer_allocator_new(nvinfer->network_width, nvinfer->network_height, color_format,
-                                      nvinfer->max_batch_size, nvinfer->gpu_id),
+                                      nvinfer->max_batch_size, nvinfer->gpu_id, NVBUF_MEM_DEFAULT),
             allocator_deleter);
+#else
+        std::unique_ptr<GstAllocator, decltype(allocator_deleter)> allocator_ptr(
+            gst_nvinfer_allocator_new(
+                nvinfer->network_width, nvinfer->network_height, color_format,
+                nvinfer->max_batch_size, nvinfer->gpu_id,
+                (nvinfer->face_alignment) ? NVBUF_MEM_CUDA_UNIFIED : NVBUF_MEM_DEFAULT),
+            allocator_deleter);
+#endif
+        ////////////////
+        /* End Custom */
+        ////////////////
         memset(&allocation_params, 0, sizeof(allocation_params));
         gst_buffer_pool_config_set_allocator(config_ptr.get(), allocator_ptr.get(),
                                              &allocation_params);
@@ -1071,10 +1242,34 @@ static GstFlowReturn get_converted_buffer(GstNvInfer *nvinfer,
                                           guint &offset_top,
                                           void *destCudaPtr)
 {
-    guint src_left = GST_ROUND_UP_2((unsigned int)crop_rect_params->left);
-    guint src_top = GST_ROUND_UP_2((unsigned int)crop_rect_params->top);
-    guint src_width = GST_ROUND_DOWN_2((unsigned int)crop_rect_params->width);
-    guint src_height = GST_ROUND_DOWN_2((unsigned int)crop_rect_params->height);
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    float crop_rect_left = crop_rect_params->left;
+    float crop_rect_top = crop_rect_params->top;
+    float crop_rect_right = crop_rect_params->left + crop_rect_params->width;
+    float crop_rect_bottom = crop_rect_params->top + crop_rect_params->height;
+
+    if (nvinfer->face_alignment) {
+        // Increase size 15%
+        crop_rect_left -= crop_rect_params->width * 0.15;
+        crop_rect_top -= crop_rect_params->height * 0.15;
+        crop_rect_right += crop_rect_params->width * 0.15;
+        crop_rect_bottom += crop_rect_params->height * 0.15;
+    }
+
+    crop_rect_left = CLIP(crop_rect_left, 0, src_frame->width);
+    crop_rect_top = CLIP(crop_rect_top, 0, src_frame->height);
+    crop_rect_right = CLIP(crop_rect_right, 0, src_frame->width);
+    crop_rect_bottom = CLIP(crop_rect_bottom, 0, src_frame->height);
+
+    guint src_left = GST_ROUND_UP_2((unsigned int)crop_rect_left);
+    guint src_top = GST_ROUND_UP_2((unsigned int)crop_rect_top);
+    guint src_width = GST_ROUND_DOWN_2((unsigned int)(crop_rect_right - crop_rect_left));
+    guint src_height = GST_ROUND_DOWN_2((unsigned int)(crop_rect_bottom - crop_rect_top));
+    ////////////////
+    /* End Custom */
+    ////////////////
     guint dest_width, dest_height;
 
     guint offset_right = 0, offset_bottom = 0;
@@ -1319,12 +1514,48 @@ static gpointer gst_nvinfer_input_queue_loop(gpointer data)
     return NULL;
 }
 
+/////////////////
+/* Start Custom */
+/////////////////
+static gboolean check_landmarks(NvOSD_RectParams rect_params, NvDSInferLandmarkMeta landmark)
+{
+    if (!landmark.data || landmark.size < 0 | landmark.num_landmark < 0)
+        return FALSE;
+
+    for (unsigned int landmark_idx = 0; landmark_idx < landmark.num_landmark; landmark_idx++) {
+        if (landmark.data[2 * landmark_idx] < rect_params.left ||
+            landmark.data[2 * landmark_idx] > rect_params.left + rect_params.width)
+            return FALSE;
+
+        if (landmark.data[2 * landmark_idx + 1] < rect_params.top ||
+            landmark.data[2 * landmark_idx + 1] > rect_params.top + rect_params.height)
+            return FALSE;
+    }
+    return TRUE;
+}
+////////////////
+/* End Custom */
+////////////////
+
 static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
                                                        GstNvInferBatch *batch,
                                                        GstNvInferMemory *mem)
 {
     NvBufSurfTransform_Error err = NvBufSurfTransformError_Success;
     std::string nvtx_str;
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    NvDsObjectMeta *obj_meta = NULL;
+
+#ifdef WITH_OPENCV
+    cv::Mat in_mat;
+    cv::Mat out_mat;
+#endif
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     /* Set the transform session parameters for the conversions executed in this
      * thread. */
@@ -1360,6 +1591,210 @@ static gboolean convert_batch_and_push_to_input_thread(GstNvInfer *nvinfer,
                           (NULL));
         return FALSE;
     }
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    if (nvinfer->face_alignment) {
+#ifdef DUMP_INPUT_TO_FILE
+        guint id_cropobj = 0;
+#endif
+        // Use openCV to remove padding and convert RGBA to BGR. Can be skipped if
+        // algorithm can handle padded RGBA data.
+        for (guint i = 0; i < nvinfer->tmp_surf.numFilled; i++) {
+#ifdef DUMP_INPUT_TO_FILE
+            id_cropobj++;
+#endif
+            obj_meta = batch->frames[i].obj_meta;
+
+            if (obj_meta == NULL)
+                continue;
+
+            for (NvDsMetaList *l_user = obj_meta->obj_user_meta_list; l_user != NULL;
+                 l_user = l_user->next) {
+                NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
+
+                if (user_meta->base_meta.meta_type == (NvDsMetaType)NVDSINFER_LANDMARK_META) {
+                    NvDSInferLandmarkMeta *landmark_meta =
+                        (NvDSInferLandmarkMeta *)user_meta->user_meta_data;
+
+                    if (check_landmarks(obj_meta->rect_params, *landmark_meta)) {
+                        // Map the buffer so that it can be accessed by CPU
+                        if (NvBufSurfaceMap(mem->surf, i, 0, NVBUF_MAP_READ_WRITE) != 0) {
+                            GST_ELEMENT_ERROR(
+                                nvinfer, STREAM, FAILED,
+                                ("%s:buffer map to be accessed by CPU failed", __func__), (NULL));
+                            return FALSE;
+                        }
+                        if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
+                            // sync mapped data for CPU access
+                            NvBufSurfaceSyncForCpu(mem->surf, i, 0);
+                        }
+
+#ifdef WITH_OPENCV
+                        if (mem->surf->surfaceList[i].colorFormat == NVBUF_COLOR_FORMAT_RGBA) {
+                            in_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
+                                             (gint)mem->surf->surfaceList[i].width, CV_8UC4,
+                                             mem->surf->surfaceList[i].mappedAddr.addr[0],
+                                             mem->surf->surfaceList[i].pitch);
+                        } else if (mem->surf->surfaceList[i].colorFormat ==
+                                   NVBUF_COLOR_FORMAT_RGB) {
+                            in_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
+                                             (gint)mem->surf->surfaceList[i].width, CV_8UC3,
+                                             mem->surf->surfaceList[i].mappedAddr.addr[0],
+                                             mem->surf->surfaceList[i].pitch);
+                        } else {
+                            GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
+                                              ("%s:not support color format", __func__), (NULL));
+                            return FALSE;
+                        }
+
+                        // TODO: Convert landmark:
+                        // 1. - bounding box nvinfer->transform_params.src_rect[i]->src_rect.left,
+                        // nvinfer->transform_params.src_rect[i]->src_rect.top
+                        // 2. / nvinfer->transform_params.src_rect[i]->src_rect.width,
+                        // nvinfer->transform_params.src_rect[i]->src_rect.height
+                        // 3. * mem->surf->surfaceList[i].width, mem->surf->surfaceList[i].height
+                        // 4. + batch->frames[i].offset_left, batch->frames[i].offset_top
+
+                        float landmarks[2 * landmark_meta->num_landmark];
+
+                        for (unsigned int landmark_idx = 0;
+                             landmark_idx < landmark_meta->num_landmark; landmark_idx++) {
+                            landmarks[2 * landmark_idx] =
+                                (((landmark_meta->data[2 * landmark_idx] -
+                                   nvinfer->transform_params.src_rect[i].left) /
+                                  nvinfer->transform_params.src_rect[i].width) *
+                                 nvinfer->transform_params.dst_rect[i].width) +
+                                nvinfer->transform_params.dst_rect[i].left;
+
+                            landmarks[2 * landmark_idx + 1] =
+                                (((landmark_meta->data[2 * landmark_idx + 1] -
+                                   nvinfer->transform_params.src_rect[i].top) /
+                                  nvinfer->transform_params.src_rect[i].height) *
+                                 nvinfer->transform_params.dst_rect[i].height) +
+                                nvinfer->transform_params.dst_rect[i].top;
+                        }
+
+                        out_mat = cv::Mat((gint)mem->surf->surfaceList[i].height,
+                                          (gint)mem->surf->surfaceList[i].width, CV_8UC3);
+
+#ifdef DUMP_INPUT_TO_FILE
+                        if (mem->surf->surfaceList[i].colorFormat == NVBUF_COLOR_FORMAT_RGB) {
+#if (CV_MAJOR_VERSION >= 4)
+                            cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
+#else
+                            cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
+#endif
+                        } else if (mem->surf->surfaceList[i].colorFormat ==
+                                   NVBUF_COLOR_FORMAT_RGBA) {
+#if (CV_MAJOR_VERSION >= 4)
+                            cv::cvtColor(in_mat, out_mat, cv::COLOR_RGBA2BGR);
+#else
+                            cv::cvtColor(in_mat, out_mat, CV_RGBA2BGR);
+#endif
+                        } else {
+                            GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
+                                              ("%s:not support color format", __func__), (NULL));
+                            return FALSE;
+                        }
+
+                        cv::Scalar colors[5] = {cv::Scalar(0, 0, 255), cv::Scalar(255, 0, 0),
+                                                cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255),
+                                                cv::Scalar(255, 0, 0)};
+
+                        for (unsigned int landmark_idx = 0;
+                             landmark_idx < landmark_meta->num_landmark; landmark_idx++) {
+                            cv::circle(
+                                out_mat,
+                                cv::Point(
+                                    GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx]),
+                                    GST_ROUND_UP_2((unsigned int)landmarks[2 * landmark_idx + 1])),
+                                1, colors[landmark_idx], -1);
+                        }
+                        gchar *img_file_path_origin = g_strdup_printf(
+                            "./outputs/gst-nvinfer/image_origin_%d_%d_%d.png",
+                            batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
+
+                        cv::imwrite(img_file_path_origin, out_mat);
+#endif
+                        cv::Mat dst(landmark_meta->num_landmark, 2, CV_32FC1, landmarks);
+                        memcpy(dst.data, landmarks,
+                               2 * landmark_meta->num_landmark * sizeof(float));
+                        cv::Mat src(landmark_meta->num_landmark, 2, CV_32FC1,
+                                    DEFAULT_REFERENCE_5PTS);
+                        memcpy(src.data, DEFAULT_REFERENCE_5PTS,
+                               2 * landmark_meta->num_landmark * sizeof(float));
+                        cv::Mat M = FacePreprocess::similarTransform(dst, src);
+
+                        if (mem->surf->surfaceList[i].colorFormat == NVBUF_COLOR_FORMAT_RGB) {
+                            cv::warpPerspective(in_mat, in_mat, M, in_mat.size());
+                        } else if (mem->surf->surfaceList[i].colorFormat ==
+                                   NVBUF_COLOR_FORMAT_RGBA) {
+#if (CV_MAJOR_VERSION >= 4)
+                            cv::cvtColor(in_mat, out_mat, cv::COLOR_RGBA2RGB);
+#else
+                            cv::cvtColor(in_mat, out_mat, CV_RGBA2RGB);
+#endif
+                            cv::warpPerspective(out_mat, out_mat, M, out_mat.size());
+
+#if (CV_MAJOR_VERSION >= 4)
+                            cv::cvtColor(out_mat, in_mat, cv::COLOR_RGB2RGBA);
+#else
+                            cv::cvtColor(out_mat, in_mat, CV_RGB2RGBA);
+#endif
+                        } else {
+                            GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
+                                              ("%s:not support color format", __func__), (NULL));
+                            return FALSE;
+                        }
+
+#ifdef DUMP_INPUT_TO_FILE
+                        if (mem->surf->surfaceList[i].colorFormat == NVBUF_COLOR_FORMAT_RGB) {
+#if (CV_MAJOR_VERSION >= 4)
+                            cv::cvtColor(in_mat, out_mat, cv::COLOR_RGB2BGR);
+#else
+                            cv::cvtColor(in_mat, out_mat, CV_RGB2BGR);
+#endif
+                        } else if (mem->surf->surfaceList[i].colorFormat ==
+                                   NVBUF_COLOR_FORMAT_RGBA) {
+#if (CV_MAJOR_VERSION >= 4)
+                            cv::cvtColor(in_mat, out_mat, cv::COLOR_RGBA2BGR);
+#else
+                            cv::cvtColor(in_mat, out_mat, CV_RGBA2BGR);
+#endif
+                        } else {
+                            GST_ELEMENT_ERROR(nvinfer, STREAM, FAILED,
+                                              ("%s:not support color format", __func__), (NULL));
+                            return FALSE;
+                        }
+                        gchar *img_file_path_aligned = g_strdup_printf(
+                            "./outputs/gst-nvinfer/image_aligned_%d_%d_%d.png",
+                            batch->frames[i].frame_num, nvinfer->unique_id, id_cropobj);
+                        cv::imwrite(img_file_path_aligned, out_mat);
+#endif
+#endif
+                        /* Cache the mapped data for device access */
+                        if (mem->surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
+                            NvBufSurfaceSyncForDevice(mem->surf, i, 0);
+                        }
+
+                        if (NvBufSurfaceUnMap(mem->surf, i, 0)) {
+                            GST_ELEMENT_ERROR(
+                                nvinfer, STREAM, FAILED,
+                                ("%s:buffer unmap to be accessed by CPU failed", __func__), (NULL));
+                            return FALSE;
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     LockGMutex locker(nvinfer->process_lock);
     /* Push the batch info structure in the processing queue and notify the output
@@ -2318,7 +2753,14 @@ static gpointer gst_nvinfer_output_loop(gpointer data)
                     obj_history->under_inference = FALSE;
             }
 
-            if (IS_DETECTOR_INSTANCE(nvinfer) || IS_INSTANCE_SEGMENTATION_INSTANCE(nvinfer)) {
+            /////////////////
+            /* Start Custom */
+            /////////////////
+            if (IS_DETECTOR_INSTANCE(nvinfer) || IS_INSTANCE_SEGMENTATION_INSTANCE(nvinfer) ||
+                IS_FACE_DETECTION_INSTANCE(nvinfer)) {
+                ////////////////
+                /* End Custom */
+                ////////////////
                 attach_metadata_detector(nvinfer, GST_MINI_OBJECT(tensor_out_object.get()), frame,
                                          frame_output.detectionOutput,
                                          init_params->segmentationThreshold);

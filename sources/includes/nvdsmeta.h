@@ -142,6 +142,15 @@ typedef enum {
     NVDS_PREPROCESS_BATCH_META,
     /** Specifies user defined custom message blob to be part of payload generated */
     NVDS_CUSTOM_MSG_BLOB,
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    /** Specifies metadata type for face detection model output attached by
+     Gst-nvinfer. @see NvDSInferLandmarkMeta for details. */
+    NVDSINFER_LANDMARK_META,
+    ////////////////
+    /* End Custom */
+    ////////////////
     /** Reserved field */
     NVDS_RESERVED_META = 4095,
     /**

@@ -301,7 +301,17 @@ static gboolean gst_nvinfer_parse_other_attribute_yaml(GstNvInfer *nvinfer,
         nvinfer->output_tensor_meta = std::stoi(pair[1]);
     } else if (pair[0] == "output-instance-mask") {
         nvinfer->output_instance_mask = std::stoi(pair[1]);
-    } else if (pair[0] == "secondary-reinfer-interval") {
+    }
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    else if (pair[0] == "output-face-detection-landmark") {
+        nvinfer->output_face_detection_landmark = std::stoi(pair[1]);
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
+    else if (pair[0] == "secondary-reinfer-interval") {
         nvinfer->secondary_reinfer_interval = std::stoi(pair[1]);
     } else if (pair[0] == "maintain-aspect-ratio") {
         nvinfer->maintain_aspect_ratio = std::stoi(pair[1]);
@@ -391,7 +401,17 @@ static gboolean gst_nvinfer_parse_other_attribute_yaml(GstNvInfer *nvinfer,
             goto done;
         }
         nvinfer->transform_params.transform_filter = (NvBufSurfTransform_Inter)val;
-    } else {
+    }
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    else if (pair[0] == "face-alignment") {
+        nvinfer->face_alignment = std::stoi(pair[1]);
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
+    else {
         g_printerr("Unknown or legacy key specified '%s' for group property\n", pair[0].c_str());
     }
 
@@ -661,7 +681,19 @@ static gboolean gst_nvinfer_parse_props_yaml(GstNvInfer *nvinfer,
         } else if (paramKey == "parse-bbox-instance-mask-func-name") {
             std::string temp = itr->second.as<std::string>();
             std::strncpy(init_params->customBBoxInstanceMaskParseFuncName, temp.c_str(), 1023);
-        } else if (paramKey == "engine-create-func-name") {
+        }
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (paramKey == "parse-bbox-face-detection-func-name") {
+            std::string temp = itr->second.as<std::string>();
+            std::strncpy(init_params->customBBoxFaceDetectionLandmarkParseFuncName, temp.c_str(),
+                         1023);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+        else if (paramKey == "engine-create-func-name") {
             std::string temp = itr->second.as<std::string>();
             std::strncpy(init_params->customEngineCreateFuncName, temp.c_str(), 1023);
         } else if (paramKey == "parse-classifier-func-name") {

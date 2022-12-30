@@ -288,6 +288,13 @@ void DetectPostprocessor::clusterAndFillDetectionOutputNMS(NvDsInferDetectionOut
         object.classIndex = clusteredBboxes[i].classId;
         object.label = nullptr;
         object.mask = nullptr;
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        object.landmark = nullptr;
+        ////////////////
+        /* End Custom */
+        ////////////////
         if (object.classIndex < static_cast<int>(m_Labels.size()) &&
             m_Labels[object.classIndex].size() > 0)
             object.label = strdup(m_Labels[object.classIndex][0].c_str());
@@ -341,6 +348,13 @@ void DetectPostprocessor::clusterAndFillDetectionOutputCV(NvDsInferDetectionOutp
             object.classIndex = c;
             object.label = nullptr;
             object.mask = nullptr;
+            /////////////////
+            /* Start Custom */
+            /////////////////
+            object.landmark = nullptr;
+            ////////////////
+            /* End Custom */
+            ////////////////
             if (c < m_Labels.size() && m_Labels[c].size() > 0)
                 object.label = strdup(m_Labels[c][0].c_str());
             object.confidence = -0.1;
@@ -404,6 +418,13 @@ void DetectPostprocessor::clusterAndFillDetectionOutputDBSCAN(NvDsInferDetection
             object.classIndex = c;
             object.label = nullptr;
             object.mask = nullptr;
+            /////////////////
+            /* Start Custom */
+            /////////////////
+            object.landmark = nullptr;
+            ////////////////
+            /* End Custom */
+            ////////////////
             if (c < m_Labels.size() && m_Labels[c].size() > 0)
                 object.label = strdup(m_Labels[c][0].c_str());
             object.confidence = m_PerClassObjectList[c][i].detectionConfidence;
@@ -472,6 +493,13 @@ void DetectPostprocessor::fillUnclusteredOutput(NvDsInferDetectionOutput &output
             object.classIndex = obj.classId;
             object.label = nullptr;
             object.mask = nullptr;
+            /////////////////
+            /* Start Custom */
+            /////////////////
+            object.landmark = nullptr;
+            ////////////////
+            /* End Custom */
+            ////////////////
             if (obj.classId < m_Labels.size() && m_Labels[obj.classId].size() > 0)
                 object.label = strdup(m_Labels[obj.classId][0].c_str());
             object.confidence = obj.detectionConfidence;
@@ -512,6 +540,13 @@ void InstanceSegmentPostprocessor::fillUnclusteredOutput(NvDsInferDetectionOutpu
                 object.label = strdup(m_Labels[obj.classId][0].c_str());
             object.confidence = obj.detectionConfidence;
             object.mask = nullptr;
+            /////////////////
+            /* Start Custom */
+            /////////////////
+            object.landmark = nullptr;
+            ////////////////
+            /* End Custom */
+            ////////////////
             if (obj.mask) {
                 object.mask = std::move(obj.mask);
                 object.mask_width = obj.mask_width;
@@ -654,6 +689,132 @@ NvDsInferStatus InstanceSegmentPostprocessor::fillDetectionOutput(
     }
     return NVDSINFER_SUCCESS;
 }
+
+/////////////////
+/* Start Custom */
+/////////////////
+
+/**
+ * full the output structure without performing any clustering operations
+ */
+
+void FaceDetectionLandmarkPostprocessor::fillUnclusteredOutput(NvDsInferDetectionOutput &output)
+{
+    for (auto &object : m_FaceDetectionLandmarkList) {
+        m_PerClassFaceDetectionLandmarkList[object.classId].emplace_back(object);
+    }
+
+    unsigned int totalObjects = 0;
+    for (unsigned int c = 0; c < m_NumDetectedClasses; c++) {
+        filterTopKOutputs(m_PerClassDetectionParams.at(c).topK,
+                          m_PerClassFaceDetectionLandmarkList.at(c));
+        totalObjects += m_PerClassFaceDetectionLandmarkList.at(c).size();
+    }
+
+    output.objects = new NvDsInferObject[totalObjects];
+    output.numObjects = 0;
+    for (const auto &perClassList : m_PerClassFaceDetectionLandmarkList) {
+        for (const auto &obj : perClassList) {
+            NvDsInferObject &object = output.objects[output.numObjects];
+            object.left = obj.left;
+            object.top = obj.top;
+            object.width = obj.width;
+            object.height = obj.height;
+            object.classIndex = obj.classId;
+            object.label = nullptr;
+            if (obj.classId < m_Labels.size() && m_Labels[obj.classId].size() > 0)
+                object.label = strdup(m_Labels[obj.classId][0].c_str());
+            object.confidence = obj.detectionConfidence;
+            object.mask = nullptr;
+            object.landmark = nullptr;
+            if (obj.landmark) {
+                object.landmark = std::move(obj.landmark);
+                object.num_landmark = obj.num_landmark;
+                object.landmark_size = obj.landmark_size;
+            }
+            ++output.numObjects;
+        }
+    }
+}
+
+/**
+ * Filter out objects which have been specificed to be removed from the metadata
+ * prior to clustering operation
+ */
+void FaceDetectionLandmarkPostprocessor::preClusteringThreshold(
+    NvDsInferParseDetectionParams const &detectionParams,
+    std::vector<NvDsInferFaceDetectionLandmarkInfo> &objectList)
+{
+    objectList.erase(
+        std::remove_if(objectList.begin(), objectList.end(),
+                       [detectionParams](const NvDsInferFaceDetectionLandmarkInfo &obj) {
+                           return (obj.classId >= detectionParams.numClassesConfigured) ||
+                                          (obj.detectionConfidence <
+                                           detectionParams.perClassPreclusterThreshold[obj.classId])
+                                      ? true
+                                      : false;
+                       }),
+        objectList.end());
+}
+
+/**
+ * Filter out the top k objects with the highest probability and ignore the
+ * rest
+ */
+void FaceDetectionLandmarkPostprocessor::filterTopKOutputs(
+    const int topK,
+    std::vector<NvDsInferFaceDetectionLandmarkInfo> &objectList)
+{
+    if (topK < 0)
+        return;
+
+    std::stable_sort(objectList.begin(), objectList.end(),
+                     [](const NvDsInferFaceDetectionLandmarkInfo &obj1,
+                        const NvDsInferFaceDetectionLandmarkInfo &obj2) {
+                         return obj1.detectionConfidence > obj2.detectionConfidence;
+                     });
+    objectList.resize(static_cast<size_t>(topK) <= objectList.size() ? topK : objectList.size());
+}
+
+NvDsInferStatus FaceDetectionLandmarkPostprocessor::fillDetectionOutput(
+    const std::vector<NvDsInferLayerInfo> &outputLayers,
+    NvDsInferDetectionOutput &output)
+{
+    /* Clear the object lists. */
+    m_FaceDetectionLandmarkList.clear();
+
+    /* Clear all per class object lists */
+    for (auto &list : m_PerClassFaceDetectionLandmarkList)
+        list.clear();
+
+    /* Call custom parsing function if specified otherwise use the one
+     * written along with this implementation. */
+    if (m_CustomParseFunc) {
+        if (!m_CustomParseFunc(outputLayers, m_NetworkInfo, m_DetectionParams,
+                               m_FaceDetectionLandmarkList)) {
+            printError("Failed to parse bboxes and landmark using custom parse function");
+            return NVDSINFER_CUSTOM_LIB_FAILED;
+        }
+    } else {
+        printError("Failed to find custom parse function");
+        return NVDSINFER_OUTPUT_PARSING_FAILED;
+    }
+
+    preClusteringThreshold(m_DetectionParams, m_FaceDetectionLandmarkList);
+
+    switch (m_ClusterMode) {
+    case NVDSINFER_CLUSTER_NONE:
+        fillUnclusteredOutput(output);
+        break;
+    default:
+        printError("Invalid cluster mode for face detection landmark");
+        return NVDSINFER_OUTPUT_PARSING_FAILED;
+    }
+    return NVDSINFER_SUCCESS;
+}
+////////////////
+/* End Custom */
+////////////////
 
 NvDsInferStatus DetectPostprocessor::fillDetectionOutput(
     const std::vector<NvDsInferLayerInfo> &outputLayers,
@@ -833,6 +994,22 @@ void InferPostprocessor::releaseFrameOutput(NvDsInferFrameOutput &frameOutput)
         }
         delete[] frameOutput.detectionOutput.objects;
         break;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    case NvDsInferNetworkType_FaceDetection:
+        for (unsigned int j = 0; j < frameOutput.detectionOutput.numObjects; j++) {
+            free(frameOutput.detectionOutput.objects[j].label);
+            if (frameOutput.detectionOutput.objects[j].landmark != NULL &&
+                frameOutput.detectionOutput.objects[j].num_landmark > 0 &&
+                frameOutput.detectionOutput.objects[j].landmark_size > 0)
+                delete frameOutput.detectionOutput.objects[j].landmark;
+        }
+        delete[] frameOutput.detectionOutput.objects;
+        break;
+        ////////////////
+        /* End Custom */
+        ////////////////
     default:
         break;
     }

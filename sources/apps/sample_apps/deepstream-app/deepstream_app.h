@@ -36,12 +36,26 @@ extern "C" {
 #include "deepstream_config.h"
 #include "deepstream_dsanalytics.h"
 #include "deepstream_dsexample.h"
+/////////////////
+/* Start Custom */
+/////////////////
+#include "deepstream_dspostprocessing.h"
+////////////////
+/* End Custom */
+////////////////
 #include "deepstream_image_save.h"
 #include "deepstream_osd.h"
 #include "deepstream_perf.h"
 #include "deepstream_preprocess.h"
 #include "deepstream_primary_gie.h"
 #include "deepstream_secondary_gie.h"
+/////////////////
+/* Start Custom */
+/////////////////
+#include "deepstream_segvisual.h"
+////////////////
+/* End Custom */
+////////////////
 #include "deepstream_sinks.h"
 #include "deepstream_sources.h"
 #include "deepstream_streammux.h"
@@ -66,16 +80,36 @@ typedef struct {
     gulong fps_buffer_probe_id;
     GstElement *bin;
     GstElement *tee;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    GstElement *msg_conv_broker_tee;
+    ////////////////
+    /* End Custom */
+    ////////////////
     GstElement *msg_conv;
     NvDsPreProcessBin preprocess_bin;
     NvDsPrimaryGieBin primary_gie_bin;
     NvDsOSDBin osd_bin;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    NvSegVisualBin segvisual_bin;
+    /* End Custom */
+    ////////////////
     NvDsSecondaryGieBin secondary_gie_bin;
     NvDsTrackerBin tracker_bin;
     NvDsSinkBin sink_bin;
     NvDsSinkBin demux_sink_bin;
     NvDsDsAnalyticsBin dsanalytics_bin;
     NvDsDsExampleBin dsexample_bin;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    NvDsDsPostProcessingBin dspostprocessing_bin;
+    ////////////////
+    /* End Custom */
+    ////////////////
     AppCtx *appCtx;
 } NvDsInstanceBin;
 
@@ -90,7 +124,21 @@ typedef struct {
     GstElement *tiler_tee;
     NvDsTiledDisplayBin tiled_display_bin;
     GstElement *demuxer;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    GstElement *dxexample_tee;
+    ////////////////
+    /* End Custom */
+    ////////////////
     NvDsDsExampleBin dsexample_bin;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    NvDsDsPostProcessingBin dspostprocessing_bin;
+    ////////////////
+    /* End Custom */
+    ////////////////
     AppCtx *appCtx;
 } NvDsPipeline;
 
@@ -110,9 +158,27 @@ typedef struct {
     gchar *kitti_track_dir_path;
 
     gchar **uri_list;
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    gint *drop_frame_interval_list;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     NvDsSourceConfig multi_source_config[MAX_SOURCE_BINS];
     NvDsStreammuxConfig streammux_config;
     NvDsOSDConfig osd_config;
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    NvSegVisualConfig segvisual_config;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     NvDsPreProcessConfig preprocess_config;
     NvDsGieConfig primary_gie_config;
     NvDsTrackerConfig tracker_config;
@@ -122,6 +188,13 @@ typedef struct {
     NvDsTiledDisplayConfig tiled_display_config;
     NvDsDsAnalyticsConfig dsanalytics_config;
     NvDsDsExampleConfig dsexample_config;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    NvDsDsPostProcessingConfig dspostprocessing_config;
+    ////////////////
+    /* End Custom */
+    ////////////////
     NvDsSinkMsgConvBrokerConfig msg_conv_config;
     NvDsImageSave image_save_config;
 

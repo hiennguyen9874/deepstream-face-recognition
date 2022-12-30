@@ -119,6 +119,21 @@ typedef struct {
     void *priv_data;
 } NvDsInferSegmentationMeta;
 
+/////////////////
+/* Start Custom */
+/////////////////
+/**
+ * Holds the mask parameters of the segment to be overlayed
+ */
+typedef struct {
+    gfloat *data;       /** Landmark data */
+    guint size;         /** Landmark size */
+    guint num_landmark; /** Landmark num */
+} NvDSInferLandmarkMeta;
+////////////////
+/* End Custom */
+////////////////
+
 G_END_DECLS
 
 /** @} */

@@ -852,7 +852,16 @@ static gboolean create_rtsp_src_bin(NvDsSourceConfig *config, NvDsSrcBin *bin)
 
     g_object_set(G_OBJECT(bin->src_elem), "location", config->uri, NULL);
     g_object_set(G_OBJECT(bin->src_elem), "latency", config->latency, NULL);
-    g_object_set(G_OBJECT(bin->src_elem), "drop-on-latency", TRUE, NULL);
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    g_object_set(G_OBJECT(bin->src_elem), "do-retransmission", config->do_retransmission, NULL);
+    g_object_set(G_OBJECT(bin->src_elem), "drop-on-latency", config->drop_on_latency, NULL);
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     configure_source_for_ntp_sync(bin->src_elem);
 
     // 0x4 for TCP and 0x7 for All (UDP/UDP-MCAST/TCP)

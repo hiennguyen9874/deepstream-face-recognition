@@ -23,6 +23,15 @@
 #include <iterator>
 #include <memory>
 #include <sstream>
+/////////////////
+/* Start Custom */
+/////////////////
+#ifdef DUMP_INPUT_TO_FILE
+#include <opencv2/imgcodecs.hpp>
+#endif
+////////////////
+/* End Custom */
+////////////////
 
 #include "nvdsinfer_conversion.h"
 #include "nvdsinfer_func_utils.h"
@@ -772,6 +781,81 @@ NvDsInferStatus InstanceSegmentPostprocessor::parseEachBatch(
     return NVDSINFER_SUCCESS;
 }
 
+/////////////////
+/* Start Custom */
+/////////////////
+NvDsInferStatus FaceDetectionLandmarkPostprocessor::initResource(
+    const NvDsInferContextInitParams &initParams)
+{
+    RETURN_NVINFER_ERROR(InferPostprocessor::initResource(initParams),
+                         "init post processing resource failed");
+
+    m_ClusterMode = initParams.clusterMode;
+    if (m_ClusterMode != NVDSINFER_CLUSTER_NONE) {
+        printError(" cluster mode %d not supported with face detection", m_ClusterMode);
+        return NVDSINFER_CONFIG_FAILED;
+    }
+
+    m_NumDetectedClasses = initParams.numDetectedClasses;
+    if (initParams.numDetectedClasses > 0 && initParams.perClassDetectionParams == nullptr) {
+        printError(
+            "NumDetectedClasses > 0 but PerClassDetectionParams array not "
+            "specified");
+        return NVDSINFER_CONFIG_FAILED;
+    }
+
+    m_PerClassDetectionParams.assign(initParams.perClassDetectionParams,
+                                     initParams.perClassDetectionParams + m_NumDetectedClasses);
+    m_DetectionParams.numClassesConfigured = initParams.numDetectedClasses;
+    m_DetectionParams.perClassPreclusterThreshold.resize(initParams.numDetectedClasses);
+    m_DetectionParams.perClassPostclusterThreshold.resize(initParams.numDetectedClasses);
+
+    /* Resize the per class vector to the number of detected classes. */
+    m_PerClassFaceDetectionLandmarkList.resize(initParams.numDetectedClasses);
+
+    /* Fill the class thresholds in the m_DetectionParams structure. This
+     * will be required during parsing. */
+    for (unsigned int i = 0; i < initParams.numDetectedClasses; i++) {
+        m_DetectionParams.perClassPreclusterThreshold[i] =
+            m_PerClassDetectionParams[i].preClusterThreshold;
+        m_DetectionParams.perClassPostclusterThreshold[i] =
+            m_PerClassDetectionParams[i].postClusterThreshold;
+    }
+
+    /* If custom parse function is specified get the function address from the
+     * custom library. */
+    if (m_CustomLibHandle &&
+        !string_empty(initParams.customBBoxFaceDetectionLandmarkParseFuncName)) {
+        m_CustomParseFunc =
+            m_CustomLibHandle->symbol<NvDsInferFaceDetectionLandmarkParseCustomFunc>(
+                initParams.customBBoxFaceDetectionLandmarkParseFuncName);
+        if (!m_CustomParseFunc) {
+            printError(
+                "FaceDetection-postprocessor failed to init resource "
+                "because dlsym failed to get func %s pointer",
+                safeStr(initParams.customBBoxFaceDetectionLandmarkParseFuncName));
+            return NVDSINFER_CUSTOM_LIB_FAILED;
+        }
+    } else {
+        printError("Custom parse function not found for FaceDetection-postprocessor");
+        return NVDSINFER_RESOURCE_ERROR;
+    }
+
+    return NVDSINFER_SUCCESS;
+}
+
+NvDsInferStatus FaceDetectionLandmarkPostprocessor::parseEachBatch(
+    const std::vector<NvDsInferLayerInfo> &outputLayers,
+    NvDsInferFrameOutput &result)
+{
+    result.outputType = NvDsInferNetworkType_FaceDetection;
+    fillDetectionOutput(outputLayers, result.detectionOutput);
+    return NVDSINFER_SUCCESS;
+}
+////////////////
+/* End Custom */
+////////////////
+
 NvDsInferStatus ClassifyPostprocessor::initResource(const NvDsInferContextInitParams &initParams)
 {
     RETURN_NVINFER_ERROR(InferPostprocessor::initResource(initParams),
@@ -920,6 +1004,15 @@ NvDsInferStatus NvDsInferContextImpl::preparePostprocess(
     case NvDsInferNetworkType_InstanceSegmentation:
         processor = std::make_unique<InstanceSegmentPostprocessor>(m_UniqueID, m_GpuID);
         break;
+        /////////////////
+        /* Start Custom */
+        /////////////////
+    case NvDsInferNetworkType_FaceDetection:
+        processor = std::make_unique<FaceDetectionLandmarkPostprocessor>(m_UniqueID, m_GpuID);
+        break;
+        ////////////////
+        /* End Custom */
+        ////////////////
     case NvDsInferNetworkType_Other:
         processor = std::make_unique<OtherPostprocessor>(m_UniqueID, m_GpuID);
         break;
@@ -1210,6 +1303,35 @@ NvDsInferStatus NvDsInferContextImpl::allocateBuffers()
     /* Resize the binding buffers vector to the number of bound layers. */
     m_BindingBuffers.assign(m_AllLayerInfo.size(), nullptr);
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+
+#ifdef DUMP_INPUT_TO_FILE
+    /* allocate input/output layers buffers */
+    int maxSize = 0;
+
+    for (size_t iL = 0; iL < m_AllLayerInfo.size(); iL++) {
+        const NvDsInferBatchDimsLayerInfo &layerInfo = m_AllLayerInfo[iL];
+        const NvDsInferDims &layerDims = layerInfo.inferDims;
+        size_t sizePerBatch = layerDims.numElements * getElementSize(layerInfo.dataType);
+
+        if ((layerInfo.isInput) && (sizePerBatch > maxSize))
+            maxSize = sizePerBatch;
+    }
+
+    if (maxSize > 0) {
+        m_inputDumpHostBuf = malloc(maxSize);
+        if (!m_inputDumpHostBuf)
+            printError("Failed to malloc m_inputDumpHostBuf!\n");
+        CHECK_CUDA_ERR_NO_ACTION(cudaMalloc(&m_inputDumpDeviceBuf, maxSize),
+                                 "cudaMalloc m_inputDumpDeviceBuf failed");
+    }
+#endif // DUMP_INPUT_TO_FILE
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     /* allocate input/output layers buffers */
     for (size_t iL = 0; iL < m_AllLayerInfo.size(); iL++) {
         const NvDsInferBatchDimsLayerInfo &layerInfo = m_AllLayerInfo[iL];
@@ -1291,6 +1413,63 @@ NvDsInferStatus NvDsInferContextImpl::allocateBuffers()
 
     return NVDSINFER_SUCCESS;
 }
+
+/////////////////
+/* Start Custom */
+/////////////////
+#ifdef DUMP_INPUT_TO_FILE
+void dump_to_file(const char *filename,
+                  unsigned char *buffer,
+                  int size,
+                  int width,
+                  int height,
+                  int toRawdata,
+                  NvDsInferFormat format)
+{
+    if (toRawdata) {
+        std::ofstream dump_file(filename, std::ios::binary);
+        dump_file.write((const char *)buffer, size);
+
+        return;
+    }
+
+    // else dump to jpg file
+    cv::Mat img(height, width, CV_32FC3);
+    std::vector<cv::Mat> bgrChannels(3);
+
+    split(img, bgrChannels);
+
+    if (format == NvDsInferFormat_BGR) {
+        // b
+        unsigned char *b = buffer;
+        memcpy(bgrChannels[0].data, b, sizeof(float) * width * height);
+        // g
+        unsigned char *g = (unsigned char *)(buffer + sizeof(float) * width * height);
+        memcpy(bgrChannels[1].data, g, sizeof(float) * width * height);
+        // r
+        unsigned char *r = (unsigned char *)(buffer + sizeof(float) * width * height * 2);
+        memcpy(bgrChannels[2].data, r, sizeof(float) * width * height);
+    } else // NvDsInferFormat_RGB
+    {
+        // b
+        unsigned char *b = (unsigned char *)(buffer + sizeof(float) * width * height * 2);
+        memcpy(bgrChannels[0].data, b, sizeof(float) * width * height);
+        // g
+        unsigned char *g = (unsigned char *)(buffer + sizeof(float) * width * height);
+        memcpy(bgrChannels[1].data, g, sizeof(float) * width * height);
+        // r
+        unsigned char *r = (unsigned char *)buffer;
+        memcpy(bgrChannels[2].data, r, sizeof(float) * width * height);
+    }
+
+    cv::merge(bgrChannels, img);
+
+    cv::imwrite(filename, img);
+}
+#endif
+////////////////
+/* End Custom */
+////////////////
 
 /* Initialize non-image input layers if the custom library has implemented
  * the interface. */
@@ -1450,6 +1629,77 @@ NvDsInferStatus NvDsInferContextImpl::queueInputBatch(NvDsInferContextBatchInput
     auto backendBuffer = std::make_shared<BackendBatchBuffer>(bindings, m_AllLayerInfo, batchSize);
     assert(m_BackendContext && backendBuffer);
     assert(m_InferStream && m_InputConsumedEvent && m_InferCompleteEvent);
+
+/////////////////
+/* Start Custom */
+/////////////////
+#ifdef DUMP_INPUT_TO_FILE
+#define DUMP_FRAME_CNT_START (0)
+#define DUMP_FRAME_CNT_STOP (100000)
+    if (m_UniqueID == 2) {
+        if ((m_FrameCnt++ >= DUMP_FRAME_CNT_START) && (m_FrameCnt <= DUMP_FRAME_CNT_STOP)) {
+            void *hBuffer;
+            float scale = m_Preprocessor->getScale();
+            NvDsInferFormat format = m_Preprocessor->getNetworkFormat();
+
+            printf("batchDims.batchSize = %d, scale = %f, format = %d\n", batchSize, scale, format);
+            assert(m_AllLayerInfo.size());
+            for (size_t i = 0; i < m_AllLayerInfo.size(); i++) {
+                NvDsInferLayerInfo &info = m_AllLayerInfo[i];
+                assert(info.inferDims.numElements > 0);
+
+                if (info.isInput) {
+                    int sizePerBatch = getElementSize(info.dataType) * info.inferDims.numElements;
+
+                    cudaDeviceSynchronize();
+
+                    for (int b = 0; b < batchSize; b++) {
+                        float *indBuf = (float *)bindings[i] + b * info.inferDims.numElements;
+                        int w = info.inferDims.d[2];
+                        int h = info.inferDims.d[1];
+
+                        if (scale < 1.0) {
+                            // R or B
+                            NvDsInferConvert_FtFTensor((float *)m_inputDumpDeviceBuf, indBuf, w, h,
+                                                       w, 1 / scale, NULL, NULL);
+                            // G
+                            NvDsInferConvert_FtFTensor(((float *)m_inputDumpDeviceBuf + w * h),
+                                                       ((float *)indBuf + w * h), w, h, w,
+                                                       1 / scale, NULL, NULL);
+                            // B or R
+                            NvDsInferConvert_FtFTensor(((float *)m_inputDumpDeviceBuf + 2 * w * h),
+                                                       ((float *)indBuf + 2 * w * h), w, h, w,
+                                                       1 / scale, NULL, NULL);
+                            indBuf = (float *)m_inputDumpDeviceBuf;
+                        }
+
+                        RETURN_CUDA_ERR(cudaMemcpy(m_inputDumpHostBuf, (void *)indBuf, sizePerBatch,
+                                                   cudaMemcpyDeviceToHost),
+                                        "postprocessing cudaMemcpyAsync for output buffers failed");
+
+                        bool dumpToRaw = false;
+
+                        std::string filename = "./outputs/nvdsinfer/frame-" +
+                                               std::to_string(m_FrameCnt) + "_gie-" +
+                                               std::to_string(m_UniqueID) + "_input-" +
+                                               std::to_string(i) + "_batch-" + std::to_string(b);
+
+                        if (dumpToRaw)
+                            filename += ".raw";
+                        else
+                            filename += ".png";
+
+                        dump_to_file(filename.c_str(), (unsigned char *)m_inputDumpHostBuf,
+                                     sizePerBatch, w, h, dumpToRaw, format);
+                    }
+                }
+            }
+        }
+    }
+#endif // DUMP_INPUT_TO_FILE
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     RETURN_NVINFER_ERROR(
         m_BackendContext->enqueueBuffer(backendBuffer, *m_InferStream, m_InputConsumedEvent.get()),
@@ -1813,6 +2063,19 @@ NvDsInferContextImpl::~NvDsInferContextImpl()
     if (m_PostprocessStream) {
         cudaStreamSynchronize(*m_PostprocessStream);
     }
+
+/////////////////
+/* Start Custom */
+/////////////////
+#ifdef DUMP_INPUT_TO_FILE
+    if (m_inputDumpHostBuf)
+        free(m_inputDumpHostBuf);
+    if (m_inputDumpDeviceBuf)
+        cudaFree(m_inputDumpDeviceBuf);
+#endif
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     m_BackendContext.reset();
 

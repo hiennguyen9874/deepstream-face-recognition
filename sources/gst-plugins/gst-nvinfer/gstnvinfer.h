@@ -21,6 +21,18 @@
 #include <unordered_map>
 #include <vector>
 
+/////////////////
+/* Start Custom */
+/////////////////
+/* Open CV headers */
+#ifdef WITH_OPENCV
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#endif
+////////////////
+/* End Custom */
+////////////////
+
 #include "cuda_runtime_api.h"
 #include "gstnvdsinfer.h"
 #include "gstnvdsmeta.h"
@@ -71,7 +83,21 @@ enum {
     PROP_OUTPUT_CALLBACK,
     PROP_OUTPUT_CALLBACK_USERDATA,
     PROP_OUTPUT_TENSOR_META,
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    PROP_FACE_ALIGNMENT,
+    ////////////////
+    /* End Custom */
+    ////////////////
     PROP_OUTPUT_INSTANCE_MASK,
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    PROP_OUTPUT_FACE_DETECTION_LANDMARK,
+    ////////////////
+    /* End Custom */
+    ////////////////
     PROP_INPUT_TENSOR_META,
     PROP_LAST
 };
@@ -307,9 +333,28 @@ struct _GstNvInfer {
      * GstBuffers. */
     gboolean output_tensor_meta;
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    /** Boolean indicating use opencv to aligment face using landmark. */
+    gboolean face_alignment;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     /** Boolean indicating if instance masks are expected in output and
      *  has to be attached in metadata */
     gboolean output_instance_mask;
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    /** Boolean indicating if landmarks are expected in output and
+     *  has to be attached in user metadata */
+    gboolean output_face_detection_landmark;
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     /** PTS of input buffer when nvinfer last posted the warning about untracked
      * object. */

@@ -38,6 +38,13 @@
 #define CONFIG_GROUP_INFER_GPU_ID "gpu-id"
 #define CONFIG_GROUP_INFER_SECONDARY_REINFER_INTERVAL "secondary-reinfer-interval"
 #define CONFIG_GROUP_INFER_OUTPUT_TENSOR_META "output-tensor-meta"
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_INFER_FACE_ALIGNMENT "face-alignment"
+////////////////
+/* End Custom */
+////////////////
 // gpu_post_processing 0 is not 1 is yes
 #define CONFIG_GROUP_INFER_DISABLE_OUTPUT_HOST_COPY "disable-output-host-copy"
 
@@ -77,6 +84,13 @@
 #define CONFIG_GROUP_INFER_CUSTOM_LIB_PATH "custom-lib-path"
 #define CONFIG_GROUP_INFER_CUSTOM_PARSE_BBOX_FUNC "parse-bbox-func-name"
 #define CONFIG_GROUP_INFER_CUSTOM_PARSE_BBOX_IM_FUNC "parse-bbox-instance-mask-func-name"
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_INFER_CUSTOM_PARSE_BBOX_FD_FUNC "parse-bbox-face-detection-func-name"
+////////////////
+/* End Custom */
+////////////////
 #define CONFIG_GROUP_INFER_CUSTOM_ENGINE_CREATE_FUNC "engine-create-func-name"
 #define CONFIG_GROUP_INFER_CUSTOM_PARSE_CLASSIFIER_FUNC "parse-classifier-func-name"
 #define CONFIG_GROUP_INFER_CUSTOM_NETWORK_CONFIG "custom-network-config"
@@ -115,6 +129,15 @@
 
 /** Instance Segmentaion specific parameters. */
 #define CONFIG_GROUP_INFER_OUTPUT_INSTANCE_MASK "output-instance-mask"
+
+/////////////////
+/* Start Custom */
+/////////////////
+/** Face Detection specific parameters. */
+#define CONFIG_GROUP_INFER_OUTPUT_FACE_DETECTION_LANDMARK "output-face-detection-landmark"
+////////////////
+/* End Custom */
+////////////////
 
 /** Parameters for filtering objects based min/max size threshold when
     operating in secondary mode. */

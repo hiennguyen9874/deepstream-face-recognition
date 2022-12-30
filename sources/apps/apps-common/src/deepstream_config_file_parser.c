@@ -43,6 +43,16 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_SOURCE_CAMERA_CSI_SID "camera-csi-sensor-id"
 #define CONFIG_GROUP_SOURCE_CAMERA_V4L2_DEVNODE "camera-v4l2-dev-node"
 #define CONFIG_GROUP_SOURCE_URI "uri"
+
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_SOURCE_DO_RETRANSMISSION "do-retransmission"
+#define CONFIG_GROUP_SOURCE_DROP_ON_LATENCY "drop-on-latency"
+////////////////
+/* End Custom */
+////////////////
+
 #define CONFIG_GROUP_SOURCE_LATENCY "latency"
 #define CONFIG_GROUP_SOURCE_NUM_SOURCES "num-sources"
 #define CONFIG_GROUP_SOURCE_INTRA_DECODE "intra-decode-enable"
@@ -76,6 +86,16 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_STREAMMUX_ATTACH_SYS_TS_AS_NTP "attach-sys-ts-as-ntp"
 #define CONFIG_GROUP_STREAMMUX_FRAME_NUM_RESET_ON_STREAM_RESET "frame-num-reset-on-stream-reset"
 #define CONFIG_GROUP_STREAMMUX_FRAME_NUM_RESET_ON_EOS "frame-num-reset-on-eos"
+
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_SEGVISUAL_BATCH_SIZE "batch-size"
+#define CONFIG_GROUP_SEGVISUAL_WIDTH "width"
+#define CONFIG_GROUP_SEGVISUAL_HEIGHT "height"
+////////////////
+/* End Custom */
+////////////////
 
 #define CONFIG_GROUP_STREAMMUX_CONFIG_FILE_PATH "config-file"
 #define CONFIG_GROUP_STREAMMUX_SYNC_INPUTS "sync-inputs"
@@ -157,6 +177,19 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_SINK_PLANE_ID "plane-id"
 #define CONFIG_GROUP_SINK_SET_MODE "set-mode"
 #define CONFIG_GROUP_SINK_ONLY_FOR_DEMUX "link-to-demux"
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_SINK_HLS_LOCATION "hls-location"
+#define CONFIG_GROUP_SINK_HLS_MAX_FILES "hls-max-files"
+#define CONFIG_GROUP_SINK_HLS_PLAYLIST_LENGTH "hls-playlist-length"
+#define CONFIG_GROUP_SINK_HLS_PLAYLIST_LOCATION "hls-playlist-location"
+#define CONFIG_GROUP_SINK_HLS_PLAYLIST_ROOT "hls-playlist-root"
+#define CONFIG_GROUP_SINK_HLS_TARGET_DURATION "hls-target-duration"
+#define CONFIG_GROUP_SINK_MSG_CONV_BROKER_ON_BROKER_ON_DEMUX "msg-conv-broker-on-demux"
+////////////////
+/* End Custom */
+////////////////
 
 #define CONFIG_GROUP_SINK_MSG_CONV_CONFIG "msg-conv-config"
 #define CONFIG_GROUP_SINK_MSG_CONV_PAYLOAD_TYPE "msg-conv-payload-type"
@@ -198,6 +231,14 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_IMG_SAVE_MIN_BOX_WIDTH "min-box-width"
 #define CONFIG_GROUP_IMG_SAVE_MIN_BOX_HEIGHT "min-box-height"
 
+/////////////////
+/* Start Custom */
+/////////////////
+#define CONFIG_GROUP_IMG_SAVE_QUALITY "quality"
+////////////////
+/* End Custom */
+////////////////
+
 // To add configuration parsing for any element, you need to:
 // 1. Define a group name and set of key strings for the config options
 // 2. Create a function to parse these configs (refer parse_dsexample)
@@ -213,6 +254,20 @@ GST_DEBUG_CATEGORY(APP_CFG_PARSER_CAT);
 #define CONFIG_GROUP_DSEXAMPLE_BLUR_OBJECTS "blur-objects"
 #define CONFIG_GROUP_DSEXAMPLE_UNIQUE_ID "unique-id"
 #define CONFIG_GROUP_DSEXAMPLE_GPU_ID "gpu-id"
+
+/////////////////
+/* Start Custom */
+/////////////////
+// Add group name for set of configs of dspostprocessing element
+#define CONFIG_GROUP_DSPOSTPROCESSING "ds-postprocessing"
+// Refer to gst-dspostprocessing element source code for the meaning of these
+// configs
+#define CONFIG_GROUP_DSPOSTPROCESSING_UNIQUE_ID "unique-id"
+#define CONFIG_GROUP_DSPOSTPROCESSING_GPU_ID "gpu-id"
+#define CONFIG_GROUP_DSPOSTPROCESSING_INITIAL_COLORS "initial-colors"
+////////////////
+/* End Custom */
+////////////////
 
 #define CHECK_ERROR(error)                                       \
     if (error) {                                                 \
@@ -413,6 +468,16 @@ gboolean parse_source(NvDsSourceConfig *config,
     }
     keys = g_key_file_get_keys(key_file, group, NULL, &error);
     CHECK_ERROR(error);
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    config->do_retransmission = TRUE;
+    config->drop_on_latency = TRUE;
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     config->latency = 100;
     config->num_decode_surfaces = N_DECODE_SURFACES;
     config->num_extra_surfaces = N_EXTRA_SURFACES;
@@ -466,7 +531,25 @@ gboolean parse_source(NvDsSourceConfig *config,
                 g_free(uri);
             } else
                 config->uri = uri;
-        } else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_LATENCY)) {
+        }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_DO_RETRANSMISSION)) {
+            config->do_retransmission = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SOURCE_DO_RETRANSMISSION, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_DROP_ON_LATENCY)) {
+            config->drop_on_latency = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SOURCE_DROP_ON_LATENCY, &error);
+            CHECK_ERROR(error);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SOURCE_LATENCY)) {
             config->latency =
                 g_key_file_get_integer(key_file, group, CONFIG_GROUP_SOURCE_LATENCY, &error);
             CHECK_ERROR(error);
@@ -795,6 +878,66 @@ done:
     return ret;
 }
 
+/////////////////
+/* Start Custom */
+/////////////////
+gboolean parse_dspostprocessing(NvDsDsPostProcessingConfig *config, GKeyFile *key_file)
+{
+    gboolean ret = FALSE;
+    gchar **keys = NULL;
+    gchar **key = NULL;
+    GError *error = NULL;
+
+    keys = g_key_file_get_keys(key_file, CONFIG_GROUP_DSPOSTPROCESSING, NULL, &error);
+    CHECK_ERROR(error);
+    for (key = keys; *key; key++) {
+        if (!g_strcmp0(*key, CONFIG_GROUP_ENABLE)) {
+            config->enable = g_key_file_get_integer(key_file, CONFIG_GROUP_DSPOSTPROCESSING,
+                                                    CONFIG_GROUP_ENABLE, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_DSPOSTPROCESSING_UNIQUE_ID)) {
+            config->unique_id =
+                g_key_file_get_integer(key_file, CONFIG_GROUP_DSPOSTPROCESSING,
+                                       CONFIG_GROUP_DSPOSTPROCESSING_UNIQUE_ID, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_DSPOSTPROCESSING_GPU_ID)) {
+            config->gpu_id = g_key_file_get_integer(key_file, CONFIG_GROUP_DSPOSTPROCESSING,
+                                                    CONFIG_GROUP_DSPOSTPROCESSING_GPU_ID, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_DSPOSTPROCESSING_INITIAL_COLORS)) {
+            gsize length;
+            config->list_initial_colors = g_key_file_get_integer_list(
+                key_file, CONFIG_GROUP_DSPOSTPROCESSING,
+                CONFIG_GROUP_DSPOSTPROCESSING_INITIAL_COLORS, &length, &error);
+            config->num_initial_colors = length;
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_NVBUF_MEMORY_TYPE)) {
+            config->nvbuf_memory_type = g_key_file_get_integer(
+                key_file, CONFIG_GROUP_DSPOSTPROCESSING, CONFIG_NVBUF_MEMORY_TYPE, &error);
+            CHECK_ERROR(error);
+        } else {
+            NVGSTDS_WARN_MSG_V("Unknown key '%s' for group [%s]", *key,
+                               CONFIG_GROUP_DSPOSTPROCESSING);
+        }
+    }
+
+    ret = TRUE;
+done:
+    if (error) {
+        g_error_free(error);
+    }
+    if (keys) {
+        g_strfreev(keys);
+    }
+    if (!ret) {
+        NVGSTDS_ERR_MSG_V("%s failed", __func__);
+    }
+    return ret;
+}
+////////////////
+/* End Custom */
+////////////////
+
 gboolean parse_osd(NvDsOSDConfig *config, GKeyFile *key_file)
 {
     gboolean ret = FALSE;
@@ -934,6 +1077,62 @@ done:
     }
     return ret;
 }
+
+/////////////////
+/* Start Custom */
+/////////////////
+gboolean parse_segvisual(NvSegVisualConfig *config, GKeyFile *key_file)
+{
+    gboolean ret = FALSE;
+    gchar **keys = NULL;
+    gchar **key = NULL;
+    GError *error = NULL;
+
+    /** Default values */
+    config->batch_size = 1;
+    config->width = 512;
+    config->height = 512;
+
+    keys = g_key_file_get_keys(key_file, CONFIG_GROUP_SEGVISUAL, NULL, &error);
+    CHECK_ERROR(error);
+    for (key = keys; *key; key++) {
+        if (!g_strcmp0(*key, CONFIG_GROUP_ENABLE)) {
+            config->enable = g_key_file_get_integer(key_file, CONFIG_GROUP_SEGVISUAL,
+                                                    CONFIG_GROUP_ENABLE, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SEGVISUAL_BATCH_SIZE)) {
+            config->batch_size = g_key_file_get_integer(key_file, CONFIG_GROUP_SEGVISUAL,
+                                                        CONFIG_GROUP_SEGVISUAL_BATCH_SIZE, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SEGVISUAL_WIDTH)) {
+            config->width = g_key_file_get_integer(key_file, CONFIG_GROUP_SEGVISUAL,
+                                                   CONFIG_GROUP_SEGVISUAL_WIDTH, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SEGVISUAL_HEIGHT)) {
+            config->height = g_key_file_get_integer(key_file, CONFIG_GROUP_SEGVISUAL,
+                                                    CONFIG_GROUP_SEGVISUAL_HEIGHT, &error);
+            CHECK_ERROR(error);
+        } else {
+            NVGSTDS_WARN_MSG_V("Unknown key '%s' for group [%s]", *key, CONFIG_GROUP_OSD);
+        }
+    }
+
+    ret = TRUE;
+done:
+    if (error) {
+        g_error_free(error);
+    }
+    if (keys) {
+        g_strfreev(keys);
+    }
+    if (!ret) {
+        NVGSTDS_ERR_MSG_V("%s failed", __func__);
+    }
+    return ret;
+}
+////////////////
+/* End Custom */
+////////////////
 
 gboolean parse_dewarper(NvDsDewarperConfig *config, GKeyFile *key_file, gchar *cfg_file_path)
 {
@@ -1341,6 +1540,20 @@ gboolean parse_sink(NvDsSinkSubBinConfig *config,
 
     config->encoder_config.rtsp_port = 8554;
     config->encoder_config.udp_port = 5000;
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    config->encoder_config.hls_location = g_strdup("segment%05d.ts");
+    config->encoder_config.hls_max_files = 10;
+    config->encoder_config.hls_playlist_length = 5;
+    config->encoder_config.hls_playlist_location = g_strdup("playlist.m3u8");
+    config->encoder_config.hls_playlist_root = NULL;
+    config->encoder_config.hls_target_duration = 15;
+
+    ////////////////
+    /* End Custom */
+    ////////////////
     config->render_config.qos = FALSE;
     config->render_config.color_range = -1;
     config->render_config.set_mode = -1;
@@ -1348,6 +1561,14 @@ gboolean parse_sink(NvDsSinkSubBinConfig *config,
     config->msg_conv_broker_config.new_api = FALSE;
     config->msg_conv_broker_config.conv_msg2p_new_api = FALSE;
     config->msg_conv_broker_config.conv_frame_interval = 30;
+
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    config->msg_conv_broker_on_demux = FALSE;
+    ////////////////
+    /* End Custom */
+    ////////////////
 
     if (g_key_file_get_integer(key_file, group, CONFIG_GROUP_ENABLE, &error) == FALSE ||
         error != NULL)
@@ -1367,7 +1588,21 @@ gboolean parse_sink(NvDsSinkSubBinConfig *config,
             config->link_to_demux =
                 g_key_file_get_integer(key_file, group, CONFIG_GROUP_SINK_ONLY_FOR_DEMUX, &error);
             CHECK_ERROR(error);
-        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_WIDTH)) {
+        }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_MSG_CONV_BROKER_ON_BROKER_ON_DEMUX)) {
+            config->msg_conv_broker_on_demux = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SINK_MSG_CONV_BROKER_ON_BROKER_ON_DEMUX, &error);
+            CHECK_ERROR(error);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_WIDTH)) {
             config->render_config.width =
                 g_key_file_get_integer(key_file, group, CONFIG_GROUP_SINK_WIDTH, &error);
             CHECK_ERROR(error);
@@ -1427,7 +1662,41 @@ gboolean parse_sink(NvDsSinkSubBinConfig *config,
             config->encoder_config.udp_port =
                 g_key_file_get_integer(key_file, group, CONFIG_GROUP_SINK_UDP_PORT, &error);
             CHECK_ERROR(error);
-        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_UDP_BUFFER_SIZE)) {
+        }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_LOCATION)) {
+            config->encoder_config.hls_location =
+                g_key_file_get_string(key_file, group, CONFIG_GROUP_SINK_HLS_LOCATION, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_MAX_FILES)) {
+            config->encoder_config.hls_max_files =
+                g_key_file_get_integer(key_file, group, CONFIG_GROUP_SINK_HLS_MAX_FILES, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_PLAYLIST_LENGTH)) {
+            config->encoder_config.hls_playlist_length = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SINK_HLS_PLAYLIST_LENGTH, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_PLAYLIST_LOCATION)) {
+            config->encoder_config.hls_playlist_location = g_key_file_get_string(
+                key_file, group, CONFIG_GROUP_SINK_HLS_PLAYLIST_LOCATION, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_PLAYLIST_ROOT)) {
+            config->encoder_config.hls_playlist_root =
+                g_key_file_get_string(key_file, group, CONFIG_GROUP_SINK_HLS_PLAYLIST_ROOT, &error);
+            CHECK_ERROR(error);
+        } else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_HLS_TARGET_DURATION)) {
+            config->encoder_config.hls_target_duration = g_key_file_get_integer(
+                key_file, group, CONFIG_GROUP_SINK_HLS_TARGET_DURATION, &error);
+            CHECK_ERROR(error);
+        }
+
+        ////////////////
+        /* End Custom */
+        ////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_SINK_UDP_BUFFER_SIZE)) {
             config->encoder_config.udp_buffer_size =
                 g_key_file_get_uint64(key_file, group, CONFIG_GROUP_SINK_UDP_BUFFER_SIZE, &error);
             CHECK_ERROR(error);
@@ -1733,6 +2002,13 @@ gboolean parse_image_save(NvDsImageSave *config,
     config->max_confidence = 1.0;
     config->min_box_width = 1;
     config->min_box_height = 1;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    config->quality = 80;
+    ////////////////
+    /* End Custom */
+    ////////////////
     config->save_image_full_frame = TRUE;
     config->save_image_cropped_object = FALSE;
     config->second_to_skip_interval = 600;
@@ -1779,7 +2055,19 @@ gboolean parse_image_save(NvDsImageSave *config,
             config->min_box_height = g_key_file_get_integer(
                 key_file, group, CONFIG_GROUP_IMG_SAVE_MIN_BOX_HEIGHT, &error);
             CHECK_ERROR(error);
-        } else {
+        }
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_IMG_SAVE_QUALITY)) {
+            config->quality =
+                g_key_file_get_integer(key_file, group, CONFIG_GROUP_IMG_SAVE_QUALITY, &error);
+            CHECK_ERROR(error);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+        else {
             NVGSTDS_WARN_MSG_V("Unknown key '%s' for group [%s]", *key, group);
         }
     }

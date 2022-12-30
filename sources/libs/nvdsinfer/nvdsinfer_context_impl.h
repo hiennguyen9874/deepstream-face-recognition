@@ -73,6 +73,16 @@ public:
     void setLoggingFunc(const NvDsInferLoggingFunc &func) { m_LoggingFunc = func; }
     bool setScaleOffsets(float scale, const std::vector<float> &offsets = {});
     bool setMeanFile(const std::string &file);
+/////////////////
+/* Start Custom */
+/////////////////
+#ifdef DUMP_INPUT_TO_FILE
+    float getScale() { return m_Scale; };
+    NvDsInferFormat getNetworkFormat() { return m_NetworkInputFormat; };
+#endif
+    ////////////////
+    /* End Custom */
+    ////////////////
     bool setInputOrder(const NvDsInferTensorOrder order);
 
     NvDsInferStatus allocateResource();
@@ -279,6 +289,54 @@ private:
     NvDsInferInstanceMaskParseCustomFunc m_CustomParseFunc = nullptr;
 };
 
+/////////////////
+/* Start Custom */
+/////////////////
+/** Implementation of post-processing class for face detection networks. */
+class FaceDetectionLandmarkPostprocessor : public InferPostprocessor {
+public:
+    FaceDetectionLandmarkPostprocessor(int id, int gpuId = 0)
+        : InferPostprocessor(NvDsInferNetworkType_FaceDetection, id, gpuId)
+    {
+    }
+    ~FaceDetectionLandmarkPostprocessor() override = default;
+
+    NvDsInferStatus initResource(const NvDsInferContextInitParams &initParams) override;
+
+private:
+    NvDsInferStatus parseEachBatch(const std::vector<NvDsInferLayerInfo> &outputLayers,
+                                   NvDsInferFrameOutput &result) override;
+
+    void fillUnclusteredOutput(NvDsInferDetectionOutput &output);
+    NvDsInferStatus fillDetectionOutput(const std::vector<NvDsInferLayerInfo> &outputLayers,
+                                        NvDsInferDetectionOutput &output);
+    void preClusteringThreshold(NvDsInferParseDetectionParams const &detectionParams,
+                                std::vector<NvDsInferFaceDetectionLandmarkInfo> &objectList);
+    void filterTopKOutputs(const int topK,
+                           std::vector<NvDsInferFaceDetectionLandmarkInfo> &objectList);
+
+private:
+    NvDsInferClusterMode m_ClusterMode;
+
+    /* Number of classes detected by the model. */
+    uint32_t m_NumDetectedClasses = 0;
+
+    /* Detection / grouping parameters. */
+    std::vector<NvDsInferDetectionParams> m_PerClassDetectionParams;
+    NvDsInferParseDetectionParams m_DetectionParams = {0, {}, {}};
+
+    /* Vector for all parsed instance masks. */
+    std::vector<NvDsInferFaceDetectionLandmarkInfo> m_FaceDetectionLandmarkList;
+    /* Vector of NvDsInferFaceDetectionLandmarkInfo vectors for each class. */
+    std::vector<std::vector<NvDsInferFaceDetectionLandmarkInfo>>
+        m_PerClassFaceDetectionLandmarkList;
+
+    NvDsInferFaceDetectionLandmarkParseCustomFunc m_CustomParseFunc = nullptr;
+};
+////////////////
+/* End Custom */
+////////////////
+
 /** Implementation of post-processing class for classification networks. */
 class ClassifyPostprocessor : public InferPostprocessor {
 public:
@@ -428,6 +486,17 @@ private:
     NvDsInferBatchDimsLayerInfo m_InputImageLayerInfo;
 
     std::vector<void *> m_BindingBuffers;
+/////////////////
+/* Start Custom */
+/////////////////
+#ifdef DUMP_INPUT_TO_FILE
+    uint32_t m_FrameCnt = 0;
+    void *m_inputDumpHostBuf;
+    void *m_inputDumpDeviceBuf;
+#endif
+    ////////////////
+    /* End Custom */
+    ////////////////
     std::vector<std::unique_ptr<CudaDeviceBuffer>> m_InputDeviceBuffers;
 
     uint32_t m_OutputBufferPoolSize = NVDSINFER_MIN_OUTPUT_BUFFERPOOL_SIZE;

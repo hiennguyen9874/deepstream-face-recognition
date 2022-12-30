@@ -135,6 +135,16 @@ typedef enum {
      network detects objects, bounding box and mask for objects, and
      their classes in an input frame */
     NvDsInferNetworkType_InstanceSegmentation,
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    /** Specifies a face detection network. A face detection
+     network detects objects, bounding box and landmark for objects, and
+     their classes in an input frame */
+    NvDsInferNetworkType_FaceDetection,
+    ////////////////
+    /* End Custom */
+    ////////////////
     /** Specifies other. Output layers of an "other" network are not parsed by
      NvDsInferContext. This is useful for networks that produce custom output.
      Output can be parsed by the NvDsInferContext client or can be combined
@@ -381,6 +391,16 @@ typedef struct _NvDsInferContextInitParams {
      in the custom library. */
     char customBBoxInstanceMaskParseFuncName[_MAX_STR_LENGTH];
 
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    /** Holds the name of the bounding box and instance mask parse function
+    in the custom library. */
+    char customBBoxFaceDetectionLandmarkParseFuncName[_MAX_STR_LENGTH];
+    ////////////////
+    /* End Custom */
+    ////////////////
+
     /** Can be used to specify the format and datatype for bound output layers.
      * For each layer specified the format is
      * "<layer-name>:<data-type>:<format>" */
@@ -478,6 +498,18 @@ typedef struct {
     unsigned int mask_height;
     /** Holds size of mask in bytes*/
     unsigned int mask_size;
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    /** Holds object segment landmark */
+    float *landmark;
+    /** Holds num of landmark */
+    unsigned int num_landmark;
+    /** Holds size of landmark in bytes*/
+    unsigned int landmark_size;
+    ////////////////
+    /* End Custom */
+    ////////////////
 } NvDsInferObject;
 
 /**

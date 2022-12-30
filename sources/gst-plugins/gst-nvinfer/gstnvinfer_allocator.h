@@ -67,6 +67,13 @@ GstAllocator *gst_nvinfer_allocator_new(guint width,
                                         guint height,
                                         NvBufSurfaceColorFormat color_format,
                                         guint batch_size,
-                                        guint gpu_id);
+                                        guint gpu_id,
+                                        /////////////////
+                                        /* Start Custom */
+                                        /////////////////
+                                        NvBufSurfaceMemType memType
+////////////////
+/* End Custom */
+////////////////);
 
 #endif

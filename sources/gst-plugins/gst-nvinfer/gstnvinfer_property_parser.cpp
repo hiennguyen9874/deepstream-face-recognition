@@ -340,12 +340,37 @@ static gboolean gst_nvinfer_parse_other_attribute(GstNvInfer *nvinfer,
                                    &error))
             nvinfer->output_tensor_meta = TRUE;
         CHECK_ERROR(error);
-    } else if (!g_strcmp0(key, CONFIG_GROUP_INFER_OUTPUT_INSTANCE_MASK)) {
+    }
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    else if (!g_strcmp0(key, CONFIG_GROUP_INFER_FACE_ALIGNMENT)) {
+        if (g_key_file_get_boolean(key_file, group_name, CONFIG_GROUP_INFER_FACE_ALIGNMENT, &error))
+            nvinfer->face_alignment = TRUE;
+        CHECK_ERROR(error);
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
+    else if (!g_strcmp0(key, CONFIG_GROUP_INFER_OUTPUT_INSTANCE_MASK)) {
         if (g_key_file_get_boolean(key_file, group_name, CONFIG_GROUP_INFER_OUTPUT_INSTANCE_MASK,
                                    &error))
             nvinfer->output_instance_mask = TRUE;
         CHECK_ERROR(error);
-    } else if (!g_strcmp0(key, CONFIG_GROUP_INFER_SECONDARY_REINFER_INTERVAL)) {
+    }
+    /////////////////
+    /* Start Custom */
+    /////////////////
+    else if (!g_strcmp0(key, CONFIG_GROUP_INFER_OUTPUT_FACE_DETECTION_LANDMARK)) {
+        if (g_key_file_get_boolean(key_file, group_name,
+                                   CONFIG_GROUP_INFER_OUTPUT_FACE_DETECTION_LANDMARK, &error))
+            nvinfer->output_face_detection_landmark = TRUE;
+        CHECK_ERROR(error);
+    }
+    ////////////////
+    /* End Custom */
+    ////////////////
+    else if (!g_strcmp0(key, CONFIG_GROUP_INFER_SECONDARY_REINFER_INTERVAL)) {
         nvinfer->secondary_reinfer_interval = g_key_file_get_integer(
             key_file, group_name, CONFIG_GROUP_INFER_SECONDARY_REINFER_INTERVAL, &error);
         CHECK_ERROR(error);
@@ -703,6 +728,13 @@ static gboolean gst_nvinfer_parse_props(GstNvInfer *nvinfer,
             case NvDsInferNetworkType_Classifier:
             case NvDsInferNetworkType_Segmentation:
             case NvDsInferNetworkType_InstanceSegmentation:
+                /////////////////
+                /* Start Custom */
+                /////////////////
+            case NvDsInferNetworkType_FaceDetection:
+                ////////////////
+                /* End Custom */
+                ////////////////
             case NvDsInferNetworkType_Other:
                 init_params->networkType = (NvDsInferNetworkType)val;
                 break;
@@ -788,7 +820,24 @@ static gboolean gst_nvinfer_parse_props(GstNvInfer *nvinfer,
             CHECK_ERROR(error);
             g_strlcpy(init_params->customBBoxInstanceMaskParseFuncName, str, _MAX_STR_LENGTH);
             g_free(str);
-        } else if (!g_strcmp0(*key, CONFIG_GROUP_INFER_CUSTOM_ENGINE_CREATE_FUNC)) {
+        }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_INFER_CUSTOM_PARSE_BBOX_FD_FUNC)) {
+            gchar *str =
+                g_key_file_get_string(key_file, CONFIG_GROUP_PROPERTY,
+                                      CONFIG_GROUP_INFER_CUSTOM_PARSE_BBOX_FD_FUNC, &error);
+            CHECK_ERROR(error);
+            g_strlcpy(init_params->customBBoxFaceDetectionLandmarkParseFuncName, str,
+                      _MAX_STR_LENGTH);
+            g_free(str);
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
+        else if (!g_strcmp0(*key, CONFIG_GROUP_INFER_CUSTOM_ENGINE_CREATE_FUNC)) {
             gchar *str =
                 g_key_file_get_string(key_file, CONFIG_GROUP_PROPERTY,
                                       CONFIG_GROUP_INFER_CUSTOM_ENGINE_CREATE_FUNC, &error);
@@ -1152,8 +1201,15 @@ gboolean gst_nvinfer_parse_config_file(GstNvInfer *nvinfer,
 
     /* If the nvinfer instance is to be configured as a detector, parse the
      * per-class detection parameters. */
+    /////////////////
+    /* Start Custom */
+    /////////////////
     if (init_params->networkType == NvDsInferNetworkType_Detector ||
-        init_params->networkType == NvDsInferNetworkType_InstanceSegmentation) {
+        init_params->networkType == NvDsInferNetworkType_InstanceSegmentation ||
+        init_params->networkType == NvDsInferNetworkType_FaceDetection) {
+        ////////////////
+        /* End Custom */
+        ////////////////
         /* Set the default detection parameters. */
         NvDsInferDetectionParams detection_params{{DEFAULT_PRE_CLUSTER_THRESHOLD},
                                                   DEFAULT_POST_CLUSTER_THRESHOLD,

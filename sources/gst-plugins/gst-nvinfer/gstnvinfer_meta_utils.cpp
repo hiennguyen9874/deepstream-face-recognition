@@ -30,6 +30,34 @@ static inline int get_element_size(NvDsInferDataType data_type)
     }
 }
 
+/////////////////
+/* Start Custom */
+/////////////////
+static void release_landmark_meta(gpointer data, gpointer user_data)
+{
+    NvDsUserMeta *user_meta = (NvDsUserMeta *)data;
+    NvDSInferLandmarkMeta *meta = (NvDSInferLandmarkMeta *)user_meta->user_meta_data;
+    if (meta->data) {
+        g_free(meta->data);
+    }
+    delete meta;
+}
+
+static gpointer copy_landmark_meta(gpointer data, gpointer user_data)
+{
+    NvDsUserMeta *src_user_meta = (NvDsUserMeta *)data;
+    NvDSInferLandmarkMeta *src_meta = (NvDSInferLandmarkMeta *)src_user_meta->user_meta_data;
+    NvDSInferLandmarkMeta *meta = (NvDSInferLandmarkMeta *)g_malloc(sizeof(NvDSInferLandmarkMeta));
+
+    meta->size = src_meta->size;
+    meta->num_landmark = src_meta->num_landmark;
+    meta->data = (gfloat *)g_memdup(src_meta->data, src_meta->size);
+    return meta;
+}
+////////////////
+/* End Custom */
+////////////////
+
 /**
  * Attach metadata for the detector. We will be adding a new metadata.
  */
@@ -147,6 +175,66 @@ void attach_metadata_detector(GstNvInfer *nvinfer,
             obj_meta->mask_params.width = obj.mask_width;
             obj_meta->mask_params.height = obj.mask_height;
         }
+
+        /////////////////
+        /* Start Custom */
+        /////////////////
+        if (obj.landmark) {
+            for (unsigned int landmark_idx = 0; landmark_idx < obj.num_landmark; landmark_idx++) {
+                obj.landmark[landmark_idx * 2] =
+                    (obj.landmark[landmark_idx * 2] - frame.offset_left) / frame.scale_ratio_x +
+                    frame.roi_left;
+
+                obj.landmark[landmark_idx * 2 + 1] =
+                    (obj.landmark[landmark_idx * 2 + 1] - frame.offset_top) / frame.scale_ratio_y +
+                    frame.roi_top;
+            }
+
+            NvDsDisplayMeta *display_meta = nvds_acquire_display_meta_from_pool(batch_meta);
+            nvds_add_display_meta_to_frame(frame_meta, display_meta);
+
+            NvOSD_ColorParams colors[5] = {NvOSD_ColorParams{255, 0, 0, 1},  // Left eye
+                                           NvOSD_ColorParams{0, 0, 255, 1},  // Right eye
+                                           NvOSD_ColorParams{0, 255, 0, 1},  // Nose
+                                           NvOSD_ColorParams{255, 0, 0, 1},  // Left mouth
+                                           NvOSD_ColorParams{0, 0, 255, 1}}; // Right mouth
+
+            for (unsigned int landmark_idx = 0; landmark_idx < obj.num_landmark; landmark_idx++) {
+                NvOSD_CircleParams &circle_params =
+                    display_meta->circle_params[display_meta->num_circles];
+
+                circle_params.xc = obj.landmark[landmark_idx * 2];
+                circle_params.yc = obj.landmark[landmark_idx * 2 + 1];
+
+                circle_params.radius = 2;
+                circle_params.circle_color = colors[landmark_idx];
+                circle_params.has_bg_color = 0;
+                circle_params.bg_color = colors[landmark_idx];
+                display_meta->num_circles++;
+            }
+
+            if (nvinfer->output_face_detection_landmark) {
+                NvDsUserMeta *user_meta = nvds_acquire_user_meta_from_pool(batch_meta);
+
+                NvDSInferLandmarkMeta *meta =
+                    (NvDSInferLandmarkMeta *)g_malloc(sizeof(NvDSInferLandmarkMeta));
+                meta->data = (gfloat *)g_malloc(obj.landmark_size);
+                memcpy(meta->data, obj.landmark, obj.landmark_size);
+                meta->size = obj.landmark_size;
+                meta->num_landmark = obj.num_landmark;
+
+                user_meta->user_meta_data = meta;
+                user_meta->base_meta.meta_type = (NvDsMetaType)NVDSINFER_LANDMARK_META;
+                user_meta->base_meta.release_func = release_landmark_meta;
+                user_meta->base_meta.copy_func = copy_landmark_meta;
+                user_meta->base_meta.batch_meta = batch_meta;
+
+                nvds_add_user_meta_to_obj(obj_meta, user_meta);
+            }
+        }
+        ////////////////
+        /* End Custom */
+        ////////////////
 
         nvds_add_obj_meta_to_frame(frame_meta, obj_meta, parent_obj_meta);
     }

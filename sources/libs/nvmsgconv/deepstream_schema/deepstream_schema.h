@@ -25,6 +25,14 @@
 #include <string>
 #include <unordered_map>
 
+/////////////////
+/* Start Custom */
+/////////////////
+#include "gstnvdsmeta.h"
+////////////////
+/* End Custom */
+////////////////
+
 #include "nvdsmeta.h"
 #include "nvdsmeta_schema.h"
 
@@ -110,6 +118,15 @@ void destroy_deepstream_schema_ctx(void *privData);
 bool nvds_msg2p_parse_key_value(void *privData, const gchar *file);
 bool nvds_msg2p_parse_csv(void *privData, const gchar *file);
 bool nvds_msg2p_parse_yaml(void *privData, const gchar *file);
+
+/////////////////
+/* Start Custom */
+/////////////////
+gchar *generate_dsmeta_message_custom(void *privData, void *frameMeta, void *objMeta);
+gchar *generate_dsmeta_message_minimal_custom(void *privData, void *frameMeta);
+////////////////
+/* End Custom */
+////////////////
 
 #ifdef __cplusplus
 }
