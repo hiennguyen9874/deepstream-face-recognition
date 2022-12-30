@@ -445,9 +445,6 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
 
             // if (obj->obj_label[0] != '\0')
             //     sprintf(str_ins_pos, "%s", obj->obj_label);
-
-            if (obj->obj_label[0] != '\0')
-                sprintf(str_ins_pos, "%s", obj->obj_label);
             str_ins_pos += strlen(str_ins_pos);
 
             if (obj->object_id != UNTRACKED_OBJECT_ID) {
@@ -457,8 +454,6 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
                 if (appCtx->config.tracker_config.display_tracking_id) {
                     guint64 const LOW_32_MASK = 0x00000000FFFFFFFF;
                     sprintf(str_ins_pos, " %lu", (obj->object_id & LOW_32_MASK));
-                    str_ins_pos += strlen(str_ins_pos);
-                    sprintf(str_ins_pos, " %f", label->result_prob);
                     str_ins_pos += strlen(str_ins_pos);
                 }
             }
@@ -476,6 +471,8 @@ static void process_meta(AppCtx *appCtx, NvDsBatchMeta *batch_meta)
                     } else if (label->result_label[0] != '\0') {
                         sprintf(str_ins_pos, " %s", label->result_label);
                     }
+                    str_ins_pos += strlen(str_ins_pos);
+                    sprintf(str_ins_pos, " %f", label->result_prob);
                     str_ins_pos += strlen(str_ins_pos);
                 }
             }
