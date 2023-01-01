@@ -56,16 +56,18 @@ include_directories(
     ${SRC_APP_COMMON_INCLUDE_DIRS}
     ${SRC_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
-    /usr/include/opencv2
+    /usr/include/opencv4
 )
 
 link_directories(${NVDS_INSTALL_DIR}/lib)
 
 file(GLOB SRCS2 ${SRC_FOLDER}/*.c ${SRC_FOLDER}/*.cpp ${SRC_FOLDER}/*.h)
 file(GLOB SRC_APP_COMMON_SRCS ${SRC_APP_COMMON_INCLUDE_DIRS}/../src/*.c ${SRC_APP_COMMON_INCLUDE_DIRS}/../src/*.cpp ${SRC_APP_COMMON_INCLUDE_DIRS}/../src/*.h)
+file(GLOB SRC_APP_COMMON_SRCS_YAML ${SRC_APP_COMMON_INCLUDE_DIRS}/../src/deepstream-yaml/*.c ${SRC_APP_COMMON_INCLUDE_DIRS}/../src/deepstream-yaml/*.cpp ${SRC_APP_COMMON_INCLUDE_DIRS}/../src/deepstream-yaml/*.h)
 
 add_executable(${PROJECT_NAME}
     ${SRC_APP_COMMON_SRCS}
+    ${SRC_APP_COMMON_SRCS_YAML}
     ${SRCS2}
 )
 
@@ -86,5 +88,6 @@ target_link_libraries(${PROJECT_NAME}
     nvds_utils
     nvds_msgbroker
     nvds_batch_jpegenc
+    yaml-cpp
     m
 )
