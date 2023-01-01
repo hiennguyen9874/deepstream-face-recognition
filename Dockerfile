@@ -26,6 +26,8 @@ RUN apt-get update && \
     libglib2.0-dev \
     libjson-glib-dev \
     uuid-dev \
+    libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev \
+    libopencv-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt autoremove \
     && apt-get clean
@@ -92,8 +94,8 @@ RUN git clone https://github.com/facebookresearch/faiss.git \
     && /cmake/bin/cmake -B build \
     -DFAISS_ENABLE_GPU=OFF \
     -DFAISS_ENABLE_PYTHON=ON \
-    -DPYTHON_INCLUDE_DIR=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")  \
-    -DPYTHON_LIBRARY=$(python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))") \
+    -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")  \
+    -DPYTHON_LIBRARY=$(python3 -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))") \
     -DPython_EXECUTABLE=$(which python3) \
     -DFAISS_OPT_LEVEL=generic \
     -DCMAKE_BUILD_TYPE=Release \
@@ -141,4 +143,4 @@ USER root
 WORKDIR /app
 COPY ./ /app
 
-CMD ['/bin/bash']
+CMD ["./bin/deepstream-app", "-c", "samples/configs/deepstream_app.txt"]
