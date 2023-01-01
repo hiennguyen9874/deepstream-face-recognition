@@ -2,32 +2,38 @@
 
 Current only support jetpack version 4.6.1
 
+## Get cuda compute
+
+![JetsonCudaComputeCapability](./docs/Jetson_Cuda_Compute_Capacity.png)
+
+Eg: DGPU_ARCHS=73 for jetson AGX Xavier
+
 ## Install custom tensorRT
 
--   Build tensorrt
-    ```
-    ARG TRT_OSS_CHECKOUT_TAG=release/8.2
-    ARG TENSORRT_REPO=https://github.com/nvidia/TensorRT
-    WORKDIR /tmp
-    RUN git clone -b $TRT_OSS_CHECKOUT_TAG $TENSORRT_REPO
-    WORKDIR /tmp/TensorRT
-    ENV TRT_SOURCE=/tmp/TensorRT
-    WORKDIR $TRT_SOURCE
-    RUN git submodule update --init --recursive
-    RUN mkdir -p build
-    WORKDIR /tmp/TensorRT/build
-    RUN ls /usr/src/tensorrt
-    RUN /cmake/bin/cmake .. -DGPU_ARCHS="62" -DTENSORRT_ROOT=/usr/src/tensorrt -DCMAKE_CUDA_COMPILER=/usr/local/cuda-10.2/bin/nvcc -DCUDA_INCLUDE_DIRS=/usr/local/cuda/include -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
-    RUN make nvinfer_plugin -j$(nproc)
-    RUN cp $(find /tmp/TensorRT/build -name "libnvinfer_plugin.so.8.*" -print -quit) $(find /usr/lib/aarch64-linux-gnu/ -name "libnvinfer_plugin.so.8.*" -print -quit)
-    RUN ldconfig
-    COPY ./libnvinfer_plugin.so.8.2.3 /tmp
-    RUN echo $(find /usr/lib/aarch64-linux-gnu/ -name "libnvinfer_plugin.so.8.*" -print -quit)
-    RUN cp /tmp/libnvinfer_plugin.so.8.2.3 $(find /usr/lib/aarch64-linux-gnu/ -name "libnvinfer_plugin.so.8.*" -print -quit)
-    RUN ldconfig
-    ```
--   cp ./libnvinfer_plugin.so.8.2.3 $(find /usr/lib/aarch64-linux-gnu/ -name 'libnvinfer_plugin.so.8.\*' -print -quit)
--   ldconfig
+```bash
+export TRT_OSS_CHECKOUT_TAG=release/8.2 \
+&& export TENSORRT_REPO=https://github.com/hiennguyen9874/TensorRT \
+&& export DGPU_ARCHS=<JetsonCudaComputeCapability> \
+&& cd /tmp \
+&& git clone -b $TRT_OSS_CHECKOUT_TAG $TENSORRT_REPO \
+&& cd /tmp/TensorRT \
+&& git submodule update --init --recursive \
+&& mkdir -p build \
+&& cd /tmp/TensorRT/build \
+&& cmake .. -DGPU_ARCHS=$DGPU_ARCHS \
+-DTENSORRT_ROOT=/usr/src/tensorrt \
+-DCMAKE_CUDA_COMPILER=/usr/local/cuda-10.2/bin/nvcc \
+-DCUDA_INCLUDE_DIRS=/usr/local/cuda/include \
+-DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ \
+-DCMAKE_C_COMPILER=/usr/bin/gcc \
+-DTRT_BIN_DIR=`pwd`/out \
+&& make nvinfer_plugin -j$(nproc) \
+&& cp $(find /tmp/TensorRT/build -name "libnvinfer_plugin.so.8.*" -print -quit) \
+$(find /usr/lib/aarch64-linux-gnu/ -name "libnvinfer_plugin.so.8.*" -print -quit) \
+&& ldconfig \
+&& cd /tmp \
+&& rm -rf /tmp/TensorRT
+```
 
 ## Set default runtime to nvidia
 
