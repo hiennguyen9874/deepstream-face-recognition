@@ -6,7 +6,7 @@ Current only support jetpack version 4.6.1
 
 ![JetsonCudaComputeCapability](./docs/Jetson_Cuda_Compute_Capacity.png)
 
-Eg: DGPU_ARCHS=73 for jetson AGX Xavier
+Eg: DGPU_ARCHS=72 for jetson AGX Xavier
 
 ## Install custom tensorRT
 
@@ -47,7 +47,7 @@ https://github.com/dusty-nv/jetson-containers#docker-default-runtime
 
 -   Build or pull: `docker build -t hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.1.1 -f Dockerfile.jetson .` or `docker pull hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.1.1`
 <!-- -   `docker push hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.1.1` -->
--   Run: `docker run --runtime nvidia --device /dev/video1 --rm -it -v $(pwd):/app hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.1.1 bash`
+-   Run: `docker run --runtime nvidia --rm -it -v $(pwd):/app hiennguyen9874/deepstream-face-recognition:jetson-deepstream-6.1.1 bash`
 
 # Install Opencv
 

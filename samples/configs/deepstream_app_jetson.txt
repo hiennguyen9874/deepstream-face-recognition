@@ -56,7 +56,7 @@ display-text=1
 gpu-id=0
 ##Boolean property to inform muxer that sources are live
 live-source=1
-# buffer-pool-size=1
+buffer-pool-size=4
 batch-size=1
 ##time out in usec, to wait after the first buffer is available
 ##to push the batch even if the complete batch is not formed
@@ -110,6 +110,7 @@ gie-unique-id=2
 operate-on-gie-id=1
 # operate-on-class-ids=0;
 nvbuf-memory-type=0
+#config-file=config_infer_secondary_recognition.txt
 config-file=config_infer_secondary_recognition2.txt
 
 [tests]
