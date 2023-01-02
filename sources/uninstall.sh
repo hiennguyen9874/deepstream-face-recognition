@@ -2,15 +2,18 @@
 
 export PWD=`pwd`
 export DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+TARGET_DEVICE=$(gcc -dumpmachine | cut -f1 -d -)
+if [ "$TARGET_DEVICE" == "aarch64" ]; then
 export CUDA_VER=11.4
+else
+export CUDA_VER=11.7
+fi
 
 cd $DIR
 
 echo "Building deepstream-app"
 cd apps/sample_apps/deepstream-app && make clean -j4 && cd $DIR
-
-echo "Building gst-dsexample"
-cd gst-plugins/gst-dsexample && make clean -j4 && cd $DIR
 
 echo "Building gst-nvinfer"
 cd gst-plugins/gst-nvinfer && make clean -j4 && cd $DIR

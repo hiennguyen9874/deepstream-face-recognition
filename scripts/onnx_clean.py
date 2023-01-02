@@ -6,7 +6,7 @@ from pathlib import Path
 import cv2
 import onnx
 import onnxsim
-import torch
+import numpy as np
 from onnx.tools import update_model_dims
 
 
@@ -43,13 +43,15 @@ def onnx_dynamic(onnx_path, onnx_dynamic_path, intput_name, output_name):
     assert os.path.exists(onnx_dynamic_path)
 
 
-def onnx_simplify(onnx_path, onnx_simplify_path, image, dynamic, input_name):
+def onnx_simplify(
+    onnx_path, onnx_simplify_path, batch_size, img_width, img_height, dynamic, input_name
+):
     model_onnx = onnx.load(onnx_path)
     onnx.checker.check_model(model_onnx)
 
     model_onnx, check = onnxsim.simplify(
         model_onnx,
-        test_input_shapes={input_name: list(image.shape)} if dynamic else None,
+        test_input_shapes={input_name: [batch_size, 3, img_width, img_height]} if dynamic else None,
     )
     onnx.save(model_onnx, onnx_simplify_path)
 
@@ -145,8 +147,6 @@ if __name__ == "__main__":
 
     args.image_size = [int(x) for x in args.image_size.split(",")]
 
-    image = torch.randn((args.batch_size, 3, args.image_size[0], args.image_size[1]))
-
     input_name, output_name, output_type = onnx_get_input_output(args.onnx_path)
 
     if args.add_norm:
@@ -162,7 +162,15 @@ if __name__ == "__main__":
 
     if args.simplify:
         args.onnx_simplify_path = f"{os.path.splitext(args.onnx_path)[0]}_simplify.onnx"
-        onnx_simplify(args.onnx_path, args.onnx_simplify_path, image, args.dynamic, input_name)
+        onnx_simplify(
+            args.onnx_path,
+            args.onnx_simplify_path,
+            args.batch_size,
+            args.image_size[1],
+            args.image_size[0],
+            args.dynamic,
+            input_name,
+        )
         args.onnx_path = args.onnx_simplify_path
 
     if args.cleanup:

@@ -250,6 +250,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+!Makefile
+!README
+
 outputs/
 faiss_xx/
 tris/
@@ -267,5 +270,3 @@ backup/
 
 faiss.index
 labels.txt
-
-

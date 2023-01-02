@@ -63,7 +63,6 @@ sync=0
 # msg-conv-broker-on-demux=1
 #Type - 1=FakeSink 2=EglSink 3=File 4=UDPSink 5=nvoverlaysink 6=MsgConvBroker
 type=6
-msg-conv-config=config_msgconv.txt
 #(0): PAYLOAD_DEEPSTREAM - Deepstream schema payload
 #(1): PAYLOAD_DEEPSTREAM_MINIMAL - Deepstream schema payload minimal
 #(256): PAYLOAD_RESERVED - Reserved type
@@ -80,7 +79,6 @@ msg-broker-proto-lib=/opt/nvidia/deepstream/deepstream/lib/libnvds_kafka_proto.s
 msg-broker-conn-str=10.1.1.41;9092
 topic=face-detection
 #Optional:
-msg-broker-config=config_nvmsgbroker.txt
 #(0) Use message adapter library api's
 #(1) Use new msgbroker library api's
 new-api=1
@@ -128,7 +126,7 @@ display-text=1
 gpu-id=0
 ##Boolean property to inform muxer that sources are live
 live-source=0
-# buffer-pool-size=1
+buffer-pool-size=4
 batch-size=1
 ##time out in usec, to wait after the first buffer is available
 ##to push the batch even if the complete batch is not formed
@@ -164,7 +162,7 @@ gpu-id=0
 # For NvDCF and DeepSORT tracker, tracker-width and tracker-height must be a multiple of 32, respectively
 tracker-width=640
 tracker-height=384
-ll-lib-file=/opt/nvidia/deepstream/deepstream-6.0/lib/libnvds_nvmultiobjecttracker.so
+ll-lib-file=/opt/nvidia/deepstream/deepstream-6.1/lib/libnvds_nvmultiobjecttracker.so
 # ll-config-file required to set different tracker types
 # ll-config-file=config_tracker_IOU.yml
 # ll-config-file=config_tracker_NvDCF_perf.yml
@@ -182,6 +180,7 @@ gie-unique-id=2
 operate-on-gie-id=1
 # operate-on-class-ids=0;
 nvbuf-memory-type=0
+#config-file=config_infer_secondary_recognition.txt
 config-file=config_infer_secondary_recognition2.txt
 
 [tests]

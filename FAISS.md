@@ -23,10 +23,10 @@
 -   `git clone https://github.com/facebookresearch/faiss.git`
 -   `cd faiss`
 -   `mkdir build`
--   `cmake -B build -DFAISS_ENABLE_GPU=ON -DFAISS_ENABLE_PYTHON=ON -DCMAKE_CUDA_ARCHITECTURES=75 -DBUILD_SHARED_LIBS=ON .`
+-   `cmake -B build -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=ON -DPYTHON_INCLUDE_DIR=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")  -DPYTHON_LIBRARY=$(python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))") -DPython_EXECUTABLE=$(which python3) -DFAISS_OPT_LEVEL=generic -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON .`
 -   `make -C build -j faiss`
 -   `make -C build -j swigfaiss`
--   `cd build/faiss/python && python3 setup.py install`
+-   `cd build/faiss/python && python3 setup.py install && cp ./*.so /usr/local/lib/`
 -   `sudo make -C build install`
-
-cmake -B build -DCMAKE_CXX_COMPILER=clang++-8 -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF -DFAISS_OPT_LEVEL=generic -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF .
+-   Add into `.bashrc` or `.zshrc`:
+    `export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH`

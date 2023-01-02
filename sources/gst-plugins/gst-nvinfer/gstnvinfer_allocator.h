@@ -72,8 +72,9 @@ GstAllocator *gst_nvinfer_allocator_new(guint width,
                                         /* Start Custom */
                                         /////////////////
                                         NvBufSurfaceMemType memType
-////////////////
-/* End Custom */
-////////////////);
+                                        ////////////////
+                                        /* End Custom */
+                                        ////////////////
+);
 
 #endif

@@ -1,0 +1,6 @@
+-i https://pypi.ngc.nvidia.com
+opencv-python
+onnx
+onnxsim
+numpy
+onnx_graphsurgeon

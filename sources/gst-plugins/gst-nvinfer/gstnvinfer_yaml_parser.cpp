@@ -621,6 +621,13 @@ static gboolean gst_nvinfer_parse_props_yaml(GstNvInfer *nvinfer,
             case NvDsInferNetworkType_Classifier:
             case NvDsInferNetworkType_Segmentation:
             case NvDsInferNetworkType_InstanceSegmentation:
+                /////////////////
+                /* Start Custom */
+                /////////////////
+            case NvDsInferNetworkType_FaceDetection:
+                ////////////////
+                /* End Custom */
+                ////////////////
             case NvDsInferNetworkType_Other:
                 init_params->networkType = (NvDsInferNetworkType)val;
                 break;
@@ -894,8 +901,15 @@ gboolean gst_nvinfer_parse_config_file_yaml(GstNvInfer *nvinfer,
 
     /* If the nvinfer instance is to be configured as a detector, parse the
      * per-class detection parameters. */
+    /////////////////
+    /* Start Custom */
+    /////////////////
     if (init_params->networkType == NvDsInferNetworkType_Detector ||
-        init_params->networkType == NvDsInferNetworkType_InstanceSegmentation) {
+        init_params->networkType == NvDsInferNetworkType_InstanceSegmentation ||
+        init_params->networkType == NvDsInferNetworkType_FaceDetection) {
+        ////////////////
+        /* End Custom */
+        ////////////////
         /* Set the default detection parameters. */
         NvDsInferDetectionParams detection_params{{DEFAULT_PRE_CLUSTER_THRESHOLD},
                                                   DEFAULT_POST_CLUSTER_THRESHOLD,
