@@ -1,11 +1,8 @@
-ARG BASE_CONTAINER=hiennguyen9874/jetson-deepstream:deepstream-6.0.1-opencv
+ARG BASE_CONTAINER=nvcr.io/nvidia/deepstream-l4t:6.1.1-triton
 FROM $BASE_CONTAINER as base
 
 # Enviroment
-ENV SWIG_PATH=/usr/swig/bin
-ENV PATH=$SWIG_PATH:$PATH
 ENV DEBIAN_FRONTEND=noninteractive
-ENV LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -15,10 +12,62 @@ RUN apt-get update && \
     libpcre2-dev \
     flex bison \
     && rm -rf /var/lib/apt/lists/* \
-    && apt autoremove \
+    && apt autoremove -y \
     && apt-get clean
 
-FROM base as builder
+FROM base as base-builder
+
+# Cmake
+WORKDIR /tmp
+# RUN wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz \
+#     && tar xvf cmake-3.19.4.tar.gz \
+#     && rm cmake-3.19.4.tar.gz \
+#     && cd /tmp/cmake-3.19.4/ \
+#     && mkdir /cmake \
+#     && ./configure --prefix=/cmake \
+#     && make -j$(nproc) \
+#     && make install \
+#     && cd /tmp \
+#     && rm -rf /tmp/cmake-3.19.4/
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.19.5/cmake-3.19.5-Linux-aarch64.tar.gz \
+    && tar -zxvf cmake-3.19.5-Linux-aarch64.tar.gz \
+    && cd cmake-3.19.5-Linux-aarch64/ \
+    && cp -rf bin/ doc/ share/ /usr/local/ \
+    && cp -rf man/* /usr/local/man \
+    && sync \
+    && cmake --version \
+    && cd /tmp \
+    && rm -rf /tmp/cmake*
+
+FROM base-builder as tensorrt-builder
+
+# Build tensorRT
+ARG TRT_OSS_CHECKOUT_TAG=release/8.2
+ARG DGPU_ARCHS=72
+ARG TENSORRT_REPO=https://github.com/hiennguyen9874/TensorRT
+
+WORKDIR /tmp
+RUN git clone -b $TRT_OSS_CHECKOUT_TAG $TENSORRT_REPO \
+    && export TRT_SOURCE=/tmp/TensorRT \
+    && cd /tmp/TensorRT \
+    && git submodule update --init --recursive \
+    && mkdir -p build \
+    && cd /tmp/TensorRT/build \
+    && cmake .. -DGPU_ARCHS=$DGPU_ARCHS \
+    -DTENSORRT_ROOT=/usr/src/tensorrt \
+    -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.4/bin/nvcc \
+    -DCUDA_INCLUDE_DIRS=/usr/local/cuda/include \
+    -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ \
+    -DCMAKE_C_COMPILER=/usr/bin/gcc \
+    -DTRT_BIN_DIR=`pwd`/out \
+    && make nvinfer_plugin -j$(nproc) \
+    && cp $(find /tmp/TensorRT/build -name "libnvinfer_plugin.so.8.*" -print -quit) \
+    $(find /usr/lib/aarch64-linux-gnu/ -name "libnvinfer_plugin.so.8.*" -print -quit) \
+    && ldconfig \
+    && cd /tmp \
+    && rm -rf /tmp/TensorRT
+
+FROM base-builder as faiss-builder
 
 WORKDIR /tmp
 RUN wget https://prdownloads.sourceforge.net/swig/swig-4.1.0.tar.gz \
@@ -38,7 +87,7 @@ WORKDIR /tmp
 RUN git clone https://github.com/facebookresearch/faiss.git \
     && cd /tmp/faiss \
     && mkdir build \
-    && /cmake/bin/cmake -B build \
+    && cmake -B build \
     # -DCMAKE_CXX_COMPILER=clang++-8 \
     -DFAISS_ENABLE_GPU=OFF \
     -DFAISS_ENABLE_PYTHON=ON \
@@ -55,22 +104,9 @@ RUN git clone https://github.com/facebookresearch/faiss.git \
     && cp -r /tmp/faiss/build/faiss /tmp/faiss-python \
     && rm -rf /tmp/faiss
 # /usr/local/include/faiss, /usr/local/share/faiss, /usr/local/lib/libfaiss.so
+ENV LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 
 FROM base
-
-COPY --from=builder /usr/swig /usr/swig
-COPY --from=builder /usr/local/include/faiss /usr/local/include/faiss
-COPY --from=builder /usr/local/share/faiss /usr/local/share/faiss
-COPY --from=builder /usr/local/lib/libfaiss.so /usr/local/lib/libfaiss.so
-
-COPY --from=builder /tmp/faiss-python /tmp/faiss-python
-WORKDIR /tmp
-RUN cd /tmp/faiss-python/faiss/python \
-    && python3 -m pip install setuptools \
-    && python3 setup.py install \
-    && cp /tmp/faiss-python/faiss/python/*.so /usr/local/lib/ \
-    && cd /tmp \
-    && rm -rf /tmp/faiss-python
 
 # Pytorch
 RUN apt-get update && \
@@ -85,10 +121,9 @@ RUN apt-get update && \
     # llvm-8 \
     locales \
     && rm -rf /var/lib/apt/lists/* \
-    && apt autoremove \
+    && apt autoremove -y \
     && apt-get clean
 
-ENV TORCH_INSTALL=https://developer.download.nvidia.cn/compute/redist/jp/v461/pytorch/torch-1.11.0a0+17540c5+nv22.01-cp36-cp36m-linux_aarch64.whl
 ENV LD_LIBRARY_PATH=/usr/lib/llvm-8/lib:$LD_LIBRARY_PATH
 
 # Fix scikit-image https://github.com/scikit-image/scikit-image/issues/4705
@@ -97,6 +132,30 @@ RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     update-locale LANG=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools Cython wheel
+
+COPY --from=tensorrt-builder /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.8.* /usr/lib/aarch64-linux-gnu/
+RUN ldconfig
+
+COPY --from=faiss-builder /usr/swig /usr/swig
+ENV SWIG_PATH=/usr/swig/bin
+ENV PATH=$SWIG_PATH:$PATH
+
+COPY --from=faiss-builder /usr/local/include/faiss /usr/local/include/faiss
+COPY --from=faiss-builder /usr/local/share/faiss /usr/local/share/faiss
+COPY --from=faiss-builder /usr/local/lib/libfaiss.so /usr/local/lib/libfaiss.so
+ENV LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+
+COPY --from=faiss-builder /tmp/faiss-python /tmp/faiss-python
+WORKDIR /tmp
+RUN cd /tmp/faiss-python/faiss/python \
+    && python3 -m pip install setuptools \
+    && python3 setup.py install \
+    && cp /tmp/faiss-python/faiss/python/*.so /usr/local/lib/ \
+    && cd /tmp \
+    && rm -rf /tmp/faiss-python
+
+ENV TORCH_INSTALL=https://developer.download.nvidia.cn/compute/redist/jp/v502/pytorch/torch-1.13.0a0+410ce96a.nv22.12-cp38-cp38-linux_aarch64.whl
 RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools Cython wheel \
     && python3 -m pip install --no-cache-dir aiohttp numpy=='1.19.4' scipy=='1.5.3' \
     && python3 -m pip install --no-cache-dir --upgrade protobuf \
@@ -110,7 +169,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3-tk \
     && rm -rf /var/lib/apt/lists/* \
-    && apt autoremove \
+    && apt autoremove -y \
     && apt-get clean
 
 WORKDIR /app
