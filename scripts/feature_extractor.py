@@ -61,7 +61,7 @@ if __name__ == "__main__":
             "samples",
             "engines",
             "Secondary_Recognition",
-            "webface_r50_dynamic_simplify_cleanup.trt",
+            "webface_r50_norm_dynamic_simplify_cleanup.trt",
         )
     )
 
