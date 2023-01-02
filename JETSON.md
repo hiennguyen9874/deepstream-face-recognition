@@ -6,7 +6,7 @@ Current only support jetpack version 4.6.1
 
 ![JetsonCudaComputeCapability](./docs/Jetson_Cuda_Compute_Capacity.png)
 
-Eg: DGPU_ARCHS=73 for jetson AGX Xavier
+Eg: DGPU_ARCHS=72 for jetson AGX Xavier
 
 ## Install custom tensorRT
 
