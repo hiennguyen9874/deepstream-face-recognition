@@ -1,6 +1,6 @@
 # Deepstream face recognition on jetson
 
-Current only support jetpack version 4.6.1
+Current only support jetpack version 5.0.2
 
 ## Get cuda compute
 
