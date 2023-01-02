@@ -2,6 +2,11 @@
 
 Demo output video: [![Deepstream face detection & recognition](https://img.youtube.com/vi/eim-uTRNYtg/0.jpg)](https://www.youtube.com/watch?v=eim-uTRNYtg)
 
+Supported deepstream version:
+
+-   Deepstream 6.0.1: [github.com/hiennguyen9874/deepstream-face-recognition/tree/ds-6.0.1](https://github.com/hiennguyen9874/deepstream-face-recognition/tree/ds-6.0.1)
+-   Deepstream 6.1.1: [github.com/hiennguyen9874/deepstream-face-recognition/tree/ds-6.1.1](https://github.com/hiennguyen9874/deepstream-face-recognition/tree/ds-6.1.1)
+
 This docs for dGPU, for jetson using [./JETSON.md](./JETSON.md)
 
 ## Export `.engine`
