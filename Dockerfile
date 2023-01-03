@@ -32,16 +32,26 @@ RUN apt-get update && \
 
 # Cmake
 WORKDIR /tmp
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz \
-    && tar xvf cmake-3.19.4.tar.gz \
-    && rm cmake-3.19.4.tar.gz \
-    && cd /tmp/cmake-3.19.4/ \
-    && mkdir /cmake \
-    && ./configure --prefix=/cmake \
-    && make -j$(nproc) \
-    && make install \
+# RUN wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz \
+#     && tar xvf cmake-3.19.4.tar.gz \
+#     && rm cmake-3.19.4.tar.gz \
+#     && cd /tmp/cmake-3.19.4/ \
+#     && mkdir /cmake \
+#     && ./configure --prefix=/cmake \
+#     && make -j$(nproc) \
+#     && make install \
+#     && cd /tmp \
+#     && rm -rf /tmp/cmake-3.19.4/
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.19.5/cmake-3.19.5-Linux-x86_64.tar.gz \
+    && tar -zxvf cmake-3.19.5-Linux-x86_64.tar.gz \
+    && rm cmake-3.19.5-Linux-x86_64.tar.gz \
+    && cd /tmp/cmake-3.19.5-Linux-x86_64/ \
+    && cp -rf bin/ doc/ share/ /usr/local/ \
+    && cp -rf man/* /usr/local/man \
+    && sync \
+    && cmake --version \
     && cd /tmp \
-    && rm -rf /tmp/cmake-3.19.4/
+    && rm -rf /tmp/cmake-3.19.5-Linux-x86_64/
 
 RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools Cython wheel \
     && python3 -m pip install --no-cache-dir numpy
@@ -60,7 +70,7 @@ RUN git clone -b $TRT_OSS_CHECKOUT_TAG $TENSORRT_REPO \
     && git submodule update --init --recursive \
     && mkdir -p build \
     && cd /tmp/TensorRT/build \
-    && /cmake/bin/cmake .. -DGPU_ARCHS=$DGPU_ARCHS \
+    && cmake .. -DGPU_ARCHS=$DGPU_ARCHS \
     -DTRT_LIB_DIR=/usr/lib/x86_64-linux-gnu/ \
     -DCMAKE_C_COMPILER=/usr/bin/gcc \
     -DTRT_BIN_DIR=`pwd`/out \
@@ -89,7 +99,7 @@ WORKDIR /tmp
 RUN git clone https://github.com/facebookresearch/faiss.git \
     && cd /tmp/faiss \
     && mkdir build \
-    && /cmake/bin/cmake -B build \
+    && cmake -B build \
     -DFAISS_ENABLE_GPU=OFF \
     -DFAISS_ENABLE_PYTHON=ON \
     -DPYTHON_INCLUDE_DIR=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")  \
